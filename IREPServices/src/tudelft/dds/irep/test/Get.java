@@ -13,18 +13,24 @@ import javax.ws.rs.GET;
 public class Get {
 	
 	@GET
-	public String getParam(@QueryParam("param") String param, @QueryParam("unitid") String unitid, @QueryParam("confhash") Integer confhash){
-		try{
-		com.google.common.base.Preconditions.checkArgument(ConfigRepository.exist(confhash), "No conf running object found");
-		NamespaceConfig nsConf = ConfigRepository.getConf(confhash);
-		Namespace ns = new Namespace(nsConf, ImmutableMap.of("user_guid", unitid), null);
-		String paramValue = ns.getParam(param, null);
-		com.google.common.base.Preconditions.checkNotNull(paramValue, "Param "+param+" does not exist");
-		return paramValue; 
-		} catch (Exception e){
-			throw new javax.ws.rs.BadRequestException(e);
-		}
+	public String get(){
+		return "Hello World";
 	}
+	
+	
+//	@GET
+//	public String getParam(@QueryParam("param") String param, @QueryParam("unitid") String unitid, @QueryParam("confhash") Integer confhash){
+//		try{
+//		com.google.common.base.Preconditions.checkArgument(ConfigRepository.exist(confhash), "No conf running object found");
+//		NamespaceConfig nsConf = ConfigRepository.getConf(confhash);
+//		Namespace ns = new Namespace(nsConf, ImmutableMap.of("user_guid", unitid), null);
+//		String paramValue = ns.getParam(param, null);
+//		com.google.common.base.Preconditions.checkNotNull(paramValue, "Param "+param+" does not exist");
+//		return paramValue; 
+//		} catch (Exception e){
+//			throw new javax.ws.rs.BadRequestException(e);
+//		}
+//	}
 	
 
 }
