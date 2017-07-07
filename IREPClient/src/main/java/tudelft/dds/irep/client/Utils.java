@@ -11,7 +11,7 @@ public class Utils {
 		BufferedReader br = new BufferedReader(fr);
 		StringBuffer sb = new StringBuffer();
 		while (br.ready()){
-		   sb.append(br.readLine());
+		   sb.append(br.readLine() + System.lineSeparator());
 		}
 		br.close();
 		return sb.toString();
