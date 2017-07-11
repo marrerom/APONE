@@ -24,8 +24,8 @@ import com.glassdoor.planout4j.compiler.YAMLConfigParser;
 import com.glassdoor.planout4j.config.ValidationException;
 import com.google.common.collect.ImmutableMap;
 
-@Path("/repository")
-public class Repository {
+@Path("/definition")
+public class Definition {
 
 	@Path("/upload")
 	@POST

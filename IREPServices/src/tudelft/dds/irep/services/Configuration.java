@@ -29,6 +29,7 @@ public class Configuration {
 			String idrun = String.valueOf(nsConf.hashCode());
 			RunningExperiments.put(Maps.immutableEntry(idrun, nsConf));
 			//TODO: check if idexp exist in database, save data
+			
 			return idrun;
 		} catch (ValidationException e) {
 			e.printStackTrace();
