@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.file.Paths;
 
+import javax.ws.rs.FormParam;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
@@ -22,7 +23,7 @@ public class ClientTest {
 		
 		public static Response testYAMLForm(Client client) throws IOException{
 			WebTarget base = client.target(context);
-			WebTarget target =base.path("/repository/upload");
+			WebTarget target =base.path("/definition/upload");
 			Invocation.Builder builder = target.request(MediaType.TEXT_PLAIN);
 			String nsName = "demo_namespace";
 			String path = Paths.get("resources", nsName + ".yaml").toFile().toString();
@@ -35,16 +36,20 @@ public class ClientTest {
 		}
 		
 		
-		public static Response testRepositoryUpdateMultivariate(Client client) throws IOException{
+		public static Response testDefinitionUpdateMultivariate(Client client) throws IOException{
 			WebTarget base = client.target(context);
-			WebTarget target =base.path("/repository/upload");
+			WebTarget target =base.path("/definition/upload");
 			Invocation.Builder builder = target.request(MediaType.TEXT_PLAIN);
 			String nsName = "demo_namespace";
 			String path = Paths.get("resources", nsName + ".yaml").toFile().toString();
 			String yaml = Utils.readStrFile(path);
 			MultivaluedMap<String, String> mmap = new MultivaluedHashMap<String, String>();
-			//String enc = URLEncoder.encode(yaml, "UTF-8");
+			
+			mmap.add("expname", "test experiment");
+			mmap.add("experimenter", "mmarrero");
+			mmap.add("description", "experiment description");
 			mmap.add("yaml", yaml);
+			
 			Response res = builder.post(Entity.form(mmap));
 			System.out.println(res);
 			return res;
@@ -86,7 +91,7 @@ public class ClientTest {
 		   Client client = ClientBuilder.newClient();
 		   try{
 		   //testGet(client);
-		   Response res1 =  testRepositoryUpdateMultivariate(client);
+		   Response res1 =  testDefinitionUpdateMultivariate(client);
 		   String idexp = res1.readEntity(String.class);
 		   
 		   Response res2 = testConfigurationStart(client, idexp);
