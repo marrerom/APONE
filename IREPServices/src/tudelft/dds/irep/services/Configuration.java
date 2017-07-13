@@ -3,11 +3,13 @@ package tudelft.dds.irep.services;
 import java.io.StringReader;
 import java.util.Map.Entry;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 
 import com.glassdoor.planout4j.NamespaceConfig;
 import com.glassdoor.planout4j.compiler.YAMLConfigParser;
@@ -18,16 +20,18 @@ import jersey.repackaged.com.google.common.collect.Maps;
 @Path("/configuration")
 public class Configuration {
 	
+	@Context ServletContext context;
+	
 	@Path("/start")
 	@POST
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
 	public String startExperiment(@FormParam("idexp") String idexp){
 		try {
-			String yaml = TemporalDDBB.idExpYaml.get(idexp);
+			
 			NamespaceConfig nsConf = new YAMLConfigParser().parseAndValidate(new StringReader(yaml), String.valueOf(yaml.hashCode()));
 			String idrun = String.valueOf(nsConf.hashCode());
-			RunningExperiments.put(Maps.immutableEntry(idrun, nsConf));
+			((RunningExperiments) context.getAttribute("RunningExperiments")).put(Maps.immutableEntry(idrun, nsConf));
 			//TODO: check if idexp exist in database, save data
 			
 			return idrun;
