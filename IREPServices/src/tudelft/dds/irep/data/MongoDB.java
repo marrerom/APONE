@@ -11,7 +11,8 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.*;
+import org.bson.types.ObjectId;
 
 
 public class MongoDB implements Database {
@@ -49,9 +50,7 @@ public class MongoDB implements Database {
 	public String GetYAML(String idexp) {
 		MongoDatabase database = mongo.getDatabase(DB);
 		MongoCollection<Document> coll = database.getCollection("experiment");
-		
-		coll.find(eq("_id",idexp));
-		
+		return coll.find(eq("_id",new ObjectId(idexp))).first().getString("yaml");
 	}
 	
 	

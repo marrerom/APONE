@@ -16,6 +16,7 @@ import com.glassdoor.planout4j.compiler.YAMLConfigParser;
 import com.glassdoor.planout4j.config.ValidationException;
 
 import jersey.repackaged.com.google.common.collect.Maps;
+import tudelft.dds.irep.data.Database;
 
 @Path("/configuration")
 public class Configuration {
@@ -28,7 +29,7 @@ public class Configuration {
 	@Produces("text/plain")
 	public String startExperiment(@FormParam("idexp") String idexp){
 		try {
-			
+			String yaml = ((Database) context.getAttribute("DBManager")).GetYAML(idexp);
 			NamespaceConfig nsConf = new YAMLConfigParser().parseAndValidate(new StringReader(yaml), String.valueOf(yaml.hashCode()));
 			String idrun = String.valueOf(nsConf.hashCode());
 			((RunningExperiments) context.getAttribute("RunningExperiments")).put(Maps.immutableEntry(idrun, nsConf));
