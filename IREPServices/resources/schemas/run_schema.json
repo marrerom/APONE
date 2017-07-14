@@ -1,0 +1,24 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+"id" : "run_schema.json",
+"title" : "Run schema",
+"description" : "Data related to the configuration -distribution and stopping conditions- of an existing experiment",
+"type" : "object",
+"properties": 
+	{
+	"idrun": {"type":"string"},
+	"name": {"type":"string"},
+	"experimenter": {"type":"string"},
+	"description": {"type":"string"},
+	"controller_code": {"type":"string"},
+	"distribution": {"$ref":"distribution_schema.json"},
+	"events": {"type": "$schema"},
+	"date_started": {"type": "string"},
+	"date_ended": {"type": "string"},
+	"date_to_end": {"type": "string"},
+	"max_exposures": {"type": "number"},
+	"status":{"enum":["on","off"], "default":"on"},
+	"test":{"enum":["on","off"], "default":"off"}
+	},
+	"required": ["idrun", "name", "experimenter", "controller_code"]
+}

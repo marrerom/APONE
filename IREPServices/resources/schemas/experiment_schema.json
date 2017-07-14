@@ -1,0 +1,17 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+"id" : "experiment_schema.json",
+"title" : "Experiment schema"
+"description" : "Data related to the definition of an experiment"
+"type" : "object",
+"properties" : 
+	{
+	"idexp": {"type":"string"},
+	"name": {"type":"string"},
+	"experimenter": {"type":"string"},
+	"description": {"type":"string"},
+	"yaml": {"type":"string"},
+	"run" : {"type":"array", "items": {"$ref": "run_schema.json" } }
+	},
+"required": ["idexp","name", "experimenter", "yaml"]
+}
