@@ -16,7 +16,7 @@ import com.glassdoor.planout4j.compiler.YAMLConfigParser;
 import com.glassdoor.planout4j.config.ValidationException;
 
 import jersey.repackaged.com.google.common.collect.Maps;
-import tudelft.dds.irep.data.Database;
+import tudelft.dds.irep.data.database.Database;
 
 @Path("/configuration")
 public class Configuration {

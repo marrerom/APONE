@@ -1,8 +1,8 @@
 {
 "$schema" : "http://json-schema.org/schema#",
 "id" : "experiment_schema.json",
-"title" : "Experiment schema"
-"description" : "Data related to the definition of an experiment"
+"title" : "Experiment schema",
+"description" : "Data related to the definition of an experiment",
 "type" : "object",
 "properties" : 
 	{

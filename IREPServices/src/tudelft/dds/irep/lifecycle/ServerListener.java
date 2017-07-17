@@ -4,8 +4,8 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import tudelft.dds.irep.data.Database;
-import tudelft.dds.irep.data.MongoDB;
+import tudelft.dds.irep.data.database.Database;
+import tudelft.dds.irep.data.database.MongoDB;
 import tudelft.dds.irep.services.RunningExperiments;
 
 /**
