@@ -1,0 +1,14 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+"id" : "distribution_schema.json",
+"title" : "Distribution schema",
+"description" : "Data related to the configuration of an experiment",
+"type" : "object",
+"properties" : 
+	{
+	"segments":{"type":"number"},
+	"treatment": {"type":"string"},
+	"action": {"enum":["add","remove"], "default":"add"}
+	}
+	
+}

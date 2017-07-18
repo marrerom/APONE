@@ -1,6 +1,17 @@
 package tudelft.dds.irep.data.schema;
 
-public class Distribution {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class Distribution extends Common {
+	
+	@JsonIgnore
+	public static final String schemaPath = "/schemas/distribution_schema.json";
+	
+	@JsonIgnore	
+	public String getSchemaPath() {
+		return schemaPath;
+	}
+
 	private int segments;
 	private String treatment;
 	private Action action;

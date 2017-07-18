@@ -10,8 +10,10 @@
 	"name": {"type":"string"},
 	"experimenter": {"type":"string"},
 	"description": {"type":"string"},
-	"yaml": {"type":"string"},
-	"run" : {"type":"array", "items": {"$ref": "run_schema.json" } }
+	"unit": {"type":"string"},
+	"control_treatment": {"type":"string"},
+	"treatment" : {"type":"array", "items": {"$ref": "treatment_schema.json" } },
+	"config" : {"type":"array", "items": {"$ref": "configuration_schema.json" } }
 	},
-"required": ["idexp","name", "experimenter", "yaml"]
+"required": ["idexp","name", "experimenter", "treatment", "control_treatment"]
 }

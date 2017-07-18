@@ -1,6 +1,17 @@
 package tudelft.dds.irep.data.schema;
 
-public class Treatment {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class Treatment extends Common {
+	
+	@JsonIgnore
+	public static final String schemaPath = "/schemas/treatment_schema.json";
+	
+	@JsonIgnore	
+	public String getSchemaPath() {
+		return schemaPath;
+	}
+
 	private String name;
 	private String definition; //planout language
 	private String description;

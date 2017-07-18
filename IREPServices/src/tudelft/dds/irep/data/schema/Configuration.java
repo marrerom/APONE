@@ -2,7 +2,18 @@ package tudelft.dds.irep.data.schema;
 
 import java.util.Date;
 
-public class Configuration {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class Configuration extends Common {
+	
+	@JsonIgnore
+	public static final String schemaPath = "/schemas/configuration_schema.json";
+	
+	@JsonIgnore	
+	public String getSchemaPath() {
+		return schemaPath;
+	}
+
 	private String idrun;
 	private String name;
 	private String experimenter;

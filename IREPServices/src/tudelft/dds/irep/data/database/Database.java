@@ -6,6 +6,8 @@ public interface Database {
 	
 	public String AddExperiment(Experiment experiment );
 	
+	public String GetYAML(String idexp);
+	
 	public void close();
 
 }

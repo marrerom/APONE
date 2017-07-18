@@ -1,0 +1,14 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+"id" : "treatment_schema.json",
+"title" : "Distribution schema",
+"description" : "Each treatment of an experiment",
+"type" : "object",
+"properties" : 
+	{
+	"name":{"type":"string"},
+	"description": {"type":"string"},
+	"definition": {"type":"string"}
+	}
+	
+}

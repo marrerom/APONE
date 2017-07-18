@@ -1,12 +1,16 @@
 package tudelft.dds.irep.lifecycle;
 
+import java.io.File;
+import java.nio.file.Paths;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
-import tudelft.dds.irep.services.RunningExperiments;
+import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.RunningExperiments;
 
 /**
  * Application Lifecycle Listener implementation class ServerListener
@@ -46,6 +50,7 @@ public class ServerListener implements ServletContextListener {
     	
     	sce.getServletContext().setAttribute("DBManager", new MongoDB(HOST,PORT, DB, USER, PWD));
     	sce.getServletContext().setAttribute("RunningExperiments", new RunningExperiments());
+    	sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
     }
 	
 }

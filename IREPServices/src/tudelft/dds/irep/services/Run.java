@@ -13,6 +13,8 @@ import com.glassdoor.planout4j.NamespaceConfig;
 import com.google.common.base.*;
 import com.google.common.collect.ImmutableMap;
 
+import tudelft.dds.irep.utils.RunningExperiments;
+
 @Path("/run")
 public class Run {
 	

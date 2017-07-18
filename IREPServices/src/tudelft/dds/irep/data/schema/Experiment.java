@@ -1,8 +1,16 @@
 package tudelft.dds.irep.data.schema;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class Experiment {
+public class Experiment extends Common {
+	
+	@JsonIgnore
+	private static final String schemaPath = "/schemas/experiment_schema.json";
+	
+	@JsonIgnore	
+	public String getSchemaPath() {
+		return schemaPath;
+	}
 	
 	private String idexp;
 	private String name;
@@ -62,6 +70,7 @@ public class Experiment {
 	public void setRun(Configuration[] run) {
 		this.config = run;
 	}
+	
 
 	
 }
