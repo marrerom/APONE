@@ -1,17 +1,14 @@
 package tudelft.dds.irep.client;
 
 import java.io.IOException;
-
-import java.net.URLEncoder;
 import java.nio.file.Paths;
-
-import javax.ws.rs.FormParam;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+
 
 
 //import com.google.common.net.MediaType;
@@ -67,30 +64,6 @@ public class ClientTest {
 			String unit = "user_guid";
 			String control_treatment = "exp_default";
 
-			//String path = Paths.get("resources", nsName + ".yaml").toFile().toString();
-			//String yaml = Utils.readStrFile(path);
-
-//			- definition: exp_default
-//			    assign: !planout |
-//			        page_size = 50;
-//			        full_details = false;
-//
-//			  # study effects of different page sizes only
-//			  - definition: exp_page_size
-//			    # PLanOut DSL, see http://facebook.github.io/planout/docs/planout-language-reference.html
-//			    assign: !planout |
-//			      page_size = uniformChoice(choices = [15, 20, 30], unit = user_guid);
-//
-//			  # study effects of both detail level and page sizes applied together
-//			  - definition: exp_everything
-//			    assign: !planout |
-//			      full_details = bernoulliTrial(p=0.3, unit=user_guid);
-//			      if (full_details) {
-//			        page_size = weightedChoice(choices = [10, 15, 20], weights = [0.25, 0.5, 0.25], unit = user_guid);
-//			      } else {
-//			        page_size = weightedChoice(choices = [20, 25, 30], weights = [0.25, 0.5, 0.25], unit = user_guid);
-//			      }
-
 			String t_name1 = "exp_default";
 			String t_definition1 = "page_size = 50;full_details = false;";
 			String t_description1 = "treatment desc 1";
@@ -123,11 +96,56 @@ public class ClientTest {
 					+ "\"description\":\""+description+"\",\"unit\":\""+unit+"\","
 							+ "\"control_treatment\":\""+control_treatment+"\",\"treatment\":["+treatment1+","+treatment2+","+treatment3+"]}";
 			
+			
 			Response res = builder.post(Entity.entity(experiment, MediaType.APPLICATION_JSON));
 			System.out.println(res);
 			return res;
 
 		}
+		
+		public static Response testConfigurationStart(Client client) throws IOException {
+			WebTarget base = client.target(context+jerseyServices);
+			WebTarget target =base.path("/configuration/start");
+			Invocation.Builder builder = target.request(MediaType.TEXT_PLAIN);
+			String idexp = "596e37362ada0137fbae2994";
+			String name = "config_demo1";
+			String experimenter = "mmarrero";
+			String description = "conf of demo_namespace";
+			String controller_code = "desc of code used";
+			String status = "on";
+			String test = "off";
+
+			String segments1 = "50";
+			String treatment1 = "exp_page_size";
+			String action1 = "add";
+			
+			String dist1 = "{\"segments\":\""+segments1+"\",\"treatment\":\""+treatment1+"\","
+					+ "\"action\":\""+action1+"\"}";
+			
+			
+			String segments2 = "50";
+			String treatment2 = "exp_everything";
+			String action2 = "add";
+			
+			String dist2 = "{\"segments\":\""+segments2+"\",\"treatment\":\""+treatment2+"\","
+					+ "\"action\":\""+action2+"\"}";
+			
+			
+			String configuration = "{\"name\":\""+name+"\",\"experimenter\":\""+experimenter+"\","
+					+ "\"description\":\""+description+"\",\"controller_code\":\""+controller_code+"\","
+							+ "\"status\":\""+status+"\",\"\"test\":\""+test+"\",\"distribution\":["+dist1+","+dist2+"]}";
+			
+			MultivaluedMap<String, String> mmap = new MultivaluedHashMap<String, String>();
+			
+			mmap.add("idexp", idexp);
+			mmap.add("configuration", configuration);
+			
+			Response res = builder.post(Entity.form(mmap));
+			System.out.println(res);
+			return res;
+
+		}
+		
 
 		public static Response testGet(Client client) {
 		   WebTarget base = client.target(context+jerseyServices);

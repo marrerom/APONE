@@ -25,19 +25,20 @@ public class Run {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("text/plain")
 	public String getParams(@FormParam("idrun") String idrun, @FormParam("idunit") String idunit){
-		try {
-		RunningExperiments re = (RunningExperiments)context.getAttribute("RunningExperiments");
-		Preconditions.checkArgument(re.exist(idrun));
-		NamespaceConfig nsConfig = re.getConf(idrun);
-		String unitName = nsConfig.unit;
-		Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitName, idunit), null);
-		return ns.getParams().toString();
-		//TODO: query params to override
-		//TODO: return json using JAXB
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.InternalServerErrorException(e);
-		}
+		return "ok";
+//		try {
+//		RunningExperiments re = (RunningExperiments)context.getAttribute("RunningExperiments");
+//		Preconditions.checkArgument(re.exist(idrun));
+//		NamespaceConfig nsConfig = re.getConf(idrun);
+//		String unitName = nsConfig.unit;
+//		Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitName, idunit), null);
+//		return ns.getParams().toString();
+//		//TODO: query params to override
+//		//TODO: return json using JAXB
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new javax.ws.rs.InternalServerErrorException(e);
+//		}
 	}
 
 }

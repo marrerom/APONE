@@ -1,26 +1,39 @@
 package tudelft.dds.irep.data.schema;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class Experiment extends Common {
+public class JExperiment extends JCommon {
 	
 	@JsonIgnore
 	private static final String schemaPath = "/schemas/experiment_schema.json";
+	
+	@JsonIgnore
+	public static final String rootElement = null;
 	
 	@JsonIgnore	
 	public String getSchemaPath() {
 		return schemaPath;
 	}
 	
-	private String idexp;
+	@JsonIgnore	
+	public String getRootElement() {
+		return rootElement;
+	}
+	
+	private String _id;
 	private String name;
 	private String experimenter;
 	private String description;
 	private String unit;
 	private String control_treatment;
-	private Treatment[] treatment;
+	private JTreatment[] treatment;
 	
-	private Configuration[] config;
+	private JConfiguration[] config;
 
 	public String getUnit() {
 		return unit;
@@ -34,17 +47,17 @@ public class Experiment extends Common {
 	public void setControl_treatment(String control_treatment) {
 		this.control_treatment = control_treatment;
 	}
-	public Treatment[] getTreatment() {
+	public JTreatment[] getTreatment() {
 		return treatment;
 	}
-	public void setTreatment(Treatment[] treatment) {
+	public void setTreatment(JTreatment[] treatment) {
 		this.treatment = treatment;
 	}
-	public String getIdexp() {
-		return idexp;
+	public String get_Id() {
+		return _id;
 	}
-	public void setIdexp(String idexp) {
-		this.idexp = idexp;
+	public void set_Id(String idexp) {
+		this._id = idexp;
 	}
 	public String getName() {
 		return name;
@@ -64,13 +77,29 @@ public class Experiment extends Common {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public Configuration[] getRun() {
+	public JConfiguration[] getRun() {
 		return config;
 	}
-	public void setRun(Configuration[] run) {
+	public void setRun(JConfiguration[] run) {
 		this.config = run;
 	}
 	
-
+	@JsonIgnore
+	public Map<String, Object> getDocmap(){
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("name", getName());
+		map.put("_id", get_Id());
+		map.put("description", getDescription());
+		map.put("experimenter", getExperimenter());
+		map.put("unit", getUnit());
+		map.put("control_treatment", getControl_treatment());
+		
+		List<Map<String,Object>> treatlist = new ArrayList<>();
+		for (JTreatment t: getTreatment()) 
+			treatlist.add(t.getDocmap());
+		map.put("distr", treatlist);
+		
+		return map;
+	}
 	
 }

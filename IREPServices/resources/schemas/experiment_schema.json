@@ -1,9 +1,12 @@
 {
 "$schema" : "http://json-schema.org/schema#",
-"id" : "experiment_schema.json",
+
 "title" : "Experiment schema",
+
 "description" : "Data related to the definition of an experiment",
+
 "type" : "object",
+
 "properties" : 
 	{
 	"idexp": {"type":"string"},
@@ -12,8 +15,54 @@
 	"description": {"type":"string"},
 	"unit": {"type":"string"},
 	"control_treatment": {"type":"string"},
-	"treatment" : {"type":"array", "items": {"$ref": "treatment_schema.json" } },
-	"config" : {"type":"array", "items": {"$ref": "configuration_schema.json" } }
+	"treatment" : {"type":"array", "items": {"$ref": "#/definitions/treatItem" } },
+	"config" : {"type":"array", "items": {"$ref": "#/definitions/configItem" } }
 	},
-"required": ["idexp","name", "experimenter", "treatment", "control_treatment"]
+
+"required": ["name", "experimenter", "treatment", "control_treatment"],
+
+"definitions": {
+    "treatItem": 
+    	{
+		"type" : "object",
+		"properties" : 
+			{
+			"name":{"type":"string"},
+			"description": {"type":"string"},
+			"definition": {"type":"string"}
+			},
+		"required": ["name", "definition"]
+		},
+	"configItem":
+		{
+		"type" : "object",
+		"properties": 
+			{
+			"idrun": {"type":"string"},
+			"name": {"type":"string"},
+			"experimenter": {"type":"string"},
+			"description": {"type":"string"},
+			"controller_code": {"type":"string"},
+			"date_started": {"type": "array", "items":"string"},
+			"date_ended": {"type": "array", "items":"string"},
+			"run":{"enum":["ON","OFF"], "default":"on"},
+			"date_to_end": {"type": "string"},
+			"max_exposures": {"type": "number"},
+			"test":{"enum":["ON","OFF"], "default":"on"},
+			"dist": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
+			},
+		"required": ["name", "experimenter", "controller_code"]
+		},
+	"distItem": 
+		{
+		"type" : "object",
+		"properties" : 
+			{
+			"segments":{"type":"number"},
+			"treatment": {"type":"string"},
+			"action": {"enum":["ADD","REMOVE"], "default":"add"}
+			},
+		"required": ["segments", "treatment", "action"]
+		}
+  }
 }

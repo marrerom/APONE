@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.glassdoor.planout4j.NamespaceConfig;
 
+import tudelft.dds.irep.data.schema.JConfiguration;
+
 public class RunningExperiments {
 	
 	private Map<String, NamespaceConfig> idRunConfig;
@@ -24,4 +26,12 @@ public class RunningExperiments {
 	public NamespaceConfig put(java.util.Map.Entry<String, NamespaceConfig> pair){
 		return idRunConfig.put(pair.getKey(),pair.getValue());
 	}
+	
+	public NamespaceConfig remove(String idrun) {
+		return idRunConfig.remove(idrun);
+	}
+	
+
+	
+	
 }
