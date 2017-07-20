@@ -38,7 +38,7 @@ public class JConfiguration extends JCommon {
 	private Date date_to_end;
 	private int max_exposures;
 	private JDistribution[] distr;
-	private Status test;
+	private boolean test;
 	
 	public Date getDate_to_end() {
 		return date_to_end;
@@ -58,10 +58,10 @@ public class JConfiguration extends JCommon {
 	public void setDistr(JDistribution[] distr) {
 		this.distr = distr;
 	}
-	public Status getTest() {
+	public boolean getTest() {
 		return test;
 	}
-	public void setTest(Status test) {
+	public void setTest(boolean test) {
 		this.test = test;
 	}
 

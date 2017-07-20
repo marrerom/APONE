@@ -14,7 +14,6 @@
 	"experimenter": {"type":"string"},
 	"description": {"type":"string"},
 	"unit": {"type":"string"},
-	"control_treatment": {"type":"string"},
 	"treatment" : {"type":"array", "items": {"$ref": "#/definitions/treatItem" } },
 	"config" : {"type":"array", "items": {"$ref": "#/definitions/configItem" } }
 	},
@@ -29,7 +28,8 @@
 			{
 			"name":{"type":"string"},
 			"description": {"type":"string"},
-			"definition": {"type":"string"}
+			"definition": {"type":"string"},
+			"iscontrol":{"type":"boolean"}
 			},
 		"required": ["name", "definition"]
 		},
@@ -45,10 +45,10 @@
 			"controller_code": {"type":"string"},
 			"date_started": {"type": "array", "items":"string"},
 			"date_ended": {"type": "array", "items":"string"},
-			"run":{"enum":["ON","OFF"], "default":"on"},
+			"run":{"enum":["ON","OFF","PAUSED"], "default":"ON"},
 			"date_to_end": {"type": "string"},
 			"max_exposures": {"type": "number"},
-			"test":{"enum":["ON","OFF"], "default":"on"},
+			"test":{"type":"boolean"},
 			"dist": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
 			},
 		"required": ["name", "experimenter", "controller_code"]

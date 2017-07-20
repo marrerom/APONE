@@ -30,6 +30,7 @@ import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.PausedExperiments;
 import tudelft.dds.irep.utils.RunningExperiments;
 
 @Path("/configuration")
@@ -37,25 +38,42 @@ public class Configuration {
 	
 	@Context ServletContext context;
 	
+	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) {
+		
+	}
+	
 	
 	private void run(JConfiguration conf, NamespaceConfig ns) {
 		Database db = (Database) context.getAttribute("DBManager");
 		RunningExperiments re = ((RunningExperiments) context.getAttribute("RunningExperiments"));
-		if (!re.exist(conf.get_Id())) {
-			re.put(Maps.immutableEntry(conf.get_Id(), ns));
+		Status st = re.getStatus(conf.get_Id());
+		if (st != Status.ON) {
 			db.addExpConfigDateStart(conf);
 		}
+		re.setExperiment(conf.get_Id(), ns, Status.ON);
 		db.setExpConfigRunStatus(conf, Status.ON);
 	}
 	
 	private void stop(JConfiguration conf, NamespaceConfig ns) {
 		Database db = (Database) context.getAttribute("DBManager");
-		if (((RunningExperiments) context.getAttribute("RunningExperiments")).remove(conf.get_Id()) != null) {
+		RunningExperiments re = ((RunningExperiments) context.getAttribute("RunningExperiments"));
+		if (re.getStatus(conf.get_Id()) == Status.ON) {
 			db.addExpConfigDateEnd(conf);
 		}
+		re.setExperiment(conf.get_Id(), ns, Status.OFF); 
 		db.setExpConfigRunStatus(conf, Status.OFF);
 	}
 
+	private void pause(JConfiguration conf, NamespaceConfig ns) {
+		Database db = (Database) context.getAttribute("DBManager");
+		RunningExperiments re = ((RunningExperiments) context.getAttribute("RunningExperiments"));
+		if (re.getStatus(conf.get_Id()) == Status.ON) {
+			db.addExpConfigDateEnd(conf);
+		}
+		re.setExperiment(conf.get_Id(), ns, Status.PAUSED);
+		db.setExpConfigRunStatus(conf, Status.PAUSED);
+	}
+	
 	
 	
 	@Path("/start")

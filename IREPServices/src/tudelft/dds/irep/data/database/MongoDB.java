@@ -2,11 +2,8 @@ package tudelft.dds.irep.data.database;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.bson.Document;
@@ -23,7 +20,6 @@ import com.mongodb.client.model.Updates;
 
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JExperiment;
-import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 
 import static com.mongodb.client.model.Filters.*;
@@ -105,10 +101,10 @@ public class MongoDB implements Database {
 		return now;
 	}
 	
-	public void setExpConfigRunStatus(JConfiguration conf, Status st) {
+	public void setExpConfigRunStatus(JConfiguration conf, Status status) {
 		MongoDatabase database = mongo.getDatabase(DB);
 		MongoCollection<Document> coll = database.getCollection("experiment");
-		coll.updateOne(eq("configuration._id", new ObjectId(conf.get_Id())), Updates.set("run", st));
+		coll.updateOne(eq("configuration._id", new ObjectId(conf.get_Id())), Updates.set("run", status));
 	}
 		
 	

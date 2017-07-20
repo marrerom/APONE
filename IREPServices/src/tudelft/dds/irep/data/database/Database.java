@@ -22,7 +22,7 @@ public interface Database {
 	
 	public Date addExpConfigDateEnd(JConfiguration conf);
 	
-	public void setExpConfigRunStatus(JConfiguration conf, Status st);
+	public void setExpConfigRunStatus(JConfiguration conf, Status status);
 	
 	public void close();
 
