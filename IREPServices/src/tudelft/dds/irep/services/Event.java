@@ -9,11 +9,13 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,6 +29,7 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.utils.ExperimentManager;
 import tudelft.dds.irep.utils.JsonValidator;
 
+@Path("/event")
 public class Event {
 	
 	@Context ServletContext context;
@@ -34,15 +37,16 @@ public class Event {
 	@Path("/register")
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public void stop(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") Date timestamp, 
-			@FormDataParam("unitid") String unitid, @FormDataParam("binary") boolean binary, 
+	@Produces(MediaType.TEXT_PLAIN)
+	public void stop(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
+			@FormDataParam("unitid") String unitid, @FormDataParam("binary") String binary, 
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			
 			String valuestr;
-			if (binary) {
+			if (Boolean.getBoolean(binary)) {
 				byte[] valuebin = ByteStreams.toByteArray(evalue);
 				valuestr = java.util.Base64.getEncoder().encodeToString(valuebin);
 			} else {
@@ -51,12 +55,12 @@ public class Event {
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode json = mapper.createObjectNode();
 			json.put("idconfig", idconfig);
-			json.put("timestamp", timestamp.toString()); //CHECK
+			json.put("timestamp", timestamp); //CHECK
 			json.put("unitid", unitid);
 			json.put("binary", binary);
 			json.put("ename", ename);
 			json.put("evalue", valuestr);
-			JsonNode jnode = mapper.readTree(json.asText());
+			JsonNode jnode = mapper.readTree(json.toString());
 			JEvent event = mapper.convertValue(jnode, JEvent.class);
 			ProcessingReport pr = jval.validate(event,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
