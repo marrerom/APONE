@@ -2,6 +2,8 @@ package tudelft.dds.irep.client;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Date;
+
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
@@ -197,6 +199,38 @@ public class ClientTest {
 			return res;
 		}
 		
+		public static Response testRegisterEvent(Client client, String idconf, String unitid) {
+			WebTarget base = client.target(context+jerseyServices);
+			WebTarget target =base.path("/event/register");
+			Invocation.Builder builder = target.request();
+			
+			Date timestamp = new Date();
+			String ename = "testparam";
+			Boolean binary = false;
+			String evalue = "test param value";
+			
+			FormDataMultiPart mmap = new FormDataMultiPart();
+			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
+			FormDataBodyPart part2 = new FormDataBodyPart("idunit", unitid);
+			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestamp.toString());
+			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
+			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
+			FormDataBodyPart part6 = new FormDataBodyPart("evalue", evalue);
+			
+			mmap.bodyPart(part1);
+			mmap.bodyPart(part2);
+			mmap.bodyPart(part3);
+			mmap.bodyPart(part4);
+			mmap.bodyPart(part5);
+			mmap.bodyPart(part6);
+			
+			Response res = builder.post(Entity.entity(mmap, mmap.getMediaType()));
+			System.out.println(res);
+			return res;
+			
+			
+		}
+		
 		
 	   public static void main(String[] args) throws Exception{
 		   Client client = ClientBuilder.newClient().register(MultiPartFeature.class);
@@ -236,7 +270,9 @@ public class ClientTest {
 				   String params = res7.readEntity(String.class);
 				   System.out.println("Exp "+ idexp + " Run " +idconf +" Unit "+unitid +" Params "+params);
 			   }
-		   
+			   
+			   Response res8 = testRegisterEvent(client, idconf, String.valueOf(0));
+			   String idevent = res8.readEntity(String.class);
 
 		   
 			   client.close();
