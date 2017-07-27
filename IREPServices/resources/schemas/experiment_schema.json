@@ -9,7 +9,7 @@
 
 "properties" : 
 	{
-	"idexp": {"type":"string"},
+	"_id": {"type":"string"},
 	"name": {"type":"string"},
 	"experimenter": {"type":"string"},
 	"description": {"type":"string"},
@@ -18,7 +18,7 @@
 	"config" : {"type":"array", "items": {"$ref": "#/definitions/configItem" } }
 	},
 
-"required": ["name", "experimenter", "treatment", "control_treatment"],
+"required": ["name", "experimenter", "treatment"],
 
 "definitions": {
     "treatItem": 
@@ -38,13 +38,13 @@
 		"type" : "object",
 		"properties": 
 			{
-			"idrun": {"type":"string"},
+			"_id": {"type":"string"},
 			"name": {"type":"string"},
 			"experimenter": {"type":"string"},
 			"description": {"type":"string"},
 			"controller_code": {"type":"string"},
-			"date_started": {"type": "array", "items":"string"},
-			"date_ended": {"type": "array", "items":"string"},
+			"date_started": {"type": "array", "items":{"type":"string"}},
+			"date_ended": {"type": "array", "items":{"type":"string"}},
 			"run":{"enum":["ON","OFF","PAUSED"], "default":"ON"},
 			"date_to_end": {"type": "string"},
 			"max_exposures": {"type": "number"},

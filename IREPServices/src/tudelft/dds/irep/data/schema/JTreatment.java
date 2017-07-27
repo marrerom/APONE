@@ -27,7 +27,17 @@ public class JTreatment extends JCommon {
 	private String name;
 	private String definition; //planout language
 	private String description;
+	private boolean control = false;
 	
+
+	public boolean isControl() {
+		return control;
+	}
+
+	public void setControl(boolean control) {
+		this.control = control;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -53,6 +63,7 @@ public class JTreatment extends JCommon {
 		map.put("name", getName());
 		map.put("definition", getDefinition());
 		map.put("description", getDescription());
+		map.put("control", isControl());
 		return map;
 	}
 	

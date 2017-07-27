@@ -1,14 +1,24 @@
 package tudelft.dds.irep.lifecycle;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.text.ParseException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import org.bson.BSON;
+import org.bson.Transformer;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+
+import com.glassdoor.planout4j.config.ValidationException;
+
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
+import tudelft.dds.irep.utils.ExperimentManager;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.RunningExperiments;
 
@@ -48,9 +58,17 @@ public class ServerListener implements ServletContextListener {
     	String USER = "irepuser";
     	char[] PWD = new char[] {'0','0','0','0'};
     	
-    	sce.getServletContext().setAttribute("DBManager", new MongoDB(HOST,PORT, DB, USER, PWD));
-    	sce.getServletContext().setAttribute("RunningExperiments", new RunningExperiments());
-    	sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    	try {
+    		MongoDB db = new MongoDB(HOST,PORT, DB, USER, PWD);
+    		RunningExperiments re = new RunningExperiments();
+			sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,re));
+			sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    	} catch (IOException | ValidationException | ParseException e) {
+			e.printStackTrace();
+			//TODO: manage this exception by showing an error message in the servlets requests
+		}
+    	
+    	//TODO: check RunningExperiments, what should we do if there are running experiments?
     }
 	
 }

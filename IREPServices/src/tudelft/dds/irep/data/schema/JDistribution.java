@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public class JDistribution extends JCommon {
 	
@@ -25,7 +26,7 @@ public class JDistribution extends JCommon {
 
 	private int segments;
 	private String treatment;
-	private Action action;
+	private String action = Action.ADD.toString();
 
 	public int getSegments() {
 		return segments;
@@ -39,13 +40,19 @@ public class JDistribution extends JCommon {
 	public void setTreatment(String variant) {
 		this.treatment = variant;
 	}
-	public Action getAction() {
+	
+	public String getAction() {
 		return action;
 	}
-	public void setAction(Action action) {
+	public void setAction(String action) {
 		this.action = action;
 	}
-	
+
+	@JsonIgnore
+	public Action getActionEnum() { //at the moment of development, mongo driver does not support enum types
+		return Action.valueOf(getAction());
+	}
+
 	@JsonIgnore
 	public Map<String, Object> getDocmap(){
 		Map<String, Object> map = new HashMap<String, Object>();

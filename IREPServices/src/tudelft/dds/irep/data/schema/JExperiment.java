@@ -1,13 +1,23 @@
 package tudelft.dds.irep.data.schema;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 
 public class JExperiment extends JCommon {
+	
+	class ObjectIdSerializer extends JsonSerializer<Object> {
+	    @Override
+	    public void serialize(Object value, JsonGenerator jsonGen,SerializerProvider provider) throws IOException {
+	        jsonGen.writeString(value.toString());
+	    }
+	}
 	
 	@JsonIgnore
 	private static final String schemaPath = "/schemas/experiment_schema.json";
@@ -30,10 +40,9 @@ public class JExperiment extends JCommon {
 	private String experimenter;
 	private String description;
 	private String unit;
-	private String control_treatment;
-	private JTreatment[] treatment;
+	private JTreatment[] treatment = {};
 	
-	private JConfiguration[] config;
+	private JConfiguration[] config = {};
 
 	public String getUnit() {
 		return unit;
@@ -41,23 +50,17 @@ public class JExperiment extends JCommon {
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
-	public String getControl_treatment() {
-		return control_treatment;
-	}
-	public void setControl_treatment(String control_treatment) {
-		this.control_treatment = control_treatment;
-	}
 	public JTreatment[] getTreatment() {
 		return treatment;
 	}
 	public void setTreatment(JTreatment[] treatment) {
 		this.treatment = treatment;
 	}
-	public String get_Id() {
+	public String get_id() {
 		return _id;
 	}
-	public void set_Id(String idexp) {
-		this._id = idexp;
+	public void set_id(String _id) {
+		this._id = _id;
 	}
 	public String getName() {
 		return name;
@@ -77,27 +80,33 @@ public class JExperiment extends JCommon {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public JConfiguration[] getRun() {
+	public JConfiguration[] getConfig() {
 		return config;
 	}
-	public void setRun(JConfiguration[] run) {
-		this.config = run;
+	public void setConfig(JConfiguration[] config) {
+		this.config = config;
 	}
+	
 	
 	@JsonIgnore
 	public Map<String, Object> getDocmap(){
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("name", getName());
-		map.put("_id", get_Id());
+		map.put("_id", get_id());
 		map.put("description", getDescription());
 		map.put("experimenter", getExperimenter());
 		map.put("unit", getUnit());
-		map.put("control_treatment", getControl_treatment());
 		
 		List<Map<String,Object>> treatlist = new ArrayList<>();
 		for (JTreatment t: getTreatment()) 
 			treatlist.add(t.getDocmap());
-		map.put("distr", treatlist);
+		map.put("treatment", treatlist);
+		
+		List<Map<String,Object>> configlist = new ArrayList<>();
+		for (JConfiguration c: getConfig()) 
+			configlist.add(c.getDocmap());
+		map.put("config", configlist);
+
 		
 		return map;
 	}

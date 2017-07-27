@@ -1,0 +1,21 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+
+"title" : "Event schema",
+
+"description" : "Data related to the events registerd in an experiment",
+
+"type" : "object",
+
+"properties" : 
+	{
+	"idconfig": {"type":"string"},
+	"timestamp": {"type":"string"},
+	"unitid": {"type":"string"},
+	"ename": {"type":"string"},
+	"evalue": {"type":"string"},
+	"binary" : {"type":"boolean", "default":false}
+	},
+
+"required": ["idconfig", "timestamp", "unitid", "ename", "evalue"]
+}

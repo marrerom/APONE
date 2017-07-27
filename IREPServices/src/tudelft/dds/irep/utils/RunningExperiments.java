@@ -21,39 +21,47 @@ class ExpInfo {
 
 public class RunningExperiments {
 	
-	private Map<String, ExpInfo> idRunConfig;
+	private Map<String, ExpInfo> idconfConfig;
 	
 	
-	public Status getStatus(String idrun) {
-		ExpInfo ei = getExpInfo(idrun);
+	public RunningExperiments() {
+		idconfConfig = new HashMap<String, ExpInfo>();
+	}
+	
+	public Status getStatus(String idconf) {
+		ExpInfo ei = getExpInfo(idconf);
 		if (ei != null) {
 			return ei.status;
 		}
 		return Status.OFF;
 	}
 	
-	public void setExperiment(String idExp, NamespaceConfig conf, Status status) {
+	public void setExperiment(String idconf, NamespaceConfig conf, Status status) {
 		if (status == Status.OFF)
-			remove(idExp);
+			remove(idconf);
 		else {
-			put(idExp, conf, status);
+			put(idconf, conf, status);
 		}
 	}
+	
+	public NamespaceConfig getNsConfig(String idconf) {
+		ExpInfo ei = getExpInfo(idconf);
+		if (ei != null)
+			return ei.conf;
+		return null;
+	}
 
-	private RunningExperiments() {
-		idRunConfig = new HashMap<String, ExpInfo>();
+
+	private ExpInfo getExpInfo(String idconf){
+		return idconfConfig.get(idconf);
 	}
 	
-	private ExpInfo getExpInfo(String idrun){
-		return idRunConfig.get(idrun);
+	private ExpInfo put(String idconf, NamespaceConfig conf, Status status){
+		return idconfConfig.put(idconf,new ExpInfo(conf,status));
 	}
 	
-	private ExpInfo put(String idExp, NamespaceConfig conf, Status status){
-		return idRunConfig.put(idExp,new ExpInfo(conf,status));
-	}
-	
-	private ExpInfo remove(String idrun) {
-		return idRunConfig.remove(idrun);
+	private ExpInfo remove(String idconf) {
+		return idconfConfig.remove(idconf);
 	}
 	
 
