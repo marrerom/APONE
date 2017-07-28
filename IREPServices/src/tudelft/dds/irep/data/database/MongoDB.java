@@ -71,33 +71,41 @@ class MongoToJackson extends Document {
 	
 	private void convertDate(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
 		if (jacksonclass == JConfiguration.class) {
-			dateToStandardFormat(this, "date_started");
-			dateToStandardFormat(this, "date_ended");
+			mongodoc.put("date_started", dateToStandardFormat((ArrayList<Date>) mongodoc.get("date_started")));
+			mongodoc.put("date_ended", dateToStandardFormat((ArrayList<Date>) mongodoc.get("date_ended")));
 		} else if (jacksonclass == JExperiment.class) {
 			for (Object item : ((ArrayList)this.get("config"))) {
-				dateToStandardFormat((Document) item, "date_started");
-				dateToStandardFormat((Document) item, "date_ended");
+				((Document)item).put("date_started", dateToStandardFormat((ArrayList<Date>)((Document)item).get("date_started")));
+				((Document)item).put("date_ended", dateToStandardFormat((ArrayList<Date>)((Document)item).get("date_ended")));
 			}
+		} else if (jacksonclass == JEvent.class) {
+			mongodoc.put("timestamp", dateToStandardFormat(mongodoc.getDate("timestamp")));
 		}
 	}
 	
-	private void dateToStandardFormat(Document mongodoc, String field) throws ParseException  {
-		ArrayList<Date> array = (ArrayList<Date>) mongodoc.get(field);
+	private ArrayList<String> dateToStandardFormat(ArrayList<Date> array) throws ParseException  {
 		ArrayList<String> newarray = new ArrayList<String>();
 		for (Date item : array) {
+			newarray.add(dateToStandardFormat(item));
+		}
+		return newarray;
+	}
+	
+	private String dateToStandardFormat(Date item) throws ParseException  {
+		if (item != null) {
 			DateFormat input = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy"); //Format in mongo
 			DateFormat target = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Standard format recognized by Jackson
 			Date date = input.parse(item.toString());
 			String res = target.format(date);
-			newarray.add(res);
+			return res;
 		}
-		mongodoc.put(field, newarray);
-		
+		return null;
 	}
 	
+
 	
 	private void convertId(Document mongodoc, Class<? extends JCommon> jacksonclass) {
-		if (jacksonclass == JConfiguration.class) {
+		if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class) {
 			idToStr(this);
 		} else if (jacksonclass == JExperiment.class) {
 			idToStr(this);
@@ -156,6 +164,16 @@ public class MongoDB implements Database {
 			return ((ArrayList<Document>)doc.get("config")).get(0);
 		} catch (NullPointerException e) {
 			throw new NullPointerException("Experiment Configuration "+idconf+" does not exist");
+		}
+	}
+	
+	private Document checkExistEvent(String idevent) {
+		MongoDatabase database = mongo.getDatabase(DB);
+		MongoCollection<Document> coll = database.getCollection(EVENT_COL);
+		try {
+			return coll.find(eq("_id", new ObjectId(idevent))).first();
+		} catch (NullPointerException e) {
+			throw new NullPointerException("Event "+idevent+" does not exist");
 		}
 	}
 
@@ -232,6 +250,12 @@ public class MongoDB implements Database {
 		return mapper.readValue(new StringReader(new MongoToJackson(doc,JExperiment.class).toJson()),JExperiment.class);
 	}
 	
+	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		Document doc = checkExistEvent(idevent);
+		ObjectMapper mapper = new ObjectMapper();
+		return mapper.readValue(new StringReader(new MongoToJackson(doc,JEvent.class).toJson()),JEvent.class);
+	}
+	
 
 	public JExperiment getExpFromConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		MongoDatabase database = mongo.getDatabase(DB);
@@ -272,5 +296,7 @@ public class MongoDB implements Database {
 		}
 		return result;
 	}
+	
+	
 	
 }

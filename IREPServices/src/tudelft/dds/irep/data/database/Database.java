@@ -23,6 +23,8 @@ public interface Database {
 	
 	public List<JConfiguration> getConfigurations(Iterable<Status> status) throws JsonParseException, JsonMappingException, IOException, ParseException;
 	
+	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	
 	public String addExperiment(JExperiment experiment );
 	
 	public String addExpConfig(String idexp,  JConfiguration conf);

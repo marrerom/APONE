@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class JEvent extends JCommon {
 	
 	@JsonIgnore
+	public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	
+	@JsonIgnore
 	private static final String schemaPath = "/schemas/event_schema.json";
 	
 	@JsonIgnore
@@ -25,12 +28,22 @@ public class JEvent extends JCommon {
 		return rootElement;
 	}
 	
+	private String _id;
 	private String idconfig;
 	private Date timestamp;
 	private String unitid;
 	private String ename;
 	private String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
 	private boolean binary = false; //if event value (evalue) is binary or not
+
+	
+	public String get_id() {
+		return _id;
+	}
+
+	public void set_id(String _id) {
+		this._id = _id;
+	}
 
 	public String getIdconfig() {
 		return idconfig;

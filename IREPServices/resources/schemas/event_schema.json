@@ -9,6 +9,7 @@
 
 "properties" : 
 	{
+	"_id": {"type":"string"},
 	"idconfig": {"type":"string"},
 	"timestamp": {"type":"string"},
 	"unitid": {"type":"string"},

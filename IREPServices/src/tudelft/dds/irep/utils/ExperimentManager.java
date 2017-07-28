@@ -67,6 +67,10 @@ public class ExperimentManager {
 	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		return db.getConfiguration(idconf);
 	}
+	
+	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.getEvent(idevent);
+	}
 		
 	public Map<String,?> treatment_to_json(JTreatment treatment) throws ValidationException {
 		String dsl = treatment.getDefinition();
