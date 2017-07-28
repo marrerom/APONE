@@ -3,6 +3,9 @@ package tudelft.dds.irep.client;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Utils {
 	
@@ -16,5 +19,15 @@ public class Utils {
 		br.close();
 		return sb.toString();
 	}
+	
+	 static public byte[] readSmallBinaryFile(String aFileName) throws IOException {
+		    Path path = Paths.get(aFileName);
+		    return Files.readAllBytes(path);
+		  }
+	 
+	 static public void writeSmallBinaryFile(byte[] aBytes, String aFileName) throws IOException {
+		    Path path = Paths.get(aFileName);
+		    Files.write(path, aBytes); //creates, overwrites
+		  }
 
 }

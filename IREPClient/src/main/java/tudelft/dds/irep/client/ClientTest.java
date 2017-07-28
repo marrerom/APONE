@@ -1,7 +1,10 @@
 package tudelft.dds.irep.client;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.ws.rs.client.*;
@@ -11,11 +14,13 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tudelft.dds.irep.data.schema.JEvent;
 
 
 
@@ -199,20 +204,23 @@ public class ClientTest {
 			return res;
 		}
 		
-		public static Response testRegisterEvent(Client client, String idconf, String unitid) {
+		public static Response testRegisterEvent(Client client, String idconf, String unitid, String ename, String evalue) {
 			WebTarget base = client.target(context+jerseyServices);
-			WebTarget target =base.path("/event/register");
-			Invocation.Builder builder = target.request();
 			
 			Date timestamp = new Date();
-			String ename = "testparam";
 			Boolean binary = false;
-			String evalue = "test param value";
+			
+			WebTarget target =base.path("/event/timestampFormat");
+			Invocation.Builder builder = target.request();
+			String format = builder.get(String.class);
+			DateFormat datetarget = new SimpleDateFormat(format); //Standard format recognized by Jackson
+			String timestampFormatted = datetarget.format(timestamp);
+
 			
 			FormDataMultiPart mmap = new FormDataMultiPart();
 			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
-			FormDataBodyPart part2 = new FormDataBodyPart("idunit", unitid);
-			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestamp.toString());
+			FormDataBodyPart part2 = new FormDataBodyPart("unitid", unitid);
+			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestampFormatted.toString());
 			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
 			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
 			FormDataBodyPart part6 = new FormDataBodyPart("evalue", evalue);
@@ -224,12 +232,60 @@ public class ClientTest {
 			mmap.bodyPart(part5);
 			mmap.bodyPart(part6);
 			
+			target =base.path("/event/register");
+			builder = target.request();
 			Response res = builder.post(Entity.entity(mmap, mmap.getMediaType()));
 			System.out.println(res);
 			return res;
-			
-			
 		}
+		
+	
+		public static Response testRegisterEvent(Client client, String idconf, String unitid, String ename, byte[] evalue) {
+			WebTarget base = client.target(context+jerseyServices);
+			
+			Date timestamp = new Date();
+			Boolean binary = true;
+			
+			WebTarget target =base.path("/event/timestampFormat");
+			Invocation.Builder builder = target.request();
+			String format = builder.get(String.class);
+			DateFormat datetarget = new SimpleDateFormat(format); //Standard format recognized by Jackson
+			String timestampFormatted = datetarget.format(timestamp);
+
+			
+			FormDataMultiPart mmap = new FormDataMultiPart();
+			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
+			FormDataBodyPart part2 = new FormDataBodyPart("unitid", unitid);
+			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestampFormatted.toString());
+			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
+			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
+			FormDataBodyPart part6 = new FormDataBodyPart("evalue", evalue, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+			
+			mmap.bodyPart(part1);
+			mmap.bodyPart(part2);
+			mmap.bodyPart(part3);
+			mmap.bodyPart(part4);
+			mmap.bodyPart(part5);
+			mmap.bodyPart(part6);
+			
+			target =base.path("/event/register");
+			builder = target.request();
+			Response res = builder.post(Entity.entity(mmap, mmap.getMediaType()));
+			System.out.println(res);
+			return res;
+		}
+		
+		
+		public static Response testGetEvent(Client client, String idevent) {
+			WebTarget base = client.target(context+jerseyServices);
+			WebTarget target =base.path("/event/get" +"/"+idevent);
+			Invocation.Builder builder = target.request(MediaType.APPLICATION_JSON);
+			Response res = builder.get();
+			System.out.println(res);
+			return res;
+		}
+
+		
 		
 		
 	   public static void main(String[] args) throws Exception{
@@ -271,10 +327,22 @@ public class ClientTest {
 				   System.out.println("Exp "+ idexp + " Run " +idconf +" Unit "+unitid +" Params "+params);
 			   }
 			   
-			   Response res8 = testRegisterEvent(client, idconf, String.valueOf(0));
-			   String idevent = res8.readEntity(String.class);
+			   //string event
+	//		   Response res8 = testRegisterEvent(client, idconf, "0", "testparam", "test param value");
+	//		   String idevent = res8.readEntity(String.class);
 
-		   
+			   //binary event
+			   byte[] evalue = Utils.readSmallBinaryFile("/home/mmarrero/Downloads/example1.png");
+			   Response res9 = testRegisterEvent(client, idconf, "0", "testparam", evalue);
+			   String idevent2 = res9.readEntity(String.class);
+			   
+			   Response res10 = testGetEvent(client, idevent2);
+				ObjectMapper mapper = new ObjectMapper();
+				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
+				if (jevent.isBinary())
+					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
+			   
+			   
 			   client.close();
 		   } catch (Exception e){
 			   client.close();
