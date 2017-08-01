@@ -1,13 +1,17 @@
 package tudelft.dds.irep.data.schema;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class JEvent extends JCommon {
+public class JEvent extends JCommon implements Serializable {
 	
+	@JsonIgnore
+	private static final long serialVersionUID = 1L;
+
 	@JsonIgnore
 	public static final String timestampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 	

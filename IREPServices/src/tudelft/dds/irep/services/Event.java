@@ -1,8 +1,12 @@
 package tudelft.dds.irep.services;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -31,8 +35,8 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
 import tudelft.dds.irep.data.schema.JEvent;
-import tudelft.dds.irep.utils.ExperimentManager;
-import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.experiment.JsonValidator;
 
 @Path("/event")
 public class Event {
@@ -42,8 +46,7 @@ public class Event {
 	@Path("/register")
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.TEXT_PLAIN)
-	public String register(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
+	public void register(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
 			@FormDataParam("unitid") String unitid, @FormDataParam("binary") String binary, 
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue) {
 		try {
@@ -77,7 +80,7 @@ public class Event {
 			JEvent event = mapper.convertValue(jnode, JEvent.class);
 			ProcessingReport pr = jval.validate(event,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			return em.saveEvent(event, idconfig);
+			em.registerEvent(event);
 		} catch (IOException | ProcessingException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
@@ -101,23 +104,17 @@ public class Event {
 		}
 	}
 
-//	try {
-//		
-//		String evalue = jevent.getEvalue();
-//	} catch (IOException | ParseException e) {
-//		// TODO Auto-generated catch block
-//		e.printStackTrace();
-//	}
-	
-
-	
-	
+	 
+		
 	@Path("/timestampFormat")
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getTimestampFormat() {
 		return JEvent.timestampFormat;
 	}
+
+	
+	
 
 
 }

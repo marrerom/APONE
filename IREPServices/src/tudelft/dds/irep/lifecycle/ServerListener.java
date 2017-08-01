@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -15,12 +16,16 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 import com.glassdoor.planout4j.config.ValidationException;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
-import tudelft.dds.irep.utils.ExperimentManager;
-import tudelft.dds.irep.utils.JsonValidator;
-import tudelft.dds.irep.utils.RunningExperiments;
+import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.experiment.JsonValidator;
+import tudelft.dds.irep.experiment.RunningExperiments;
 
 /**
  * Application Lifecycle Listener implementation class ServerListener
@@ -42,28 +47,47 @@ public class ServerListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce)  { 
 
     	//TODO: check RunningExperiments, what should we do if there are running experiments?
-    	
-    	 Database db = (Database) sce.getServletContext().getAttribute("DBManager");
-         db.close();
+
+        try {
+        	Database db = (Database) sce.getServletContext().getAttribute("DBManager");
+        	db.close();
          
+        	Channel channel = (Channel) sce.getServletContext().getAttribute("MsgChannel");
+			Connection con = channel.getConnection();
+			channel.close();
+			con.close();
+			
+		} catch (IOException | TimeoutException e) {
+			e.printStackTrace();
+			//TODO: manage this exception by showing an error message?
+		}
     }
 
 	/**
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent sce)  { 
-    	String HOST = "localhost";
-    	int PORT = 27017;
+    	String DBHOST = "localhost";
+    	int DBPORT = 27017;
     	String DB = "irep";
-    	String USER = "irepuser";
-    	char[] PWD = new char[] {'0','0','0','0'};
+    	String DBUSER = "irepuser";
+    	char[] DBPWD = new char[] {'0','0','0','0'};
+    	String RABBITHOST = "localhost";
     	
     	try {
-    		MongoDB db = new MongoDB(HOST,PORT, DB, USER, PWD);
-    		RunningExperiments re = new RunningExperiments();
-			sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,re));
-			sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
-    	} catch (IOException | ValidationException | ParseException e) {
+    		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    		
+			ConnectionFactory rabbitFactory = new ConnectionFactory();
+			rabbitFactory.setHost(RABBITHOST);
+			Connection rabbitConnection = rabbitFactory.newConnection();
+			Channel channel = rabbitConnection.createChannel();
+			sce.getServletContext().setAttribute("MsgChannel", channel);
+    		
+    		MongoDB db = new MongoDB(DBHOST,DBPORT, DB, DBUSER, DBPWD);
+    		sce.getServletContext().setAttribute("DBManager", db);
+			sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,new RunningExperiments(), channel));
+			
+    	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
 			e.printStackTrace();
 			//TODO: manage this exception by showing an error message in the servlets requests
 		}

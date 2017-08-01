@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
@@ -27,8 +28,8 @@ import com.google.common.base.Preconditions;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
-import tudelft.dds.irep.utils.ExperimentManager;
-import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.experiment.JsonValidator;
 
 @Path("/experiment")
 public class Experiment {
@@ -81,11 +82,9 @@ public class Experiment {
 			JExperiment exp = em.getExperiment(idexp);
 			String idrun = em.addConfig(idexp,conf);
 			conf.set_id(idrun);
-			NamespaceConfig ns = em.createNamespace(exp,conf);
-			
-			em.start(conf, ns);
+			em.start(exp,conf);
 			return idrun;
-		} catch (IOException | ProcessingException | ValidationException | ParseException e) {
+		} catch (IOException | ProcessingException | ParseException | TimeoutException | ValidationException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
@@ -99,9 +98,8 @@ public class Experiment {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JConfiguration conf = em.getConfiguration(idconf);
 			JExperiment exp = em.getExperimentFromConf(idconf);
-			NamespaceConfig ns = em.createNamespace(exp,conf);
-			em.start(conf,ns);
-		} catch (IOException | ValidationException | ParseException e) {
+			em.start(exp,conf);
+		} catch (IOException | ParseException | TimeoutException | ValidationException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
@@ -117,7 +115,7 @@ public class Experiment {
 
 			JConfiguration conf = em.getConfiguration(idconfig);
 			em.stop(conf);
-		} catch (IOException | ParseException e) {
+		} catch (IOException | ParseException | TimeoutException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
