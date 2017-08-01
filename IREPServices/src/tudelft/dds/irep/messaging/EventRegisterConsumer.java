@@ -11,7 +11,7 @@ import com.rabbitmq.client.Envelope;
 
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.experiment.ExperimentManager;
-import tudelft.dds.irep.util.Utils;
+import tudelft.dds.irep.utils.Utils;
 
 public class EventRegisterConsumer extends DefaultConsumer {
 	private ExperimentManager em;

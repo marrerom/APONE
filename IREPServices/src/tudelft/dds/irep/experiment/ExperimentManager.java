@@ -29,7 +29,7 @@ import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
-import tudelft.dds.irep.util.Utils;
+import tudelft.dds.irep.utils.Utils;
 
 public class ExperimentManager {
 
