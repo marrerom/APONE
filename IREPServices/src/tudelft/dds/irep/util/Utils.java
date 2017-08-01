@@ -1,4 +1,4 @@
-package tudelft.dds.irep.utils;
+package tudelft.dds.irep.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
