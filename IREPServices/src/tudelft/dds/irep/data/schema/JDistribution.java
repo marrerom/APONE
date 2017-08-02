@@ -53,13 +53,4 @@ public class JDistribution extends JCommon {
 		return Action.valueOf(getAction());
 	}
 
-	@JsonIgnore
-	public Map<String, Object> getDocmap(){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("segments", getSegments());
-		map.put("treatment", getTreatment());
-		map.put("action", getAction());
-		return map;
-	}
-	
 }

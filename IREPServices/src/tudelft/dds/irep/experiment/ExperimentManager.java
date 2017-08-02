@@ -1,7 +1,12 @@
 package tudelft.dds.irep.experiment;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -15,6 +20,8 @@ import com.glassdoor.planout4j.config.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
@@ -56,10 +63,7 @@ public class ExperimentManager {
 		ImmutableList<Status> conditions = ImmutableList.of(Status.ON, Status.PAUSED);
 		for (JConfiguration conf: db.getConfigurations(conditions)) {
 			JExperiment exp = db.getExpFromConfiguration(conf.get_id());
-			if (Status.valueOf(conf.getRun()) == Status.ON)
-				start(exp, conf);
-			else if (Status.valueOf(conf.getRun()) == Status.PAUSED)
-				pause(exp,conf);
+			load(exp,conf,Status.valueOf(conf.getRun()));
 		}
 	}
 	
@@ -108,10 +112,33 @@ public class ExperimentManager {
 		return result;
 	}
 	
+	public String getTreatment(String unitExp, String idconf, String idunit) {
+		Status st = re.getStatus(idconf);
+		NamespaceConfig nsConfig = re.getNsConfig(idconf);
+		String result = null;
+		if (st == Status.ON) {
+			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
+			result = ns.getExperiment().name;
+		} else if (st == Status.PAUSED) {
+			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), null);
+			result = ns.getExperiment().name; //should always be the default experiment
+		} else if (st == Status.OFF) {
+			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+		}
+		return result;
+	}
+
+	public void load(JExperiment exp, JConfiguration conf, Status dbstatus) throws ValidationException, IOException, TimeoutException {
+		NamespaceConfig ns  = createNamespace(exp,conf);
+		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
+		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()));
+		re.setExperiment(conf.get_id(), ns, dbstatus, erc, emc);
+	}
+	
 	//It should do nothing if the current status is on
 	public void start(JExperiment exp, JConfiguration conf) throws IOException, TimeoutException, ValidationException {
 		Status st = re.getStatus(conf.get_id());
-		if (st == Status.OFF || st == Status.PAUSED) { //if it is null, should not modify the db -it has been caused by a shutdown-
+		if (st == Status.OFF || st == Status.PAUSED) {
 			db.addExpConfigDateStart(conf);
 		}
 		NamespaceConfig ns = re.getNsConfig(conf.get_id());
@@ -167,6 +194,25 @@ public class ExperimentManager {
 		channel.basicPublish("", queue, null, body);
 	}
 	
+	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, Date timestamp) throws IOException {
+		JEvent event = new JEvent();
+		event.setBinary(false);
+		event.setEname(ename);
+		event.setIdconfig(idconf);
+		event.setUnitid(unitid);
+		event.setTimestamp(timestamp);
+		event.setBinary(isBinary);
+		String valuestr;
+		if (isBinary) {
+			byte[] valuebin = ByteStreams.toByteArray(evalue);
+			valuestr = java.util.Base64.getEncoder().encodeToString(valuebin);
+		} else {
+			valuestr = CharStreams.toString(new InputStreamReader(evalue));
+		}
+		event.setEvalue(valuestr);
+		return event;
+	}
+	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
 		String nsName = exp.getName()+"."+config.getName();
 		String salt = nsName; //TODO: except if we specify a random key
@@ -186,7 +232,7 @@ public class ExperimentManager {
 			if (dist.getActionEnum() == Action.REMOVE)
 				ns.removeExperiment(dist.getTreatment());
 		}
-
+		
 		return ns;
 	}
 	

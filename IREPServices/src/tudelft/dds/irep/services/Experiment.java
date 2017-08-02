@@ -1,8 +1,13 @@
 package tudelft.dds.irep.services;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -21,11 +26,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.glassdoor.planout4j.NamespaceConfig;
 import com.glassdoor.planout4j.config.ValidationException;
 import com.google.common.base.Preconditions;
 
 import tudelft.dds.irep.data.schema.JConfiguration;
+import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.experiment.ExperimentManager;
@@ -129,13 +134,27 @@ public class Experiment {
 	public String getParams(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			
 			JExperiment exp = em.getExperimentFromConf(idconfig);
 			String unitExp = exp.getUnit();
-			Map<String, ?> result = em.getParams(unitExp, idconfig, idunit);
+			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit);
+			String treatment = em.getTreatment(unitExp, idconfig, idunit);
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.writeValueAsString(result);
-		} catch (IOException | ParseException e) {
+			String paramsstr = mapper.writeValueAsString(params);
+			
+			Date timestamp = new Date();
+			Map<String, Object> exposureBody = new HashMap<String, Object>();
+			exposureBody.put("treatment", treatment);
+			exposureBody.put("param_values", params);
+			InputStream is = new ByteArrayInputStream(mapper.convertValue(exposureBody, Map.class).toString().getBytes());
+			JEvent event = em.createEvent(idconfig, idunit, "exposure", false, is, timestamp);
+			JsonNode jnode = mapper.readTree(mapper.writeValueAsString(event));
+			ProcessingReport pr = jval.validate(event,jnode, context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			em.registerEvent(event);
+			return paramsstr;
+		} catch (IOException | ParseException | ProcessingException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}

@@ -12,6 +12,4 @@ public abstract class JCommon {
 	@JsonIgnore
 	public abstract String getRootElement();
 	
-	@JsonIgnore
-	public abstract Map<String, Object> getDocmap();
 }

@@ -1,20 +1,15 @@
 package tudelft.dds.irep.services;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -23,18 +18,13 @@ import javax.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import com.fasterxml.jackson.core.JsonGenerator.Feature;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
 
 import tudelft.dds.irep.data.schema.JEvent;
+import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.JsonValidator;
 
@@ -52,36 +42,13 @@ public class Event {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-			
-			String valuestr;
-			if (Boolean.valueOf(binary)) {
-				byte[] valuebin = ByteStreams.toByteArray(evalue);
-				valuestr = java.util.Base64.getEncoder().encodeToString(valuebin);
-			} else {
-				valuestr = CharStreams.toString(new InputStreamReader(evalue));
-			}
 			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode json = mapper.createObjectNode();
-			
-			//if the value is null, json schema does not recognize it as such
-			if (idconfig != null)
-				json.put("idconfig", idconfig);
-			if (timestamp != null)
-				json.put("timestamp", timestamp);
-			if (unitid != null)
-				json.put("unitid", unitid);
-			if (binary != null)
-				json.put("binary", Boolean.valueOf(binary));
-			if (ename != null)
-				json.put("ename", ename);
-			if (valuestr != null)
-				json.put("evalue", valuestr);
-			JsonNode jnode = mapper.readTree(json.toString());
-			JEvent event = mapper.convertValue(jnode, JEvent.class);
-			ProcessingReport pr = jval.validate(event,jnode, context);
+			Date timestampDate = (new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp);
+			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestampDate);
+			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(event);
-		} catch (IOException | ProcessingException e) {
+		} catch (IOException | ProcessingException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
@@ -97,7 +64,7 @@ public class Event {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JEvent jevent = em.getEvent(idevent.toString());
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.writeValueAsString(jevent.getDocmap());
+			return mapper.writeValueAsString(jevent);
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
@@ -110,7 +77,7 @@ public class Event {
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getTimestampFormat() {
-		return JEvent.timestampFormat;
+		return JsonDateSerializer.timestampFormat;
 	}
 
 	

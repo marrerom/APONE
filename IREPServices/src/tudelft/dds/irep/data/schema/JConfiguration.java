@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 
 public class JConfiguration extends JCommon {
@@ -107,12 +108,14 @@ public class JConfiguration extends JCommon {
 	public void setController_code(String controller_code) {
 		this.controller_code = controller_code;
 	}
+	@JsonSerialize(using=JsonArrayDateSerializer.class)
 	public Date[] getDate_started() {
 		return date_started;
 	}
 	public void setDate_started(Date[] date_started) {
 		this.date_started = date_started;
 	}
+	@JsonSerialize(using=JsonArrayDateSerializer.class)
 	public Date[] getDate_ended() {
 		return date_ended;
 	}
@@ -132,36 +135,5 @@ public class JConfiguration extends JCommon {
 		return Status.valueOf(getRun());
 	}
 	
-	@JsonIgnore
-	public Map<String, Object> getDocmap(){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("_id", get_id());
-		map.put("name", getName());
-		map.put("experimenter", getExperimenter());
-		map.put("description", getDescription());
-		map.put("controller_code", getController_code());
-		map.put("run", getRun());
-		map.put("date_to_end", getDate_to_end());
-		map.put("max_exposures", getMax_exposures());
-		map.put("test", getTest());
 
-		List<Date> dsList = new ArrayList<>();
-		for (Date ds:getDate_started())
-			dsList.add(ds);
-		map.put("date_started", dsList);
-		
-		List<Date> deList = new ArrayList<>();
-		for (Date de:getDate_ended())
-			deList.add(de);
-		map.put("date_ended", deList);
-
-		List<Map<String,Object>> distrlist = new ArrayList<>();
-		for (JDistribution d: getDistribution()) 
-			distrlist.add(d.getDocmap());
-		map.put("distribution", distrlist);
-		
-		return map;
-	}
-
-	
 }

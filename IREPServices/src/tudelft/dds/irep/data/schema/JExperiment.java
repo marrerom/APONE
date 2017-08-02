@@ -1,23 +1,19 @@
 package tudelft.dds.irep.data.schema;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 
 public class JExperiment extends JCommon {
 	
-	class ObjectIdSerializer extends JsonSerializer<Object> {
-	    @Override
-	    public void serialize(Object value, JsonGenerator jsonGen,SerializerProvider provider) throws IOException {
-	        jsonGen.writeString(value.toString());
-	    }
-	}
+//	class ObjectIdSerializer extends JsonSerializer<Object> {
+//	    @Override
+//	    public void serialize(Object value, JsonGenerator jsonGen,SerializerProvider provider) throws IOException {
+//	        jsonGen.writeString(value.toString());
+//	    }
+//	}
 	
 	@JsonIgnore
 	private static final String schemaPath = "/schemas/experiment_schema.json";
@@ -85,30 +81,6 @@ public class JExperiment extends JCommon {
 	}
 	public void setConfig(JConfiguration[] config) {
 		this.config = config;
-	}
-	
-	
-	@JsonIgnore
-	public Map<String, Object> getDocmap(){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("name", getName());
-		map.put("_id", get_id());
-		map.put("description", getDescription());
-		map.put("experimenter", getExperimenter());
-		map.put("unit", getUnit());
-		
-		List<Map<String,Object>> treatlist = new ArrayList<>();
-		for (JTreatment t: getTreatment()) 
-			treatlist.add(t.getDocmap());
-		map.put("treatment", treatlist);
-		
-		List<Map<String,Object>> configlist = new ArrayList<>();
-		for (JConfiguration c: getConfig()) 
-			configlist.add(c.getDocmap());
-		map.put("config", configlist);
-
-		
-		return map;
 	}
 	
 }

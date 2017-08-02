@@ -57,14 +57,4 @@ public class JTreatment extends JCommon {
 		this.description = description;
 	}
 	
-	@JsonIgnore
-	public Map<String, Object> getDocmap(){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("name", getName());
-		map.put("definition", getDefinition());
-		map.put("description", getDescription());
-		map.put("control", isControl());
-		return map;
-	}
-	
 }
