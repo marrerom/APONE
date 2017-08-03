@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -25,6 +27,7 @@ import com.mongodb.client.model.Updates;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 
 import static com.mongodb.client.model.Filters.*;
@@ -187,6 +190,27 @@ public class MongoDB implements Database {
 			for (Document config: configArray) {
 				result.add(mapper.readValue(new StringReader(new MongoToJackson(config, JConfiguration.class).toJson()),JConfiguration.class));
 			}
+		}
+		return result;
+	}
+	
+	public List<JTreatment> getTreatments(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		List<JTreatment> result = new ArrayList<JTreatment>();
+		Document doc = checkExistExperiment(idexp);
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayList<Document> treatArray = (ArrayList<Document>) doc.get("treatment");
+		for (Document tdoc: treatArray) {
+			result.add(mapper.readValue(new StringReader(new MongoToJackson(tdoc, JTreatment.class).toJson()),JTreatment.class));
+		}
+		return result;
+	}
+	
+	public List<JEvent> getEvents(String idconfig, String ename) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		List<JEvent> result = new ArrayList<JEvent>();
+		FindIterable<Document> docs = events.find(and(eq("idconfig", idconfig), eq("ename",ename)));
+		ObjectMapper mapper = new ObjectMapper();
+		for (Document doc: docs) {
+			result.add(mapper.readValue(new StringReader(new MongoToJackson(doc, JEvent.class).toJson()),JEvent.class));
 		}
 		return result;
 	}

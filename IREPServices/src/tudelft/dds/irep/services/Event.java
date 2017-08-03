@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -15,9 +17,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
@@ -26,7 +30,7 @@ import com.google.common.base.Preconditions;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
-import tudelft.dds.irep.experiment.JsonValidator;
+import tudelft.dds.irep.utils.JsonValidator;
 
 @Path("/event")
 public class Event {
@@ -43,8 +47,7 @@ public class Event {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			ObjectMapper mapper = new ObjectMapper();
-			Date timestampDate = (new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp);
-			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestampDate);
+			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestamp);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(event);
@@ -64,8 +67,28 @@ public class Event {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JEvent jevent = em.getEvent(idevent.toString());
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.writeValueAsString(jevent);
+			String eventstr = mapper.writeValueAsString(jevent); 
+			//return Response.ok(eventstr, MediaType.APPLICATION_JSON).build();
+			return eventstr;
 		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e);
+		}
+	}
+	
+	@Path("/monitor/{idconf}")
+	@GET
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String monitor(@PathParam("idconf") String idconf) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Map<String, Integer> expcount = em.getExposures(idconf);
+			//return Response.ok(expcount,MediaType.APPLICATION_JSON).build();
+			ObjectMapper mapper = new ObjectMapper();
+			String expcountstr = mapper.writeValueAsString(expcount); 
+			return expcountstr;
+		} catch (BadRequestException | JsonProcessingException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}

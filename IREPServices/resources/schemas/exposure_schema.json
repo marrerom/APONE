@@ -1,0 +1,17 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+
+"title" : "Exposure event body schema",
+
+"description" : "Data related to the body of the exposure events registered in an experiment",
+
+"type" : "object",
+
+"properties" : 
+	{
+	"treatment": {"type":"string"},
+	"paramvalues": {"type":"object"}
+	},
+
+"required": ["treatment"]
+}

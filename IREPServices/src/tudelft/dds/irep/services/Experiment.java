@@ -32,9 +32,11 @@ import com.google.common.base.Preconditions;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.data.schema.JTreatment;
+import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
-import tudelft.dds.irep.experiment.JsonValidator;
+import tudelft.dds.irep.utils.JsonValidator;
 
 @Path("/experiment")
 public class Experiment {
@@ -131,28 +133,29 @@ public class Experiment {
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getParams(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit) {
+	public String getParams(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit, 
+			@FormDataParam("timestamp") String timestamp) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-			
+	
+			ObjectMapper mapper = new ObjectMapper();
 			JExperiment exp = em.getExperimentFromConf(idconfig);
 			String unitExp = exp.getUnit();
 			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit);
-			String treatment = em.getTreatment(unitExp, idconfig, idunit);
-			ObjectMapper mapper = new ObjectMapper();
 			String paramsstr = mapper.writeValueAsString(params);
 			
-			Date timestamp = new Date();
-			Map<String, Object> exposureBody = new HashMap<String, Object>();
-			exposureBody.put("treatment", treatment);
-			exposureBody.put("param_values", params);
-			InputStream is = new ByteArrayInputStream(mapper.convertValue(exposureBody, Map.class).toString().getBytes());
-			JEvent event = em.createEvent(idconfig, idunit, "exposure", false, is, timestamp);
-			JsonNode jnode = mapper.readTree(mapper.writeValueAsString(event));
-			ProcessingReport pr = jval.validate(event,jnode, context);
+			//TODO: is it possible to run asynchronously the following?
+			String treatment = em.getTreatment(unitExp, idconfig, idunit);
+			JExposureBody expbody = em.createExposureBody(treatment, params);
+			ProcessingReport pr = jval.validate(expbody,mapper.readTree(mapper.writeValueAsString(expbody)), context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
+			pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(event);
+			em.monitorEvent(event);
+			
 			return paramsstr;
 		} catch (IOException | ParseException | ProcessingException e) {
 			e.printStackTrace();

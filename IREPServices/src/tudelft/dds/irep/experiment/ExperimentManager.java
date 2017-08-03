@@ -1,30 +1,30 @@
 package tudelft.dds.irep.experiment;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glassdoor.planout4j.Namespace;
 import com.glassdoor.planout4j.NamespaceConfig;
 import com.glassdoor.planout4j.compiler.PlanoutDSLCompiler;
 import com.glassdoor.planout4j.config.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.DefaultConsumer;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.schema.Action;
@@ -32,7 +32,9 @@ import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JDistribution;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.data.schema.JTreatment;
+import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
@@ -96,7 +98,7 @@ public class ExperimentManager {
 		return PlanoutDSLCompiler.dsl_to_json(dsl); 
 	}
 	
-	public Map<String, ?> getParams(String unitExp, String idconf, String idunit) {
+	public Map<String, ?> getParams(String unitExp, String idconf, String idunit) throws javax.ws.rs.BadRequestException {
 		Status st = re.getStatus(idconf);
 		NamespaceConfig nsConfig = re.getNsConfig(idconf);
 		Map<String, ?> result = new HashMap<>();
@@ -112,7 +114,7 @@ public class ExperimentManager {
 		return result;
 	}
 	
-	public String getTreatment(String unitExp, String idconf, String idunit) {
+	public String getTreatment(String unitExp, String idconf, String idunit) throws javax.ws.rs.BadRequestException {
 		Status st = re.getStatus(idconf);
 		NamespaceConfig nsConfig = re.getNsConfig(idconf);
 		String result = null;
@@ -128,15 +130,33 @@ public class ExperimentManager {
 		return result;
 	}
 
-	public void load(JExperiment exp, JConfiguration conf, Status dbstatus) throws ValidationException, IOException, TimeoutException {
+	public void load(JExperiment exp, JConfiguration conf, Status dbstatus) throws ValidationException, IOException, TimeoutException, ParseException {
 		NamespaceConfig ns  = createNamespace(exp,conf);
 		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
-		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()));
+		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
 		re.setExperiment(conf.get_id(), ns, dbstatus, erc, emc);
 	}
 	
+	private Map<String, Integer> getExposures(JExperiment exp, JConfiguration conf) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		Map<String, Integer> expcount = new HashMap<String, Integer>();
+		ObjectMapper mapper = new ObjectMapper();
+		List<JTreatment> treatments = db.getTreatments(exp.get_id());
+		for (JTreatment treat:treatments) {
+			expcount.put(treat.getName(), 0);
+		}
+		List<JEvent> expevents = db.getEvents(conf.get_id(), JExposureBody.EVENT_ENAME);
+		for (JEvent event: expevents) {
+			String body = event.getEvalue();
+			JExposureBody expbody = mapper.convertValue(body, JExposureBody.class); //TODO: check
+			String treatment = expbody.getTreatment();
+			Integer count = expcount.get(treatment);
+			expcount.put(treatment, ++count); //Throws exception if treatment does not exist, but if that happens, something went very wrong in the registering process
+		}
+		return expcount;
+	}
+	
 	//It should do nothing if the current status is on
-	public void start(JExperiment exp, JConfiguration conf) throws IOException, TimeoutException, ValidationException {
+	public void start(JExperiment exp, JConfiguration conf) throws IOException, TimeoutException, ValidationException, ParseException {
 		Status st = re.getStatus(conf.get_id());
 		if (st == Status.OFF || st == Status.PAUSED) {
 			db.addExpConfigDateStart(conf);
@@ -146,7 +166,7 @@ public class ExperimentManager {
 		EventRegisterConsumer erc = re.getEventRegisterConsumer(conf.get_id());
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
-		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()));
+		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
 		re.setExperiment(conf.get_id(), ns, Status.ON, erc, emc);
 		db.setExpConfigRunStatus(conf, Status.ON);
 	}
@@ -161,7 +181,7 @@ public class ExperimentManager {
 		db.setExpConfigRunStatus(conf, Status.OFF);
 	}
 
-	public void pause(JExperiment exp, JConfiguration conf) throws IOException, TimeoutException, ValidationException {
+	public void pause(JExperiment exp, JConfiguration conf) throws IOException, TimeoutException, ValidationException, ParseException {
 		if (re.getStatus(conf.get_id()) == Status.ON) {
 			db.addExpConfigDateEnd(conf);
 		}
@@ -170,12 +190,12 @@ public class ExperimentManager {
 		EventRegisterConsumer erc = re.getEventRegisterConsumer(conf.get_id());
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
-		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()));
+		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
 		re.setExperiment(conf.get_id(), ns, Status.PAUSED, erc, emc);
 		db.setExpConfigRunStatus(conf, Status.PAUSED);
 	}
 	
-	public String saveEvent(JEvent event) {
+	public String saveEvent(JEvent event) throws javax.ws.rs.BadRequestException {
 		String idconf = event.getIdconfig();
 		Status st = re.getStatus(idconf);
 		String result = null;
@@ -194,13 +214,25 @@ public class ExperimentManager {
 		channel.basicPublish("", queue, null, body);
 	}
 	
-	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, Date timestamp) throws IOException {
+	public void monitorEvent(JEvent event) throws IOException {
+		String queue = createMonitoringQueue(event.getIdconfig());
+		byte[] body = Utils.serialize(event);
+		channel.basicPublish("", queue, null, body);
+	}
+	
+	public Map<String, Integer> getExposures(String idconfig) throws javax.ws.rs.BadRequestException {
+		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(idconfig);
+		if (emc == null) throw new javax.ws.rs.BadRequestException("The experiment is not running/paused");
+		return emc.getExposurecount();
+	}
+	
+	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, String timestamp) throws IOException, ParseException {
 		JEvent event = new JEvent();
 		event.setBinary(false);
 		event.setEname(ename);
 		event.setIdconfig(idconf);
 		event.setUnitid(unitid);
-		event.setTimestamp(timestamp);
+		event.setTimestamp((new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp));
 		event.setBinary(isBinary);
 		String valuestr;
 		if (isBinary) {
@@ -211,6 +243,20 @@ public class ExperimentManager {
 		}
 		event.setEvalue(valuestr);
 		return event;
+	}
+	
+	public JExposureBody createExposureBody(String treatment, Map<String, ?> params) {
+		JExposureBody expbody = new JExposureBody();
+		expbody.setTreatment(treatment);
+		expbody.setParamvalues(params);
+		return expbody;
+	}
+	
+	public JEvent createExposureEvent(String idconfig, String idunit, String timestamp, JExposureBody expbody) throws IOException, ParseException {
+		ObjectMapper mapper = new ObjectMapper();
+		//InputStream is = new ByteArrayInputStream(mapper.convertValue(expbody, Map.class).toString().getBytes());
+		InputStream is = new ByteArrayInputStream(mapper.writeValueAsString(expbody).getBytes());
+		return createEvent(idconfig, idunit, JExposureBody.EVENT_ENAME, false, is, timestamp);
 	}
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
@@ -254,8 +300,12 @@ public class ExperimentManager {
 		return regConsumer;
 	}
 	
-	private EventMonitoringConsumer createMonitoringConsumer(String queue) throws IOException {
-		EventMonitoringConsumer monConsumer = new EventMonitoringConsumer(channel, this);
+	private EventMonitoringConsumer createMonitoringConsumer(String queue, Optional<Map<String,Integer>> expcount) throws IOException {
+		EventMonitoringConsumer monConsumer;
+		if (expcount.isPresent())
+			monConsumer = new EventMonitoringConsumer(channel, this, expcount.get());
+		else
+			monConsumer = new EventMonitoringConsumer(channel, this);
 		channel.basicConsume(queue, monConsumer);
 		return monConsumer;
 	}

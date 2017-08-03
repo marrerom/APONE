@@ -1,4 +1,4 @@
-package tudelft.dds.irep.experiment;
+package tudelft.dds.irep.utils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -40,7 +40,5 @@ public class JsonValidator {
 		}
 		return schemas.get(obj.getClass()).validate(jnode);
 	}
-	
-
 
 }

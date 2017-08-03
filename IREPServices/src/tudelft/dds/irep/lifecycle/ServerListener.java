@@ -24,8 +24,8 @@ import com.rabbitmq.client.ConnectionFactory;
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
 import tudelft.dds.irep.experiment.ExperimentManager;
-import tudelft.dds.irep.experiment.JsonValidator;
 import tudelft.dds.irep.experiment.RunningExperiments;
+import tudelft.dds.irep.utils.JsonValidator;
 
 /**
  * Application Lifecycle Listener implementation class ServerListener

@@ -17,7 +17,7 @@ public class JEvent extends JCommon implements Serializable {
 	
 	@JsonIgnore
 	private static final long serialVersionUID = 1L;
-
+	
 	@JsonIgnore
 	private static final String schemaPath = "/schemas/event_schema.json";
 	
