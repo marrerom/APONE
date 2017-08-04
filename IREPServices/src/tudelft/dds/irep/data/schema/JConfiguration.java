@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 
@@ -49,7 +50,7 @@ public class JConfiguration extends JCommon {
 	private Date[] date_ended = {};
 	private String run = Status.ON.toString(); //again, problems in jackson to serialize enum types
 	private Date date_to_end;
-	private int max_exposures;
+	private Integer max_exposures;
 	private JDistribution[] distribution = {};
 	private boolean test;
 	
@@ -59,10 +60,10 @@ public class JConfiguration extends JCommon {
 	public void setDate_to_end(Date date_to_end) {
 		this.date_to_end = date_to_end;
 	}
-	public int getMax_exposures() {
+	public Integer getMax_exposures() {
 		return max_exposures;
 	}
-	public void setMax_exposures(int max_exposures) {
+	public void setMax_exposures(Integer max_exposures) {
 		this.max_exposures = max_exposures;
 	}
 	public JDistribution[] getDistribution() {
@@ -112,6 +113,7 @@ public class JConfiguration extends JCommon {
 	public Date[] getDate_started() {
 		return date_started;
 	}
+	@JsonDeserialize(using=JsonArrayDateDeserializer.class)
 	public void setDate_started(Date[] date_started) {
 		this.date_started = date_started;
 	}
@@ -119,6 +121,7 @@ public class JConfiguration extends JCommon {
 	public Date[] getDate_ended() {
 		return date_ended;
 	}
+	@JsonDeserialize(using=JsonArrayDateDeserializer.class)
 	public void setDate_ended(Date[] date_ended) {
 		this.date_ended = date_ended;
 	}

@@ -91,7 +91,7 @@ public class Experiment {
 			conf.set_id(idrun);
 			em.start(exp,conf);
 			return idrun;
-		} catch (IOException | ProcessingException | ParseException | TimeoutException | ValidationException e) {
+		} catch (IOException | ProcessingException | ParseException | ValidationException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
@@ -106,7 +106,7 @@ public class Experiment {
 			JConfiguration conf = em.getConfiguration(idconf);
 			JExperiment exp = em.getExperimentFromConf(idconf);
 			em.start(exp,conf);
-		} catch (IOException | ParseException | TimeoutException | ValidationException e) {
+		} catch (IOException | ParseException | ValidationException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
@@ -119,10 +119,8 @@ public class Experiment {
 	public void stop(String idconfig) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-
-			JConfiguration conf = em.getConfiguration(idconfig);
-			em.stop(conf);
-		} catch (IOException | ParseException | TimeoutException e) {
+			em.stop(idconfig);
+		} catch (IOException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}

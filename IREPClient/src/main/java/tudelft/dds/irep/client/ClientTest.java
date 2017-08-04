@@ -311,6 +311,15 @@ public class ClientTest {
 		   Client client = ClientBuilder.newClient().register(MultiPartFeature.class);
 		    
 		   try{
+			   
+//			   Response res10 = testGetEvent(client, "598435972ada0122482f0df5");
+//				ObjectMapper mapper = new ObjectMapper();
+//				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
+//				if (jevent.isBinary())
+//					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
+//
+//			   
+			   
 		   		Response res1 =  testExperimentUpload(client);
 		   		String idexp1 = res1.readEntity(String.class);
 		   
@@ -325,17 +334,15 @@ public class ClientTest {
 				   }
 		   		
 		   		
-				Response res10 = testMonitor(client, idconf1);
-				String expcount = res10.readEntity(String.class);
 				   
 				Response res4 = testExperimentStop(client, idconf1);
 				
-				   for (int i=0;i<2;i++){
-					   String unitid = String.valueOf(i);
-					   Response res5 = testExperimentGetParams(client, idconf1, unitid);
-					   String params = res5.readEntity(String.class);
-					   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
-				   }
+//				   for (int i=0;i<2;i++){
+//					   String unitid = String.valueOf(i);
+//					   Response res5 = testExperimentGetParams(client, idconf1, unitid);
+//					   String params = res5.readEntity(String.class);
+//					   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
+//				   }
 
 
 				Response res6 = testExpStartFromConfig(client,idconf1);
@@ -358,12 +365,11 @@ public class ClientTest {
 			   Response res9 = testRegisterEvent(client, idconf1, "0", "testparam", evalue);
 			   String idevent2 = res9.readEntity(String.class);
 			   
-//			   Response res10 = testGetEvent(client, idevent2);
-//				ObjectMapper mapper = new ObjectMapper();
-//				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
-//				if (jevent.isBinary())
-//					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
-//			   
+
+			   
+				Response res11 = testMonitor(client, idconf1);
+				String expcount = res11.readEntity(String.class);
+
 			   
 			   client.close();
 		   } catch (Exception e){

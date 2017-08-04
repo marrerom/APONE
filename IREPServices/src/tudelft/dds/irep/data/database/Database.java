@@ -34,13 +34,13 @@ public interface Database {
 	
 	public String addExpConfig(String idexp,  JConfiguration conf);
 	
-	public Date addExpConfigDateStart(JConfiguration conf);
+	public void addExpConfigDateStart(String idconf, Date timestamp);
 	
-	public Date addExpConfigDateEnd(JConfiguration conf);
+	public void addExpConfigDateEnd(String idconf, Date timestamp);
 	
-	public String addEvent(JEvent event);
+	public String addEvent(JEvent event) throws ParseException;
 	
-	public void setExpConfigRunStatus(JConfiguration conf, Status status);
+	public void setExpConfigRunStatus(String idconf, Status status);
 	
 	public void close();
 

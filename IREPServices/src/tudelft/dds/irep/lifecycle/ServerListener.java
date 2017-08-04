@@ -38,16 +38,12 @@ public class ServerListener implements ServletContextListener {
      * Default constructor. 
      */
     public ServerListener() {
-        // TODO Auto-generated constructor stub
     }
 
 	/**
      * @see ServletContextListener#contextDestroyed(ServletContextEvent)
      */
     public void contextDestroyed(ServletContextEvent sce)  { 
-
-    	//TODO: check RunningExperiments, what should we do if there are running experiments?
-
         try {
         	Database db = (Database) sce.getServletContext().getAttribute("DBManager");
         	db.close();
@@ -59,7 +55,7 @@ public class ServerListener implements ServletContextListener {
 			
 		} catch (IOException | TimeoutException e) {
 			e.printStackTrace();
-			//TODO: manage this exception by showing an error message?
+			//TODO: handle error properly
 		}
     }
 
@@ -89,10 +85,8 @@ public class ServerListener implements ServletContextListener {
 			
     	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
 			e.printStackTrace();
-			//TODO: manage this exception by showing an error message in the servlets requests
+			//TODO: handle error properly
 		}
-    	
-    	//TODO: check RunningExperiments, what should we do if there are running experiments?
     }
 	
 }

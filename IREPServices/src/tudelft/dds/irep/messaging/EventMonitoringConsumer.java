@@ -55,7 +55,8 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 			this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
-			//TODO: HANDLE ERROR 
+			Thread.currentThread().interrupt();
+			//TODO: handle error properly 
 		}
 	}
 

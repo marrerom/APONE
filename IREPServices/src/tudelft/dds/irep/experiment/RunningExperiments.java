@@ -1,96 +1,116 @@
 package tudelft.dds.irep.experiment;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import com.glassdoor.planout4j.NamespaceConfig;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Consumer;
-import com.rabbitmq.client.DefaultConsumer;
 
+import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
 
-class ExpInfo {
-	public NamespaceConfig conf;
-	public Status status;
-	public EventRegisterConsumer regConsumer;
-	public EventMonitoringConsumer monConsumer;
-	
-	public ExpInfo(NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer) {
-		this.conf = conf;
-		this.status = status;
-		this.regConsumer = regConsumer;
-		this.monConsumer = monConsumer;
-	}
-}
-
 public class RunningExperiments {
 	
-	private Map<String, ExpInfo> idconfConfig;
+	private Map<String, RunningExpInfo> idconfConfig;
 	
 
 	public RunningExperiments() {
-		idconfConfig = new HashMap<String, ExpInfo>();
+		idconfConfig = new HashMap<String, RunningExpInfo>();
+	}
+	
+	public List<String> getExperiments(List<Status> status) {
+		List<String> result = new ArrayList<String>();
+		for (String idconfig: idconfConfig.keySet()) {
+			if (status.contains(getStatus(idconfig))){
+				result.add(idconfig);
+			}
+		}
+		return result;
 	}
 	
 	public Status getStatus(String idconf) {
-		ExpInfo ei = getExpInfo(idconf);
+		RunningExpInfo ei = getExpInfo(idconf);
 		if (ei != null) {
-			return ei.status;
+			return ei.getStatus();
 		}
 		return Status.OFF;
 	}
 	
-	public void setExperiment(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer) throws IOException, TimeoutException {
-		if (status == Status.OFF)
-			remove(idconf);
+	public Date getDateToEnd(String idconf) {
+		RunningExpInfo ei = getExpInfo(idconf);
+		if (ei != null) {
+			return ei.getDateToEnd();
+		}
+		return null;
+	}
+	
+	public Integer getMaxExposures(String idconf) {
+		RunningExpInfo ei = getExpInfo(idconf);
+		if (ei != null) {
+			return ei.getMaxExposures();
+		}
+		return null;
+	}
+	
+	public void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer) throws IOException {
+		String idconf = conf.get_id();
+		Date dateToEnd = conf.getDate_to_end();
+		Integer maxExposures = conf.getMax_exposures();
+		if (targetStatus == Status.OFF)
+			setExperimentOFF(idconf);
 		else {
-			ExpInfo exp = getExpInfo(idconf);
-			if (status == Status.PAUSED) {
-				put(idconf, conf, status, exp.regConsumer, exp.monConsumer);
-			} else if (status == Status.ON){
-				put(idconf, conf, status, regConsumer, monConsumer);
+			RunningExpInfo exp = getExpInfo(idconf);
+			if (targetStatus == Status.PAUSED) {
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures);
+			} else if (targetStatus == Status.ON){
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures);
 			}
 		}
 	}
+
+	public void setExperimentOFF(String idconf) throws IOException {
+		remove(idconf);
+	}
 	
 	public NamespaceConfig getNsConfig(String idconf) {
-		ExpInfo ei = getExpInfo(idconf);
+		RunningExpInfo ei = getExpInfo(idconf);
 		if (ei != null)
-			return ei.conf;
+			return ei.getConf();
 		return null;
 	}
 	
 	public EventMonitoringConsumer getEventMonitoringConsumer(String idconf) {
-		ExpInfo ei = getExpInfo(idconf);
+		RunningExpInfo ei = getExpInfo(idconf);
 		if (ei != null)
-			return ei.monConsumer;
+			return ei.getMonConsumer();
 		return null;
 	}
 	
 	
 	public EventRegisterConsumer getEventRegisterConsumer(String idconf) {
-		ExpInfo ei = getExpInfo(idconf);
+		RunningExpInfo ei = getExpInfo(idconf);
 		if (ei != null)
-			return ei.regConsumer;
+			return ei.getRegConsumer();
 		return null;
 	}
 
 
-	private ExpInfo getExpInfo(String idconf){
+	private RunningExpInfo getExpInfo(String idconf){
 		return idconfConfig.get(idconf);
 	}
 	
-	private ExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer){
-		return idconfConfig.put(idconf,new ExpInfo(conf,status, regConsumer, monConsumer));
+	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures){
+		return idconfConfig.put(idconf,new RunningExpInfo(conf,status, regConsumer, monConsumer, dateToEnd, maxExposures));
 	}
 	
-	private ExpInfo remove(String idconf) throws IOException, TimeoutException {
-		ExpInfo exp = getExpInfo(idconf);
+	private RunningExpInfo remove(String idconf) throws IOException {
+		RunningExpInfo exp = getExpInfo(idconf);
 		return idconfConfig.remove(idconf);
 	}
 	

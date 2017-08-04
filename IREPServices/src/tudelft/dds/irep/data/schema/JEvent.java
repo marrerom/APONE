@@ -8,6 +8,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 
@@ -64,7 +65,7 @@ public class JEvent extends JCommon implements Serializable {
 	public Date getTimestamp() {
 		return timestamp;
 	}
-
+	@JsonDeserialize(using=JsonDateDeserializer.class)
 	public void setTimestamp(Date timestamp) {
 		this.timestamp = timestamp;
 	}

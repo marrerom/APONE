@@ -17,7 +17,7 @@ public class JsonArrayDateSerializer extends JsonSerializer<Date[]> {
 	public void serialize(Date[] datearray, JsonGenerator gen, SerializerProvider provider)	throws IOException, JsonProcessingException {
 		gen.writeStartArray();
         for (Date date : datearray) {
-        	(new JsonDateSerializer()).serialize(date, gen, provider); //TODO: TEST
+        	(new JsonDateSerializer()).serialize(date, gen, provider);
 		 }
 		 gen.writeEndArray();
 	}

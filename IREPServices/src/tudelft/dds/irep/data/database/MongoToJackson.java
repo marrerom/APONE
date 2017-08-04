@@ -15,12 +15,14 @@ import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
+import tudelft.dds.irep.utils.Utils;
 
 
 /*
  * Mongo types are not directly supported in Jackson (eg. _id is ObjectId). Apparently those types are kept when we use Document.toJson
- * TODO: extend serializer in Jackson?
+ * 
  */
+//TODO: make specific codecs with Mongo java driver Codec interface
 public class MongoToJackson extends Document {
 	
 	/**
@@ -75,6 +77,7 @@ public class MongoToJackson extends Document {
 	
 	private String dateToStandardFormat(Date item) throws ParseException  {
 		if (item != null) {
+			//return Utils.getTimestamp(item);
 			DateFormat input = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy"); //Format in mongo
 			DateFormat target = new SimpleDateFormat(JsonDateSerializer.timestampFormat); //Standard format recognized by Jackson
 			Date date = input.parse(item.toString());
@@ -83,8 +86,6 @@ public class MongoToJackson extends Document {
 		}
 		return null;
 	}
-	
-
 	
 	private void convertId(Document mongodoc, Class<? extends JCommon> jacksonclass) {
 		if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class) {

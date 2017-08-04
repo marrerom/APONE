@@ -29,6 +29,7 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.utils.Utils;
 
 import static com.mongodb.client.model.Filters.*;
 import org.bson.types.ObjectId;
@@ -57,8 +58,6 @@ public class MongoDB implements Database {
 		mongo.close();
 	}
 	
-	
-	//TODO: should the db throw an exception when getting or adding data if the experiment/configuration does not exist?
 	private Document checkExistExperiment(String idexp) {
 		try {
 			return experiments.find(eq("_id", new ObjectId(idexp))).first();
@@ -110,38 +109,35 @@ public class MongoDB implements Database {
 		 
 	}
 	
-	public Date addExpConfigDateStart(JConfiguration conf) {
-		checkExistConfiguration(conf.get_id());
-		Date now = new Date();
-		experiments.updateOne(eq("config._id", new ObjectId(conf.get_id())), Updates.push("config.$.date_started", now));
-		return now;
+	public void addExpConfigDateStart(String idconf, Date timestamp) {
+		checkExistConfiguration(idconf);
+		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.push("config.$.date_started", timestamp));
 	}
 
-	public Date addExpConfigDateEnd(JConfiguration conf) {
-		checkExistConfiguration(conf.get_id());
-		Date now = new Date();
-		experiments.updateOne(eq("config._id", new ObjectId(conf.get_id())), Updates.push("config.$.date_ended", now));
-		return now;
+	public void addExpConfigDateEnd(String idconf, Date timestamp) {
+		checkExistConfiguration(idconf);
+		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.push("config.$.date_ended", timestamp));
 	}
 	
-	public String addEvent(JEvent event) {
+	public String addEvent(JEvent event) throws ParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(event, Map.class);
 
-		if (event.isBinary()) {
-			byte[] binvalue = java.util.Base64.getDecoder().decode(event.getEvalue());
-			docmap.put("evalue", binvalue);
-		}
 		ObjectId idevent = new ObjectId();
 		docmap.put("_id", idevent);
+		
+		String timestamp = (String) docmap.get("timestamp");
+		docmap.put("timestamp", Utils.getDate(timestamp));
+		
 		Document doc = new Document(docmap);
+		
 		events.insertOne(doc);
 		return idevent.toString();
 	}
 	
-	public void setExpConfigRunStatus(JConfiguration conf, Status status) {
-		checkExistConfiguration(conf.get_id());
-		experiments.updateOne(eq("config._id", new ObjectId(conf.get_id())), Updates.set("config.$.run", status.toString()));
+	public void setExpConfigRunStatus(String idconf, Status status) {
+		checkExistConfiguration(idconf);
+		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.set("config.$.run", status.toString()));
 	}
 		
 	
@@ -214,7 +210,6 @@ public class MongoDB implements Database {
 		}
 		return result;
 	}
-	
 	
 	
 }

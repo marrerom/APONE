@@ -65,7 +65,7 @@ public class Event {
 	public String register(@PathParam("idevent") String idevent) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JEvent jevent = em.getEvent(idevent.toString());
+			JEvent jevent = em.getEvent(idevent);
 			ObjectMapper mapper = new ObjectMapper();
 			String eventstr = mapper.writeValueAsString(jevent); 
 			//return Response.ok(eventstr, MediaType.APPLICATION_JSON).build();

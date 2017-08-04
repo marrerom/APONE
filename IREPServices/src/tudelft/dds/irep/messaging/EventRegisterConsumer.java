@@ -1,8 +1,10 @@
 package tudelft.dds.irep.messaging;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 import javax.servlet.ServletContext;
+import javax.ws.rs.BadRequestException;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -28,9 +30,10 @@ public class EventRegisterConsumer extends DefaultConsumer {
 			event = (JEvent) Utils.deserialize(body);
 			em.saveEvent(event);
 			this.getChannel().basicAck(envelope.getDeliveryTag(), true);
-		} catch (ClassNotFoundException | IOException e) {
+		} catch (ClassNotFoundException | IOException | BadRequestException | ParseException e) {
 			e.printStackTrace();
-			//TODO: HANDLE ERROR 
+			Thread.currentThread().interrupt();
+			//TODO: handle error properly 
 		}
 		
 	}
