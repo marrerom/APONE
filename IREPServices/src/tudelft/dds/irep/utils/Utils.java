@@ -36,5 +36,14 @@ public class Utils {
 	 public static Date getDate(String timestamp) throws ParseException {
 		 return (new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp);
 	 }
+	 
+	 public static byte[] decodeBinary(String valuestr) {
+		 return java.util.Base64.getDecoder().decode(valuestr);
+	 }
+	 
+	 public static String encodeBinary(byte[] valuebin) {
+		 return java.util.Base64.getEncoder().encodeToString(valuebin);
+	 }
+	 
 
 }

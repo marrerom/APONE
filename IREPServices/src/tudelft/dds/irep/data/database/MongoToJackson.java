@@ -23,51 +23,42 @@ import tudelft.dds.irep.utils.Utils;
  * 
  */
 //TODO: make specific codecs with Mongo java driver Codec interface
-public class MongoToJackson extends Document {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+public class MongoToJackson extends Conversor {
 
-	public MongoToJackson(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
-		super(mongodoc);
-		convertId(this, jacksonclass);
-		convertDate(this, jacksonclass);
-		convertBinary(this, jacksonclass);
-	}
+	/*Binary*/
 	
-	private void convertBinary(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
-		if (jacksonclass == JEvent.class) {
-			binaryToStr(this);
-		}
-	}
-	
-	private void binaryToStr(Document mongodoc) {
+	@Override
+	protected Document binary(Document mongodoc) {
 		boolean binary = mongodoc.getBoolean("binary", false);
 		if (binary) {
 			Binary bin = (Binary) mongodoc.get("evalue");
 			byte[] valuebin = bin.getData();
-			String valuestr = java.util.Base64.getEncoder().encodeToString(valuebin);
+			String valuestr = Utils.encodeBinary(valuebin);
 			mongodoc.put("evalue", valuestr);
 		}
+		return mongodoc;
 	}
 	
-	private void convertDate(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
+	/*Date*/
+	
+	@Override
+	protected Document convertDate(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
 		if (jacksonclass == JConfiguration.class) {
 			mongodoc.put("date_started", dateToStandardFormat((ArrayList<Date>) mongodoc.get("date_started")));
 			mongodoc.put("date_ended", dateToStandardFormat((ArrayList<Date>) mongodoc.get("date_ended")));
 		} else if (jacksonclass == JExperiment.class) {
-			for (Object item : ((ArrayList)this.get("config"))) {
+			for (Object item : ((ArrayList)mongodoc.get("config"))) {
 				((Document)item).put("date_started", dateToStandardFormat((ArrayList<Date>)((Document)item).get("date_started")));
 				((Document)item).put("date_ended", dateToStandardFormat((ArrayList<Date>)((Document)item).get("date_ended")));
 			}
 		} else if (jacksonclass == JEvent.class) {
 			mongodoc.put("timestamp", dateToStandardFormat(mongodoc.getDate("timestamp")));
 		}
+		return mongodoc;
 	}
+
 	
-	private ArrayList<String> dateToStandardFormat(ArrayList<Date> array) throws ParseException  {
+	protected ArrayList<String> dateToStandardFormat(ArrayList<Date> array) throws ParseException {
 		ArrayList<String> newarray = new ArrayList<String>();
 		for (Date item : array) {
 			newarray.add(dateToStandardFormat(item));
@@ -75,7 +66,7 @@ public class MongoToJackson extends Document {
 		return newarray;
 	}
 	
-	private String dateToStandardFormat(Date item) throws ParseException  {
+	protected String dateToStandardFormat(Date item) throws ParseException  {
 		if (item != null) {
 			//return Utils.getTimestamp(item);
 			DateFormat input = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy"); //Format in mongo
@@ -87,18 +78,12 @@ public class MongoToJackson extends Document {
 		return null;
 	}
 	
-	private void convertId(Document mongodoc, Class<? extends JCommon> jacksonclass) {
-		if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class) {
-			idToStr(this);
-		} else if (jacksonclass == JExperiment.class) {
-			idToStr(this);
-			for (Object item : ((ArrayList)this.get("config"))) {
-				idToStr((Document) item);
-			}
-		}
-	}
 	
-	private void idToStr(Document mongodoc) {
+	/*Id*/
+	
+
+	@Override
+	protected void id(Document mongodoc) {
 		ObjectId value = (ObjectId) mongodoc.get("_id");
 		if (value != null) {
 			mongodoc.put("_id", value.toString());

@@ -101,11 +101,11 @@ public class ExperimentManager {
 		}
 	}
 	
-	public String addConfig(String idexp, JConfiguration config) throws JsonParseException, JsonMappingException, IOException {
+	public String addConfig(String idexp, JConfiguration config) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		return db.addExpConfig(idexp, config);
 	}
 	
-	public String addExperiment(JExperiment exp) {
+	public String addExperiment(JExperiment exp) throws ParseException {
 		return db.addExperiment(exp);
 	}
 	
@@ -270,7 +270,7 @@ public class ExperimentManager {
 		String valuestr;
 		if (isBinary) {
 			byte[] valuebin = ByteStreams.toByteArray(evalue);
-			valuestr = java.util.Base64.getEncoder().encodeToString(valuebin);
+			valuestr = Utils.encodeBinary(valuebin);
 		} else {
 			valuestr = CharStreams.toString(new InputStreamReader(evalue));
 		}

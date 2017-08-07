@@ -47,7 +47,7 @@ public class Experiment {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	public String uploadExpDefinition(InputStream experiment){
+	public String uploadExpDefinition(InputStream experiment) {
 		
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -64,7 +64,7 @@ public class Experiment {
 				em.treatment_to_json(t);
 			}
 			return em.addExperiment(exp);
-		} catch (IOException | IllegalArgumentException | ProcessingException | ValidationException e) {
+		} catch (IOException | IllegalArgumentException | ProcessingException | ValidationException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e);
 		}
