@@ -1,22 +1,18 @@
 package tudelft.dds.irep.services;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
@@ -24,6 +20,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.glassdoor.planout4j.config.ValidationException;
@@ -34,7 +32,6 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.data.schema.JTreatment;
-import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.utils.JsonValidator;
 
@@ -161,7 +158,47 @@ public class Experiment {
 		}
 	}
 	
+	//public String search(@QueryParam("idexp") String idexp, @QueryParam("name") String name, 
+//	@QueryParam("experimenter") String experimenter, @QueryParam("description") String desc, 
+//	@QueryParam("tname") String tname,@QueryParam("tdef") String tdef, @QueryParam("cname") String cname,
+//	@QueryParam("controler") String controller,@QueryParam("dstarted") String dstarted, 
+//	@QueryParam("dended") String dended, @QueryParam("dtoend") String dtoend, @QueryParam("maxexp") String maxexp) {
+
 	
+	@Path("/search")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public String search(@QueryParam("idexp") String idexp, @QueryParam("name") String name, 
+	@QueryParam("experimenter") String experimenter, @QueryParam("description") String desc, 
+	@QueryParam("tname") String tname,@QueryParam("tdef") String tdef, @QueryParam("cname") String cname,
+	@QueryParam("controler") String controller,@QueryParam("dstarted") String dstarted, 
+	@QueryParam("dended") String dended, @QueryParam("dtoend") String dtoend, @QueryParam("maxexp") String maxexp) {
+	
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+
+			List<JExperiment> experiments = em.getExperiments();
+			ObjectMapper mapper = new ObjectMapper();
+			ArrayNode arrayNode = mapper.createArrayNode();
+			for (JExperiment exp: experiments) {
+				for (JConfiguration conf:exp.getConfig()) {
+					ObjectNode node = mapper.createObjectNode();
+			        node.put("name", exp.getName());
+			        node.put("experimenter", exp.getExperimenter());
+			        node.put("description", exp.getDescription());
+			        node.put("run", conf.getRun());
+			        arrayNode.add(node);
+				}
+			}
+			return mapper.writeValueAsString(arrayNode);
+			
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e);
+		}
+		
+	}
+
 	
 
 }

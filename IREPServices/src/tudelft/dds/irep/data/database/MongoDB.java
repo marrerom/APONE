@@ -214,5 +214,15 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
+	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
+		List<JExperiment> result = new ArrayList<JExperiment>();
+		FindIterable<Document> docs = experiments.find();
+		ObjectMapper mapper = new ObjectMapper();
+		for (Document doc: docs) {
+			result.add(mapper.readValue(new StringReader(new MongoToJackson().convert(doc, JExperiment.class).toJson()),JExperiment.class));
+		}
+		return result;
+	}
+	
 	
 }

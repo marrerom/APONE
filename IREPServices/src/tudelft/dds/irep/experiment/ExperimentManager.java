@@ -124,6 +124,10 @@ public class ExperimentManager {
 	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		return db.getEvent(idevent);
 	}
+	
+	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
+		return db.getExperiments();
+	}
 		
 	public Map<String,?> treatment_to_json(JTreatment treatment) throws ValidationException {
 		String dsl = treatment.getDefinition();

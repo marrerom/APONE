@@ -30,6 +30,8 @@ public interface Database {
 	
 	public List<JEvent> getEvents(String idconfig, String ename) throws JsonParseException, JsonMappingException, IOException, ParseException;
 	
+	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException;
+
 	public String addExperiment(JExperiment experiment ) throws ParseException;
 	
 	public String addExpConfig(String idexp,  JConfiguration conf) throws ParseException;
