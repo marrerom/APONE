@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -29,8 +28,6 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
-import tudelft.dds.irep.utils.Utils;
-
 import static com.mongodb.client.model.Filters.*;
 import org.bson.types.ObjectId;
 
@@ -87,15 +84,19 @@ public class MongoDB implements Database {
 
 	
 	public String addExperiment(JExperiment experiment) throws ParseException {
+		for (JConfiguration conf:experiment.getConfig()) {
+			if (conf.get_id() == null || conf.get_id()=="") {
+				ObjectId idconf = new ObjectId();
+				conf.set_id(idconf.toString());
+			}
+		}
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(experiment, Map.class);
 		ObjectId idexp = new ObjectId();
 		docmap.put("_id", idexp.toString());
-		
-		Document doc = new JacksonToMongo().convert(new Document(docmap), JExperiment.class);
+		Document doc = new Document(new JacksonToMongo().convert(docmap, JExperiment.class));
 		experiments.insertOne(doc);
 		return idexp.toString();
-		
 	}
 	
 	public String addExpConfig(String idexp, JConfiguration conf) throws ParseException {
@@ -105,7 +106,7 @@ public class MongoDB implements Database {
 		ObjectId idrun = new ObjectId();
 		docmap.put("_id", idrun.toString());
 		
-		Document doc = new JacksonToMongo().convert(new Document(docmap), JConfiguration.class);
+		Document doc = new Document(new JacksonToMongo().convert(docmap, JConfiguration.class));
 		experiments.updateOne(eq("_id", new ObjectId(idexp)), Updates.addToSet("config", doc));
 		return idrun.toString();
 		 
@@ -131,9 +132,7 @@ public class MongoDB implements Database {
 //		String timestamp = (String) docmap.get("timestamp");
 //		docmap.put("timestamp", Utils.getDate(timestamp));
 		
-		Document doc = new JacksonToMongo().convert(new Document(docmap), JEvent.class);
-		
-		
+		Document doc = new Document(new JacksonToMongo().convert(docmap, JEvent.class));
 		events.insertOne(doc);
 		return idevent.toString();
 	}
@@ -147,13 +146,13 @@ public class MongoDB implements Database {
 	public JExperiment getExperiment(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Document doc = checkExistExperiment(idexp);
 		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(new StringReader(new MongoToJackson().convert(doc,JExperiment.class).toJson()),JExperiment.class);
+		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc,JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
 	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Document doc = checkExistEvent(idevent);
 		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(new StringReader(new MongoToJackson().convert(doc,JEvent.class).toJson()),JEvent.class);
+		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc,JEvent.class)).toJson()),JEvent.class);
 	}
 	
 
@@ -161,13 +160,13 @@ public class MongoDB implements Database {
 		checkExistConfiguration(idconf);
 		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).first();
 		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(new StringReader(new MongoToJackson().convert(doc, JExperiment.class).toJson()),JExperiment.class);
+		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
 	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Document doc = checkExistConfiguration(idconf);
 		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(new StringReader(new MongoToJackson().convert(doc, JConfiguration.class).toJson()),JConfiguration.class);
+		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JConfiguration.class)).toJson()),JConfiguration.class);
 	}
 	
 	public List<JConfiguration> getConfigurations(Iterable<Status> status) throws JsonParseException, JsonMappingException, IOException, ParseException {
@@ -187,7 +186,7 @@ public class MongoDB implements Database {
 		for (Document d:docs) {
 			ArrayList<Document> configArray = (ArrayList<Document>) d.get("config");
 			for (Document config: configArray) {
-				result.add(mapper.readValue(new StringReader(new MongoToJackson().convert(config, JConfiguration.class).toJson()),JConfiguration.class));
+				result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(config, JConfiguration.class)).toJson()),JConfiguration.class));
 			}
 		}
 		return result;
@@ -199,7 +198,7 @@ public class MongoDB implements Database {
 		ObjectMapper mapper = new ObjectMapper();
 		ArrayList<Document> treatArray = (ArrayList<Document>) doc.get("treatment");
 		for (Document tdoc: treatArray) {
-			result.add(mapper.readValue(new StringReader(new MongoToJackson().convert(tdoc, JTreatment.class).toJson()),JTreatment.class));
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(tdoc, JTreatment.class)).toJson()),JTreatment.class));
 		}
 		return result;
 	}
@@ -209,7 +208,7 @@ public class MongoDB implements Database {
 		FindIterable<Document> docs = events.find(and(eq("idconfig", idconfig), eq("ename",ename)));
 		ObjectMapper mapper = new ObjectMapper();
 		for (Document doc: docs) {
-			result.add(mapper.readValue(new StringReader(new MongoToJackson().convert(doc, JEvent.class).toJson()),JEvent.class));
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JEvent.class)).toJson()),JEvent.class));
 		}
 		return result;
 	}
@@ -219,7 +218,7 @@ public class MongoDB implements Database {
 		FindIterable<Document> docs = experiments.find();
 		ObjectMapper mapper = new ObjectMapper();
 		for (Document doc: docs) {
-			result.add(mapper.readValue(new StringReader(new MongoToJackson().convert(doc, JExperiment.class).toJson()),JExperiment.class));
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class));
 		}
 		return result;
 	}

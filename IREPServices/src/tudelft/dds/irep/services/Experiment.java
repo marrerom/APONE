@@ -39,17 +39,16 @@ import tudelft.dds.irep.utils.JsonValidator;
 public class Experiment {
 	
 	@Context ServletContext context;
-	
+
 	@Path("/upload")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.TEXT_PLAIN)
-	public String uploadExpDefinition(InputStream experiment) {
+	public String uploadExperiment(String experiment) {
 		
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-			
+
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(experiment);
 			JExperiment exp = mapper.convertValue(jnode, JExperiment.class);
@@ -66,7 +65,6 @@ public class Experiment {
 			throw new javax.ws.rs.BadRequestException(e);
 		}
 	}
-	
 	
 	@Path("/start")
 	@POST
@@ -93,6 +91,8 @@ public class Experiment {
 			throw new javax.ws.rs.BadRequestException(e);
 		}
 	}
+	
+
 	
 	@Path("/start")
 	@PUT
@@ -183,6 +183,7 @@ public class Experiment {
 			for (JExperiment exp: experiments) {
 				for (JConfiguration conf:exp.getConfig()) {
 					ObjectNode node = mapper.createObjectNode();
+					node.put("idrun", conf.get_id());
 			        node.put("name", exp.getName());
 			        node.put("experimenter", exp.getExperimenter());
 			        node.put("description", exp.getDescription());

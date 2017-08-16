@@ -303,6 +303,16 @@ public class ClientTest {
 			System.out.println(res);
 			return res;
 		}
+		
+		public static Response testSearch(Client client) {
+			WebTarget base = client.target(context+jerseyServices);
+			WebTarget target =base.path("/experiment/search");
+			Invocation.Builder builder = target.request(MediaType.APPLICATION_JSON);
+			Response res = builder.get();
+			System.out.println(res);
+			return res;
+
+		}
 
 		
 		
@@ -312,64 +322,66 @@ public class ClientTest {
 		    
 		   try{
 			   
-//			   Response res10 = testGetEvent(client, "598435972ada0122482f0df5");
-//				ObjectMapper mapper = new ObjectMapper();
-//				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
-//				if (jevent.isBinary())
-//					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
-//
-//			   
+			   Response res = testSearch(client);
+			   String results = res.readEntity(String.class);
 			   
-		   		Response res1 =  testExperimentUpload(client);
-		   		String idexp1 = res1.readEntity(String.class);
-		   
-		   		Response res2 = testExperimentStart(client, idexp1);
-		   		String idconf1 = res2.readEntity(String.class);
-
-				   for (int i=0;i<2;i++){
-					   String unitid = String.valueOf(i);
-					   Response res3 = testExperimentGetParams(client, idconf1, unitid);
-					   String params = res3.readEntity(String.class);
-					   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
-				   }
-		   		
-		   		
-				   
-				Response res4 = testExperimentStop(client, idconf1);
-				
+//		   		Response res1 =  testExperimentUpload(client);
+//		   		String idexp1 = res1.readEntity(String.class);
+//		   
+//		   		Response res2 = testExperimentStart(client, idexp1);
+//		   		String idconf1 = res2.readEntity(String.class);
+//
 //				   for (int i=0;i<2;i++){
 //					   String unitid = String.valueOf(i);
-//					   Response res5 = testExperimentGetParams(client, idconf1, unitid);
-//					   String params = res5.readEntity(String.class);
+//					   Response res3 = testExperimentGetParams(client, idconf1, unitid);
+//					   String params = res3.readEntity(String.class);
 //					   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
 //				   }
-
-
-				Response res6 = testExpStartFromConfig(client,idconf1);
-		   
-//			   String idconf = "5979e0152ada012b399e52b8";
-//			   String idexp ="";
-			   for (int i=0;i<2;i++){
-				   String unitid = String.valueOf(i);
-				   Response res7 = testExperimentGetParams(client, idconf1, unitid);
-				   String params = res7.readEntity(String.class);
-				   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
-			   }
-			   
-			   //string event
-	//		   Response res8 = testRegisterEvent(client, idconf, "0", "testparam", "test param value");
-	//		   String idevent = res8.readEntity(String.class);
-
-			   //binary event
-			   byte[] evalue = Utils.readSmallBinaryFile("/home/mmarrero/Downloads/example1.png");
-			   Response res9 = testRegisterEvent(client, idconf1, "0", "testparam", evalue);
-			   String idevent2 = res9.readEntity(String.class);
-			   
-
-			   
-				Response res11 = testMonitor(client, idconf1);
-				String expcount = res11.readEntity(String.class);
-
+//		   		
+//		   		
+//				   
+//				Response res4 = testExperimentStop(client, idconf1);
+//				
+////				   for (int i=0;i<2;i++){
+////					   String unitid = String.valueOf(i);
+////					   Response res5 = testExperimentGetParams(client, idconf1, unitid);
+////					   String params = res5.readEntity(String.class);
+////					   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
+////				   }
+//
+//
+//				Response res6 = testExpStartFromConfig(client,idconf1);
+//		   
+////			   String idconf = "5979e0152ada012b399e52b8";
+////			   String idexp ="";
+//			   for (int i=0;i<2;i++){
+//				   String unitid = String.valueOf(i);
+//				   Response res7 = testExperimentGetParams(client, idconf1, unitid);
+//				   String params = res7.readEntity(String.class);
+//				   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
+//			   }
+//			   
+//			   //string event
+//	//		   Response res8 = testRegisterEvent(client, idconf, "0", "testparam", "test param value");
+//	//		   String idevent = res8.readEntity(String.class);
+//
+//			   //binary event
+//			   byte[] evalue = Utils.readSmallBinaryFile("/home/mmarrero/Downloads/example1.png");
+//			   Response res9 = testRegisterEvent(client, idconf1, "0", "testparam", evalue);
+//			   res9.readEntity(String.class);
+//			   
+////			   Response res10 = testGetEvent(client, "");
+////				ObjectMapper mapper = new ObjectMapper();
+////				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
+////				if (jevent.isBinary())
+////					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
+////
+////			   
+//
+//			   
+//				Response res11 = testMonitor(client, idconf1);
+//				String expcount = res11.readEntity(String.class);
+//
 			   
 			   client.close();
 		   } catch (Exception e){

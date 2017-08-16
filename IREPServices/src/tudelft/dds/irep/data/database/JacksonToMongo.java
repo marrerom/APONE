@@ -1,14 +1,12 @@
 package tudelft.dds.irep.data.database;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 
-import org.bson.Document;
+
 import org.bson.types.ObjectId;
-
 import tudelft.dds.irep.data.schema.JCommon;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -20,8 +18,8 @@ public class JacksonToMongo extends Conversor {
 	/*Binary*/
 	
 	@Override
-	protected Document binary(Document mongodoc) {
-		boolean binary = mongodoc.getBoolean("binary", false);
+	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
+		boolean binary = (Boolean) mongodoc.get("binary");
 		if (binary) {
 			String str = (String) mongodoc.get("evalue");
 			byte[] bin = Utils.decodeBinary(str);
@@ -33,18 +31,19 @@ public class JacksonToMongo extends Conversor {
 	
 	/*Date*/
 
+	@SuppressWarnings("unchecked")
 	@Override
-	protected Document convertDate(Document mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
+	protected Map<String,Object> convertDate(Map<String,Object> mongodoc, Class<? extends JCommon> jacksonclass) throws ParseException {
 		if (jacksonclass == JConfiguration.class) {
 			mongodoc.put("date_started", date((ArrayList<String>) mongodoc.get("date_started")));
 			mongodoc.put("date_ended", date((ArrayList<String>) mongodoc.get("date_ended")));
 		} else if (jacksonclass == JExperiment.class) {
-			for (Object item : ((ArrayList)mongodoc.get("config"))) {
-				((Document)item).put("date_started", date((ArrayList<String>)((Document)item).get("date_started")));
-				((Document)item).put("date_ended", date((ArrayList<String>)((Document)item).get("date_ended")));
+			for (Map<String,Object> item : ((ArrayList<Map<String,Object>>)mongodoc.get("config"))) {
+				item.put("date_started", date((ArrayList<String>)item.get("date_started")));
+				item.put("date_ended", date((ArrayList<String>)item.get("date_ended")));
 			}
 		} else if (jacksonclass == JEvent.class) {
-			mongodoc.put("timestamp", date(mongodoc.getString("timestamp")));
+			mongodoc.put("timestamp", date((String) mongodoc.get("timestamp")));
 		}
 		return mongodoc;
 	}
@@ -67,9 +66,21 @@ public class JacksonToMongo extends Conversor {
 	
 
 	/*Id*/
+	@SuppressWarnings("unchecked")
+	protected Map<String,Object> convertId(Map<String,Object> mongodoc, Class<? extends JCommon> jacksonclass) {
+		if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class) {
+			id(mongodoc);
+		} else if (jacksonclass == JExperiment.class) {
+			id(mongodoc);
+			for(Map<String,Object> item : ((ArrayList<Map<String,Object>>)mongodoc.get("config"))) {
+				id(item);
+			}
+		}
+		return mongodoc;
+	}
 	
 	@Override
-	protected void id(Document mongodoc) {
+	protected void id(Map<String,Object> mongodoc) {
 		if (mongodoc.get("_id") != null && mongodoc.get("_id").getClass() == String.class) {
 			String value = (String) mongodoc.get("_id");
 			mongodoc.put("_id", new ObjectId(value));
