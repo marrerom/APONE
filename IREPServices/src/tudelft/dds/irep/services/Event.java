@@ -53,7 +53,7 @@ public class Event {
 			em.registerEvent(event);
 		} catch (IOException | ProcessingException | ParseException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 	
@@ -72,7 +72,7 @@ public class Event {
 			return eventstr;
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 	
@@ -90,11 +90,22 @@ public class Event {
 			return expcountstr;
 		} catch (BadRequestException | JsonProcessingException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 
-	 
+	@Path("/delete")
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	public void delete(String idconfig) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			em.deleteEvents(idconfig);
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}	 
 		
 	@Path("/timestampFormat")
 	@GET

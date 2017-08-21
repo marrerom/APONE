@@ -85,7 +85,7 @@ public class ExperimentManager {
 	private boolean matchStopConditions(String idconf) {
 		  Date dateToEnd = re.getDateToEnd(idconf);
 		  Integer maxExposures = re.getMaxExposures(idconf);
-		  if (dateToEnd != null && (dateToEnd.compareTo(new Date())> 0)) {
+		  if (dateToEnd != null && (dateToEnd.compareTo(new Date())< 0)) {
 			  return true;
 		  }
 		  Integer sum = re.getEventMonitoringConsumer(idconf).getExposurecount().values().stream().mapToInt(Integer::intValue).sum();
@@ -100,6 +100,15 @@ public class ExperimentManager {
 			JExperiment exp = db.getExpFromConfiguration(conf.get_id());
 			load(exp,conf,Status.valueOf(conf.getRun()));
 		}
+	}
+	
+	//removes exp only if there are no more configurations
+	public void deleteConfig(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		db.deleteConfig(idconf);
+	}
+	
+	public void deleteEvents(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		db.deleteEvents(idconf);
 	}
 	
 	public String addConfig(String idexp, JConfiguration config) throws JsonParseException, JsonMappingException, IOException, ParseException {
@@ -126,8 +135,8 @@ public class ExperimentManager {
 		return db.getEvent(idevent);
 	}
 	
-	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
-		return db.getExperiments();
+	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		return db.getExperiments(filter);
 	}
 		
 	public Map<String,?> treatment_to_json(JTreatment treatment) throws ValidationException {
@@ -299,7 +308,8 @@ public class ExperimentManager {
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
 		String nsName = exp.getName()+"."+config.getName();
-		String salt = nsName; //TODO: check conf. names are different for same experiment
+		//String salt = nsName; //TODO: check conf. names are different for same experiment
+		String salt = config.get_id();
 		NamespaceConfig ns = new NamespaceConfig(nsName,TOTALSEGMENTS, exp.getUnit(), salt);
 		
 		for (JTreatment treat: exp.getTreatment()) {

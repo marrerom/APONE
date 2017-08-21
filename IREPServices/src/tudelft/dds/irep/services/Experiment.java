@@ -59,38 +59,44 @@ public class Experiment {
 			for (JTreatment t:treatments) {  //just to check if the dsl are valids
 				em.treatment_to_json(t);
 			}
+			
+			JConfiguration[] config = exp.getConfig();
+			for (JConfiguration c:config) {
+				c.setRun("OFF");
+			}
+			
 			return em.addExperiment(exp);
 		} catch (IOException | IllegalArgumentException | ProcessingException | ValidationException | ParseException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 	
-	@Path("/start")
-	@POST
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.TEXT_PLAIN)
-	public String startExperiment(@FormDataParam("idexp") String idexp, @FormDataParam("configuration") InputStream configuration){
-		try {
-			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-			
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode jnode = mapper.readTree(configuration);
-			JConfiguration conf = mapper.convertValue(jnode, JConfiguration.class);
-			ProcessingReport pr = jval.validate(conf,jnode, context);
-			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			
-			JExperiment exp = em.getExperiment(idexp);
-			String idrun = em.addConfig(idexp,conf);
-			conf.set_id(idrun);
-			em.start(exp,conf);
-			return idrun;
-		} catch (IOException | ProcessingException | ParseException | ValidationException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
-		}
-	}
+//	@Path("/start")
+//	@POST
+//	@Consumes(MediaType.MULTIPART_FORM_DATA)
+//	@Produces(MediaType.TEXT_PLAIN)
+//	public String startExperiment(@FormDataParam("idexp") String idexp, @FormDataParam("configuration") InputStream configuration){
+//		try {
+//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+//			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+//			
+//			ObjectMapper mapper = new ObjectMapper();
+//			JsonNode jnode = mapper.readTree(configuration);
+//			JConfiguration conf = mapper.convertValue(jnode, JConfiguration.class);
+//			ProcessingReport pr = jval.validate(conf,jnode, context);
+//			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+//			
+//			JExperiment exp = em.getExperiment(idexp);
+//			String idrun = em.addConfig(idexp,conf);
+//			conf.set_id(idrun);
+//			em.start(exp,conf);
+//			return idrun;
+//		} catch (IOException | ProcessingException | ParseException | ValidationException e) {
+//			e.printStackTrace();
+//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage()));
+//		}
+//	}
 	
 
 	
@@ -105,7 +111,7 @@ public class Experiment {
 			em.start(exp,conf);
 		} catch (IOException | ParseException | ValidationException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 
@@ -119,7 +125,21 @@ public class Experiment {
 			em.stop(idconfig);
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}
+	
+	@Path("/delete")
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	public void delete(String idconfig) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			em.stop(idconfig);
+			em.deleteConfig(idconfig);
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 	
@@ -154,7 +174,7 @@ public class Experiment {
 			return paramsstr;
 		} catch (IOException | ParseException | ProcessingException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 	}
 	
@@ -166,19 +186,22 @@ public class Experiment {
 
 	
 	@Path("/search")
-	@GET
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String search(@QueryParam("idexp") String idexp, @QueryParam("name") String name, 
-	@QueryParam("experimenter") String experimenter, @QueryParam("description") String desc, 
-	@QueryParam("tname") String tname,@QueryParam("tdef") String tdef, @QueryParam("cname") String cname,
-	@QueryParam("controler") String controller,@QueryParam("dstarted") String dstarted, 
-	@QueryParam("dended") String dended, @QueryParam("dtoend") String dtoend, @QueryParam("maxexp") String maxexp) {
+	public String search(String filter) {
 	
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
-			List<JExperiment> experiments = em.getExperiments();
 			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jnode = mapper.readTree(filter);
+			JExperiment expfilter = mapper.convertValue(jnode, JExperiment.class);
+			ProcessingReport pr = jval.validate(expfilter,jnode, context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			
+			List<JExperiment> experiments = em.getExperiments(expfilter);
 			ArrayNode arrayNode = mapper.createArrayNode();
 			for (JExperiment exp: experiments) {
 				for (JConfiguration conf:exp.getConfig()) {
@@ -188,14 +211,15 @@ public class Experiment {
 			        node.put("experimenter", exp.getExperimenter());
 			        node.put("description", exp.getDescription());
 			        node.put("run", conf.getRun());
+			        node.put("cname", conf.getName());
 			        arrayNode.add(node);
 				}
 			}
 			return mapper.writeValueAsString(arrayNode);
 			
-		} catch (IOException | ParseException e) {
+		} catch (IOException | ParseException | ProcessingException e) {
 			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e);
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 		
 	}

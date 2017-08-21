@@ -16,7 +16,6 @@
 	"ename": {"type":"string"},
 	"evalue": {"type":"string"},
 	"binary" : {"type":"boolean", "default":false}
-	},
+	}
 
-"required": ["idconfig", "timestamp", "unitid", "ename", "evalue"]
 }

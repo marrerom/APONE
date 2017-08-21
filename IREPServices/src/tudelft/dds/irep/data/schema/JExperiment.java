@@ -37,7 +37,6 @@ public class JExperiment extends JCommon {
 	private String description;
 	private String unit;
 	private JTreatment[] treatment = {};
-	
 	private JConfiguration[] config = {};
 
 	public String getUnit() {

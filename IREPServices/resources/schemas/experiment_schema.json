@@ -18,8 +18,6 @@
 	"config" : {"type":"array", "items": {"$ref": "#/definitions/configItem" } }
 	},
 
-"required": ["name", "experimenter", "treatment"],
-
 "definitions": {
     "treatItem": 
     	{
@@ -30,8 +28,7 @@
 			"description": {"type":"string"},
 			"definition": {"type":"string"},
 			"iscontrol":{"type":"boolean"}
-			},
-		"required": ["name", "definition"]
+			}
 		},
 	"configItem":
 		{
@@ -45,13 +42,12 @@
 			"controller_code": {"type":"string"},
 			"date_started": {"type": "array", "items":{"type":"string"}},
 			"date_ended": {"type": "array", "items":{"type":"string"}},
-			"run":{"enum":["ON","OFF","PAUSED"], "default":"ON"},
+			"run":{"enum":["ON","OFF","PAUSED"], "default":"OFF"},
 			"date_to_end": {"type": "string"},
 			"max_exposures": {"type": "number"},
 			"test":{"type":"boolean"},
 			"dist": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
-			},
-		"required": ["name", "experimenter", "controller_code"]
+			}
 		},
 	"distItem": 
 		{
@@ -61,8 +57,8 @@
 			"segments":{"type":"number"},
 			"treatment": {"type":"string"},
 			"action": {"enum":["ADD","REMOVE"], "default":"add"}
-			},
-		"required": ["segments", "treatment", "action"]
+			}
+
 		}
   }
 }

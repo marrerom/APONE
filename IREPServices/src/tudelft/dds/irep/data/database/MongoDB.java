@@ -5,16 +5,19 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
@@ -28,9 +31,11 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.utils.Utils;
+
 import static com.mongodb.client.model.Filters.*;
 import org.bson.types.ObjectId;
-
+import static com.mongodb.client.model.Projections.*;
 
 
 public class MongoDB implements Database {
@@ -66,7 +71,7 @@ public class MongoDB implements Database {
 	private Document checkExistConfiguration(String idconf) {
 		try {
 			Document doc = experiments.find(eq("config._id", new ObjectId(idconf)))
-					.projection(com.mongodb.client.model.Projections.elemMatch("config", eq("_id", new ObjectId(idconf))))
+					.projection(elemMatch("config"))
 					.first();
 			return ((ArrayList<Document>)doc.get("config")).get(0);
 		} catch (NullPointerException e) {
@@ -154,13 +159,95 @@ public class MongoDB implements Database {
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc,JEvent.class)).toJson()),JEvent.class);
 	}
-	
 
 	public JExperiment getExpFromConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		checkExistConfiguration(idconf);
-		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).first();
+		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment"))).first();
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
+	}
+	
+
+	private FindIterable<Document> getFilteredExperiments(Map<String, Object> docmap) {
+		List<Bson> conditions = new ArrayList<Bson>();
+		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
+		if (docmap.get("name") != null) conditions.add(eq("name", docmap.get("name")));	
+		if (docmap.get("experimenter") != null) conditions.add(eq("experimenter", docmap.get("experimenter").toString()));	
+		if (docmap.get("unit") != null) conditions.add(eq("unit", docmap.get("unit")));
+		if (docmap.get("description") != null) conditions.add(regex("description", docmap.get("description").toString()));	
+		
+		for (Map<String,Object> treatitem : ((ArrayList<Map<String,Object>>)docmap.get("config"))) {
+			if (treatitem.get("name") != null) conditions.add(eq("treatment.name", treatitem.get("name")));
+			if (treatitem.get("description") != null) conditions.add(regex("treatment.description", treatitem.get("description").toString()));
+			if (treatitem.get("definition") != null) conditions.add(regex("treatment.definition", treatitem.get("definition").toString()));
+			if (treatitem.get("control") != null) conditions.add(eq("treatment.control", treatitem.get("control")));
+		}
+
+		boolean configsearch = false;
+		for (Map<String,Object> configitem : ((ArrayList<Map<String,Object>>)docmap.get("config"))) {
+			if (configitem.get("_id") != null) {configsearch=true; conditions.add(eq("config._id", configitem.get("_id")));}
+			if (configitem.get("name") != null) {configsearch=true;conditions.add(eq("config.name", configitem.get("name")));}
+			if (configitem.get("description") != null) {configsearch=true;conditions.add(regex("config.description", configitem.get("description").toString()));}
+			if (configitem.get("experimenter") != null) {configsearch=true;conditions.add(eq("config.experimenter", configitem.get("experimenter")));}
+			if (configitem.get("controller_code") != null) {configsearch=true;conditions.add(regex("config.controller_code", configitem.get("controller_code").toString()));}
+			if (configitem.get("run") != null) {configsearch=true;conditions.add(eq("config.run", configitem.get("run")));}
+			if (configitem.get("max_exposures") != null) {configsearch=true;conditions.add(eq("config.max_exposures", configitem.get("max_exposures")));}
+			for (Date date: ((ArrayList<Date>)configitem.get("date_started"))) {
+				configsearch=true;
+				BasicDBObject criteria = new BasicDBObject();
+				BasicDBObject elemMatch = new BasicDBObject();
+				BasicDBObject valueMatch = new BasicDBObject();
+				valueMatch.append("$gte", date);
+				valueMatch.append("$lte", Utils.addDay(date));
+				elemMatch.append("$elemMatch", valueMatch);
+				criteria.append("config.date_started", elemMatch);
+				conditions.add(criteria);
+				//conditions.add(com.mongodb.client.model.Filters.elemMatch("config.date_started", gte("date", date )));
+				}
+			for (Date date: ((ArrayList<Date>)configitem.get("date_ended"))) {
+				configsearch=true;
+				BasicDBObject criteria = new BasicDBObject();
+				BasicDBObject elemMatch = new BasicDBObject();
+				BasicDBObject valueMatch = new BasicDBObject();
+				valueMatch.append("$gte", date);
+				valueMatch.append("$lte", Utils.addDay(date));
+				elemMatch.append("$elemMatch", valueMatch);
+				criteria.append("config.date_ended", elemMatch);
+				conditions.add(criteria);
+				//conditions.add(in("config.date_ended", and(gte("config.date_ended", date ),lte("config.date_ended", Utils.addDay(date)))));
+				}
+			
+			if (configitem.get("date_to_end") != null) {
+				configsearch=true; 
+				Date date = (Date) configitem.get("date_to_end");
+				conditions.add(gte("config.date_to_end", date ));
+				conditions.add(lte("config.date_to_end", Utils.addDay(date) ));
+			}
+		}
+
+		
+		FindIterable<Document> results;
+		if (conditions.isEmpty())
+			results = experiments.find();
+		else
+			results = experiments.find(and(conditions));
+		if (configsearch)
+			results = results.projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment")));
+		return results;
+	}
+	
+	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		ObjectMapper mapper = new ObjectMapper();
+		List<JExperiment> result = new ArrayList<JExperiment>();
+		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
+		docmap = new JacksonToMongo().convert(docmap, JExperiment.class);
+		//FindIterable<Document> exps = getFilteredExperiments(filter);
+		FindIterable<Document> exps = getFilteredExperiments(docmap);
+		
+		for (Document exp: exps) {
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JExperiment.class)).toJson()),JExperiment.class));
+		}
+		return result;
 	}
 	
 	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
@@ -213,15 +300,29 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
-		List<JExperiment> result = new ArrayList<JExperiment>();
-		FindIterable<Document> docs = experiments.find();
-		ObjectMapper mapper = new ObjectMapper();
-		for (Document doc: docs) {
-			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class));
+	public void deleteConfig(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JExperiment exp= getExpFromConfiguration(idconf);
+		if (exp.getConfig().length <= 1) {
+			experiments.deleteOne(eq("_id", new ObjectId(exp.get_id())));	
+		} else {
+			BasicDBObject update = new BasicDBObject("config", new BasicDBObject("_id", new ObjectId(idconf)));
+			experiments.updateOne(eq("config._id", new ObjectId(idconf)), new BasicDBObject("$pull", update));
 		}
-		return result;
 	}
+	
+	public void deleteEvents(String idconf) {
+		events.deleteMany(eq("idconfig", new ObjectId(idconf)));
+	}
+	
+//	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
+//		List<JExperiment> result = new ArrayList<JExperiment>();
+//		FindIterable<Document> docs = experiments.find();
+//		ObjectMapper mapper = new ObjectMapper();
+//		for (Document doc: docs) {
+//			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class));
+//		}
+//		return result;
+//	}
 	
 	
 }

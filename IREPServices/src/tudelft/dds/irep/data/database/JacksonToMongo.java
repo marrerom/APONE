@@ -37,10 +37,12 @@ public class JacksonToMongo extends Conversor {
 		if (jacksonclass == JConfiguration.class) {
 			mongodoc.put("date_started", date((ArrayList<String>) mongodoc.get("date_started")));
 			mongodoc.put("date_ended", date((ArrayList<String>) mongodoc.get("date_ended")));
+			mongodoc.put("date_to_end", date((String) mongodoc.get("date_to_end")));
 		} else if (jacksonclass == JExperiment.class) {
 			for (Map<String,Object> item : ((ArrayList<Map<String,Object>>)mongodoc.get("config"))) {
 				item.put("date_started", date((ArrayList<String>)item.get("date_started")));
 				item.put("date_ended", date((ArrayList<String>)item.get("date_ended")));
+				item.put("date_to_end", date((String)item.get("date_to_end")));
 			}
 		} else if (jacksonclass == JEvent.class) {
 			mongodoc.put("timestamp", date((String) mongodoc.get("timestamp")));

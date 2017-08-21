@@ -11,7 +11,6 @@
 	{
 	"treatment": {"type":"string"},
 	"paramvalues": {"type":"object"}
-	},
+	}
 
-"required": ["treatment"]
 }

@@ -27,14 +27,14 @@ public class JTreatment extends JCommon {
 	private String name;
 	private String definition; //planout language
 	private String description;
-	private boolean control = false;
+	private Boolean control;
 	
 
-	public boolean isControl() {
+	public Boolean isControl() {
 		return control;
 	}
 
-	public void setControl(boolean control) {
+	public void setControl(Boolean control) {
 		this.control = control;
 	}
 

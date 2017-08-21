@@ -8,7 +8,9 @@ import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.SimpleTimeZone;
 
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 
@@ -27,14 +29,31 @@ public class Utils {
 	 }
 	 public static String getTimestamp(Date timestamp) {
 			DateFormat datetarget = new SimpleDateFormat(JsonDateSerializer.timestampFormat); //Standard format recognized by Jackson
+			datetarget.setTimeZone(new SimpleTimeZone(SimpleTimeZone.UTC_TIME, "UTC"));
 			return datetarget.format(timestamp);
 	 }
 	 public static String getTimestamp() {
 		 Date now = new Date();
 		 return getTimestamp(now);
 	 }
+	 
+	 //TODO: why these type of timestamps don't work??? received from the web form, in ISO format:  2017-08-29T15:40:00.000Z 
 	 public static Date getDate(String timestamp) throws ParseException {
-		 return (new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp);
+		 try {
+			return new Date(timestamp);
+		 } catch (IllegalArgumentException e) {
+//			DateFormat datetarget = new SimpleDateFormat(JsonDateSerializer.timestampFormat); //Standard format recognized by Jackson
+//			datetarget.setTimeZone(new SimpleTimeZone(SimpleTimeZone.UTC_TIME, "UTC"));
+//			return datetarget.parse(timestamp);
+			return (new SimpleDateFormat(JsonDateSerializer.timestampFormat)).parse(timestamp);
+		 }
+	 }
+	 
+	 public static Date addDay(Date date) {
+		Calendar c = Calendar.getInstance();
+		c.setTime(date);
+		c.add(Calendar.DATE, 1);
+		return c.getTime();
 	 }
 	 
 	 public static byte[] decodeBinary(String valuestr) {

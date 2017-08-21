@@ -48,15 +48,17 @@ public class JConfiguration extends JCommon {
 	private String controller_code;
 	private Date[] date_started = {};
 	private Date[] date_ended = {};
-	private String run = Status.ON.toString(); //again, problems in jackson to serialize enum types
+	private String run;
 	private Date date_to_end;
 	private Integer max_exposures;
 	private JDistribution[] distribution = {};
-	private boolean test;
+	private Boolean test;
 	
+	@JsonSerialize(using=JsonDateSerializer.class)
 	public Date getDate_to_end() {
 		return date_to_end;
 	}
+	@JsonDeserialize(using=JsonDateDeserializer.class)
 	public void setDate_to_end(Date date_to_end) {
 		this.date_to_end = date_to_end;
 	}
@@ -72,10 +74,10 @@ public class JConfiguration extends JCommon {
 	public void setDistribution(JDistribution[] distr) {
 		this.distribution = distr;
 	}
-	public boolean getTest() {
+	public Boolean getTest() {
 		return test;
 	}
-	public void setTest(boolean test) {
+	public void setTest(Boolean test) {
 		this.test = test;
 	}
 
