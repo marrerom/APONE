@@ -255,7 +255,11 @@ public class ExperimentManager {
 
 	}
 	
-	public void registerEvent(JEvent event) throws IOException {
+	public void registerEvent(String idconf, JEvent event) throws IOException {
+		Status st = re.getStatus(idconf);
+		if (st != Status.ON) {
+			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+		}
 		String queue = createRegisterQueue(event.getIdconfig());
 		byte[] body = Utils.serialize(event);
 		channel.basicPublish("", queue, null, body);

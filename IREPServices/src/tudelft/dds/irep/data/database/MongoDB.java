@@ -311,7 +311,7 @@ public class MongoDB implements Database {
 	}
 	
 	public void deleteEvents(String idconf) {
-		events.deleteMany(eq("idconfig", new ObjectId(idconf)));
+		events.deleteMany(eq("idconfig", idconf));
 	}
 	
 //	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{

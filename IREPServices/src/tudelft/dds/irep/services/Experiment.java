@@ -41,7 +41,7 @@ public class Experiment {
 	
 	@Context ServletContext context;
 
-	@Path("/upload")
+	@Path("/new/experiment")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String uploadExperiment(String experiment) {
@@ -68,6 +68,28 @@ public class Experiment {
 			
 			return em.addExperiment(exp);
 		} catch (IOException | IllegalArgumentException | ProcessingException | ValidationException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}
+	
+	@Path("/new/configuration")
+	@POST
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public String uploadConfiguration(@FormDataParam("idexp") String idexp, @FormDataParam("configuration") String configuration) {
+		
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jnode = mapper.readTree(configuration);
+			JConfiguration conf = mapper.convertValue(jnode, JConfiguration.class);
+			ProcessingReport pr = jval.validate(conf,jnode, context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			conf.setRun("OFF");
+			return em.addConfig(idexp, conf);
+		} catch (IOException | IllegalArgumentException | ProcessingException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
@@ -185,7 +207,7 @@ public class Experiment {
 			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
 			pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			em.registerEvent(event);
+			em.registerEvent(idconfig, event);
 			em.monitorEvent(event);
 			
 			return paramsstr;

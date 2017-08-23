@@ -50,7 +50,7 @@ public class Event {
 			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestamp);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			em.registerEvent(event);
+			em.registerEvent(idconfig, event);
 		} catch (IOException | ProcessingException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
