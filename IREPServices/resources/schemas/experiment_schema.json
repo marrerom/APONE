@@ -46,7 +46,7 @@
 			"date_to_end": {"type": "string"},
 			"max_exposures": {"type": "number"},
 			"test":{"type":"boolean"},
-			"dist": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
+			"distribution": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
 			}
 		},
 	"distItem": 

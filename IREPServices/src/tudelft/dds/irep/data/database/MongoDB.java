@@ -167,6 +167,38 @@ public class MongoDB implements Database {
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
+	private FindIterable<Document> getFilteredEvents(Map<String, Object> docmap){
+		List<Bson> conditions = new ArrayList<Bson>();
+		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
+		if (docmap.get("ename") != null) conditions.add(eq("ename", docmap.get("ename")));	
+			
+		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
+		
+		if (docmap.get("timestamp") != null) {
+			Date date = (Date) docmap.get("timestamp");
+			conditions.add(gte("timestamp", date ));
+			conditions.add(lte("timestamp", Utils.addDay(date) ));
+		}
+
+		Boolean binary  = (Boolean) docmap.get("binary");	
+		if (binary != null) conditions.add(eq("binary", docmap.get("binary")));
+		
+		
+		if (docmap.get("evalue") != null) { //if there is value here, assume the event is not binary
+			conditions.add(regex("evalue", docmap.get("evalue").toString()));
+			conditions.add(eq("binary", false));
+		}
+		
+		
+		FindIterable<Document> results;
+		if (conditions.isEmpty())
+			results = events.find();
+		else
+			results = events.find(and(conditions));
+		return results;
+
+	}
+	
 
 	private FindIterable<Document> getFilteredExperiments(Map<String, Object> docmap) {
 		List<Bson> conditions = new ArrayList<Bson>();
@@ -250,6 +282,19 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
+	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		ObjectMapper mapper = new ObjectMapper();
+		List<JEvent> result = new ArrayList<JEvent>();
+		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
+		docmap = new JacksonToMongo().convert(docmap, JEvent.class);
+		FindIterable<Document> exps = getFilteredEvents(docmap);
+		
+		for (Document exp: exps) {
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JEvent.class)).toJson()),JEvent.class));
+		}
+		return result;
+	}
+	
 	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Document doc = checkExistConfiguration(idconf);
 		ObjectMapper mapper = new ObjectMapper();
@@ -310,8 +355,8 @@ public class MongoDB implements Database {
 		}
 	}
 	
-	public void deleteEvents(String idconf) {
-		events.deleteMany(eq("idconfig", idconf));
+	public void deleteEvent(String idevent) {
+		events.deleteMany(eq("_id", new ObjectId(idevent)));
 	}
 	
 //	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{

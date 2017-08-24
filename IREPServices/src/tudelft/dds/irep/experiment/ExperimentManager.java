@@ -107,8 +107,8 @@ public class ExperimentManager {
 		db.deleteConfig(idconf);
 	}
 	
-	public void deleteEvents(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		db.deleteEvents(idconf);
+	public void deleteEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		db.deleteEvent(idevent);
 	}
 	
 	public String addConfig(String idexp, JConfiguration config) throws JsonParseException, JsonMappingException, IOException, ParseException {
@@ -137,6 +137,10 @@ public class ExperimentManager {
 	
 	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		return db.getExperiments(filter);
+	}
+	
+	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		return db.getEvents(filter);
 	}
 		
 	public Map<String,?> treatment_to_json(JTreatment treatment) throws ValidationException {
@@ -190,7 +194,10 @@ public class ExperimentManager {
 		for (JTreatment treat:treatments) {
 			expcount.put(treat.getName(), 0);
 		}
-		List<JEvent> expevents = db.getEvents(conf.get_id(), JExposureBody.EVENT_ENAME);
+		JEvent filter = new JEvent();
+		filter.setIdconfig(conf.get_id());
+		filter.setEname(JExposureBody.EVENT_ENAME);
+		List<JEvent> expevents = db.getEvents(filter);
 		for (JEvent event: expevents) {
 			String body = event.getEvalue();
 			JExposureBody expbody = mapper.readValue(new StringReader(body),JExposureBody.class);
@@ -311,7 +318,7 @@ public class ExperimentManager {
 	}
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
-		String nsName = exp.getName()+"."+config.getName();
+		String nsName = exp.getName()+"@"+exp.getExperimenter()+"."+config.getName();
 		//String salt = nsName; //TODO: check conf. names are different for same experiment
 		String salt = config.get_id();
 		NamespaceConfig ns = new NamespaceConfig(nsName,TOTALSEGMENTS, exp.getUnit(), salt);

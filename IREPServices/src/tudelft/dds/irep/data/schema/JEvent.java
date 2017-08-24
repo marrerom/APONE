@@ -42,7 +42,7 @@ public class JEvent extends JCommon implements Serializable {
 	private String unitid;
 	private String ename;
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
-	private boolean binary = false; //if event value (evalue) is binary or not
+	private Boolean binary; //if event value (evalue) is binary or not
 
 	
 	public String get_id() {
@@ -95,11 +95,11 @@ public class JEvent extends JCommon implements Serializable {
 		this.evalue = evalue;
 	}
 
-	public boolean isBinary() {
+	public Boolean isBinary() {
 		return binary;
 	}
 
-	public void setBinary(boolean binary) {
+	public void setBinary(Boolean binary) {
 		this.binary = binary;
 	}
 

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -22,15 +23,21 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
 
+import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
+import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.Utils;
 
 @Path("/event")
 public class Event {
@@ -68,7 +75,6 @@ public class Event {
 			JEvent jevent = em.getEvent(idevent);
 			ObjectMapper mapper = new ObjectMapper();
 			String eventstr = mapper.writeValueAsString(jevent); 
-			//return Response.ok(eventstr, MediaType.APPLICATION_JSON).build();
 			return eventstr;
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
@@ -97,10 +103,10 @@ public class Event {
 	@Path("/delete")
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
-	public void delete(String idconfig) {
+	public void delete(String idevent) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			em.deleteEvents(idconfig);
+			em.deleteEvent(idevent);
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
@@ -114,7 +120,45 @@ public class Event {
 		return JsonDateSerializer.timestampFormat;
 	}
 
+	@Path("/search")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String search(String filter) {
 	
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jnode = mapper.readTree(filter);
+			JEvent eventfilter = mapper.convertValue(jnode, JEvent.class);
+			ProcessingReport pr = jval.validate(eventfilter,jnode, context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			
+			List<JEvent> events = em.getEvents(eventfilter);
+			ArrayNode arrayNode = mapper.createArrayNode();
+			for (JEvent ev: events) {
+				ObjectNode node = mapper.createObjectNode();
+				node.put("_id", ev.get_id());
+				node.put("ename", ev.getEname());
+			    node.put("unitid", ev.getUnitid());
+			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
+			    node.put("binary", ev.isBinary());
+			    if (!ev.isBinary()) {
+			    	node.put("evalue", ev.getEvalue());
+			    }
+		        arrayNode.add(node);
+			}
+			return mapper.writeValueAsString(arrayNode);
+			
+		} catch (IOException | ParseException | ProcessingException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+		
+	}
+
 	
 
 
