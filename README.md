@@ -27,18 +27,18 @@ MongoDB
 	* Get parameters
 	[host]/IREPServices/service/experiment/getParams
 	@Consumes:
-		@FormDataParam("idconfig") id experiment 
-		@FormDataParam("idunit") keyword used in planout that identifies unique users/sessions/etc. 
-		@FormDataParam("timestamp"): timestamp of the request 
-	@Produces: {param:value, ...}
+		@FormDataParam("idconfig") id experiment  
+		@FormDataParam("idunit") keyword used in planout that identifies unique users/sessions/etc.   
+		@FormDataParam("timestamp"): timestamp of the request  
+	@Produces: {param:value, ...} 
 	
 	Automatically register an event called "exposure"
 	
-	* Register an event 
-	@Consumes:
-		@FormDataParam("idconfig"): Id experiment
-		@FormDataParam("timestamp"): timestamp of the request
-		@FormDataParam("unitid"): id of the  user/session/etc. used in the definition in planout language
-		@FormDataParam("binary") : if the value to register is binary
-		@FormDataParam("ename"): type of event
-		@FormDataParam("evalue"): value to register (Stream)
+	* Register an event   
+	@Consumes:  
+		@FormDataParam("idconfig"): Id experiment  
+		@FormDataParam("timestamp"): timestamp of the request  
+		@FormDataParam("unitid"): id of the  user/session/etc. used in the definition in planout language  
+		@FormDataParam("binary") : if the value to register is binary  
+		@FormDataParam("ename"): type of event  
+		@FormDataParam("evalue"): value to register (Stream)  
