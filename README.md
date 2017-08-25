@@ -25,8 +25,8 @@ MongoDB
 3. From client
 
 	* Get parameters
-	[host]/IREPServices/service/experiment/getParams
-	@Consumes:
+	[host]/IREPServices/service/experiment/getParams  
+	@Consumes:  
 		@FormDataParam("idconfig") id experiment  
 		@FormDataParam("idunit") keyword used in planout that identifies unique users/sessions/etc.   
 		@FormDataParam("timestamp"): timestamp of the request  
@@ -35,6 +35,7 @@ MongoDB
 	Automatically register an event called "exposure"
 	
 	* Register an event   
+	[host]/IREPServices/service/event/register  
 	@Consumes:  
 		@FormDataParam("idconfig"): Id experiment  
 		@FormDataParam("timestamp"): timestamp of the request  
