@@ -31,6 +31,7 @@ public class JsonValidator {
 		String rootElement = obj.getRootElement();
 		if (rootElement != null)
 			schema = schema.findValue(rootElement);
+		
 		return JsonSchemaFactory.byDefault().getJsonSchema(schema);
 	}
 	

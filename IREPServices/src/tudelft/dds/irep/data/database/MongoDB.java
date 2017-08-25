@@ -173,6 +173,7 @@ public class MongoDB implements Database {
 		if (docmap.get("ename") != null) conditions.add(eq("ename", docmap.get("ename")));	
 			
 		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
+		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
 		
 		if (docmap.get("timestamp") != null) {
 			Date date = (Date) docmap.get("timestamp");
@@ -208,7 +209,7 @@ public class MongoDB implements Database {
 		if (docmap.get("unit") != null) conditions.add(eq("unit", docmap.get("unit")));
 		if (docmap.get("description") != null) conditions.add(regex("description", docmap.get("description").toString()));	
 		
-		for (Map<String,Object> treatitem : ((ArrayList<Map<String,Object>>)docmap.get("config"))) {
+		for (Map<String,Object> treatitem : ((ArrayList<Map<String,Object>>)docmap.get("treatment"))) {
 			if (treatitem.get("name") != null) conditions.add(eq("treatment.name", treatitem.get("name")));
 			if (treatitem.get("description") != null) conditions.add(regex("treatment.description", treatitem.get("description").toString()));
 			if (treatitem.get("definition") != null) conditions.add(regex("treatment.definition", treatitem.get("definition").toString()));

@@ -47,18 +47,31 @@
 			"max_exposures": {"type": "number"},
 			"test":{"type":"boolean"},
 			"distribution": {"type":"array", "items": {"$ref": "#/definitions/distItem" } } 
+			},
+			
+			"definitions": {
+				"distItem":{
+				"type": "object",
+				"properties":
+					{
+					"segments": {"type":"number"},
+					"treatment":{"type":"string"},
+					"action": {"enum": ["ADD", "REMOVE"], "default":"ADD"}
+					} 
+				
+				}
 			}
 		},
-	"distItem": 
-		{
-		"type" : "object",
-		"properties" : 
+		"distItem":
 			{
-			"segments":{"type":"number"},
-			"treatment": {"type":"string"},
-			"action": {"enum":["ADD","REMOVE"], "default":"add"}
-			}
-
+			"type": "object",
+			"properties":
+			{
+			"segments": {"type":"number"},
+			"treatment":{"type":"string"},
+			"action": {"enum": ["ADD", "REMOVE"], "default":"ADD"}
+			} 
+		
 		}
   }
 }

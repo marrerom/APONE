@@ -20,7 +20,7 @@ public class JacksonToMongo extends Conversor {
 	@Override
 	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
 		Boolean binary = (Boolean) mongodoc.get("binary");
-		if (binary!=null && binary) {
+		if (binary!=null && binary && mongodoc.get("evalue")!=null) {
 			String str = (String) mongodoc.get("evalue");
 			byte[] bin = Utils.decodeBinary(str);
 			mongodoc.put("evalue", bin);

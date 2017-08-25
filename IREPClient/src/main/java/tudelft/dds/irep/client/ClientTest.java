@@ -322,8 +322,8 @@ public class ClientTest {
 		    
 		   try{
 			   
-			   Response res = testSearch(client);
-			   String results = res.readEntity(String.class);
+//			   Response res = testSearch(client);
+//			   String results = res.readEntity(String.class);
 			   
 //		   		Response res1 =  testExperimentUpload(client);
 //		   		String idexp1 = res1.readEntity(String.class);
@@ -361,22 +361,23 @@ public class ClientTest {
 //				   System.out.println("Exp "+ idexp1 + " Run " +idconf1 +" Unit "+unitid +" Params "+params);
 //			   }
 //			   
-//			   //string event
-//	//		   Response res8 = testRegisterEvent(client, idconf, "0", "testparam", "test param value");
-//	//		   String idevent = res8.readEntity(String.class);
+			   String idconf = "599be9062ada0113360132a4";
+			   //string event
+			   Response res8 = testRegisterEvent(client, idconf, "0", "testparam", "test param value");
+			   String idevent = res8.readEntity(String.class);
+
+			   //binary event
+			   byte[] evalue = Utils.readSmallBinaryFile("/home/mmarrero/Downloads/example1.png");
+			   Response res9 = testRegisterEvent(client, idconf, "0", "testparam", evalue);
+			   res9.readEntity(String.class);
+			   
+//			   Response res10 = testGetEvent(client, idevent);
+//				ObjectMapper mapper = new ObjectMapper();
+//				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
+//				if (jevent.isBinary())
+//					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
 //
-//			   //binary event
-//			   byte[] evalue = Utils.readSmallBinaryFile("/home/mmarrero/Downloads/example1.png");
-//			   Response res9 = testRegisterEvent(client, idconf1, "0", "testparam", evalue);
-//			   res9.readEntity(String.class);
 //			   
-////			   Response res10 = testGetEvent(client, "");
-////				ObjectMapper mapper = new ObjectMapper();
-////				JEvent jevent =  mapper.readValue(new StringReader(res10.readEntity(String.class)),JEvent.class);
-////				if (jevent.isBinary())
-////					Utils.writeSmallBinaryFile(java.util.Base64.getDecoder().decode(jevent.getEvalue()), "test.png");
-////
-////			   
 //
 //			   
 //				Response res11 = testMonitor(client, idconf1);

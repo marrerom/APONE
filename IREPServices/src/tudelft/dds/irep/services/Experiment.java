@@ -257,6 +257,7 @@ public class Experiment {
 			return mapper.writeValueAsString(arrayNode);
 			
 		} catch (IOException | ParseException | ProcessingException e) {
+			System.out.println(filter);
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
