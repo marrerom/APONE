@@ -3,9 +3,11 @@ package tudelft.dds.irep.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletContext;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -19,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -34,6 +37,7 @@ import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.experiment.RunningExpInfo;
 import tudelft.dds.irep.utils.JsonValidator;
 
 @Path("/experiment")
@@ -262,6 +266,37 @@ public class Experiment {
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 		
+	}
+	
+	@Path("/monitor")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public String monitor() {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Collection<RunningExpInfo> running = em.getRunningExp();
+			ObjectMapper mapper = new ObjectMapper();
+			ArrayNode arrayNode = mapper.createArrayNode();
+			for (RunningExpInfo exp: running) {
+				ObjectNode node = mapper.createObjectNode();
+				node.put("idrun", exp.getIdconfig());
+				node.put("laststarted", exp.getLastStarted().getTime());
+		        ArrayNode treatments = mapper.createArrayNode();
+		        for (String treatname: exp.getMonConsumer().getExposurecount().keySet()){
+		        	ObjectNode treatment = mapper.createObjectNode();
+		        	treatment.put("name", treatname);
+		        	treatment.put("value", exp.getMonConsumer().getExposurecount().get(treatname));
+		        	treatments.add(treatment);
+		        }
+		        node.set("treatments", treatments);
+		        		
+		        arrayNode.add(node);
+			}
+			return mapper.writeValueAsString(arrayNode);
+		} catch (BadRequestException | JsonProcessingException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
 	}
 
 	

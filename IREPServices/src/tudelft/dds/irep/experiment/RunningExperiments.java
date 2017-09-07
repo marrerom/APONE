@@ -2,10 +2,12 @@ package tudelft.dds.irep.experiment;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import com.glassdoor.planout4j.NamespaceConfig;
@@ -22,6 +24,10 @@ public class RunningExperiments {
 
 	public RunningExperiments() {
 		idconfConfig = new HashMap<String, RunningExpInfo>();
+	}
+	
+	public Collection<RunningExpInfo> getRunningExp(){
+		return idconfConfig.values();
 	}
 	
 	public List<String> getExperiments(List<Status> status) {
@@ -58,7 +64,7 @@ public class RunningExperiments {
 		return null;
 	}
 	
-	public void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer) throws IOException {
+	public void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted) throws IOException {
 		String idconf = conf.get_id();
 		Date dateToEnd = conf.getDate_to_end();
 		Integer maxExposures = conf.getMax_exposures();
@@ -67,9 +73,9 @@ public class RunningExperiments {
 		else {
 			RunningExpInfo exp = getExpInfo(idconf);
 			if (targetStatus == Status.PAUSED) {
-				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures);
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted);
 			} else if (targetStatus == Status.ON){
-				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures);
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted);
 			}
 		}
 	}
@@ -99,18 +105,24 @@ public class RunningExperiments {
 			return ei.getRegConsumer();
 		return null;
 	}
+	
+	public Date getLastStarted(String idconf) {
+		RunningExpInfo ei = getExpInfo(idconf);
+		if (ei != null)
+			return ei.getLastStarted();
+		return null;
+	}
 
 
-	private RunningExpInfo getExpInfo(String idconf){
+	public RunningExpInfo getExpInfo(String idconf){
 		return idconfConfig.get(idconf);
 	}
 	
-	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures){
-		return idconfConfig.put(idconf,new RunningExpInfo(conf,status, regConsumer, monConsumer, dateToEnd, maxExposures));
+	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted){
+		return idconfConfig.put(idconf,new RunningExpInfo(idconf,conf,status, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted));
 	}
 	
 	private RunningExpInfo remove(String idconf) throws IOException {
-		RunningExpInfo exp = getExpInfo(idconf);
 		return idconfConfig.remove(idconf);
 	}
 	

@@ -9,11 +9,14 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import javax.swing.Timer;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -54,9 +57,14 @@ public class ExperimentManager {
 	private Database db;
 	
 	private RunningExperiments re;
-	
+
 	private Channel channel;
 
+	
+	public Collection<RunningExpInfo> getRunningExp() {
+		return re.getRunningExp();
+	}
+	
 	public ExperimentManager(Database db, RunningExperiments re, Channel channel) throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
 		this.db = db;
 		this.re = re;
@@ -98,7 +106,7 @@ public class ExperimentManager {
 		ImmutableList<Status> conditions = ImmutableList.of(Status.ON, Status.PAUSED);
 		for (JConfiguration conf: db.getConfigurations(conditions)) {
 			JExperiment exp = db.getExpFromConfiguration(conf.get_id());
-			load(exp,conf,Status.valueOf(conf.getRun()));
+			load(exp,conf);
 		}
 	}
 	
@@ -180,11 +188,13 @@ public class ExperimentManager {
 		return result;
 	}
 
-	public void load(JExperiment exp, JConfiguration conf, Status dbstatus) throws ValidationException, IOException,  ParseException {
+	public void load(JExperiment exp, JConfiguration conf) throws ValidationException, IOException,  ParseException {
+		Status dbstatus =Status.valueOf(conf.getRun());
+		Date last_started = conf.getDate_started()[conf.getDate_started().length-1]; //There is at least one value
 		NamespaceConfig ns  = createNamespace(exp,conf);
 		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
-		re.setExperiment(conf, ns, dbstatus, erc, emc);
+		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started);
 	}
 	
 	private Map<String, Integer> getExposures(JExperiment exp, JConfiguration conf) throws JsonParseException, JsonMappingException, IOException, ParseException{
@@ -212,8 +222,10 @@ public class ExperimentManager {
 	//It should do nothing if the current status is on
 	public void start(JExperiment exp, JConfiguration conf) throws IOException, ValidationException, ParseException {
 		Status st = re.getStatus(conf.get_id());
-		if (st == Status.OFF || st == Status.PAUSED) {
-			db.addExpConfigDateStart(conf.get_id(), new Date());
+		Date last_started = null;
+		if (st == Status.OFF) {
+			last_started = new Date();
+			db.addExpConfigDateStart(conf.get_id(), last_started);
 		}
 		NamespaceConfig ns = re.getNsConfig(conf.get_id());
 		if (ns == null) ns = createNamespace(exp,conf);
@@ -221,12 +233,13 @@ public class ExperimentManager {
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
 		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
-		re.setExperiment(conf, ns, Status.ON, erc, emc);
+		if (last_started == null) last_started = re.getLastStarted(conf.get_id());
+		re.setExperiment(conf, ns, Status.ON, erc, emc, last_started);
 		db.setExpConfigRunStatus(conf.get_id(), Status.ON);
 	}
 	
 	public void stop(String idconf) throws IOException {
-		if (re.getStatus(idconf) == Status.ON) {
+		if (re.getStatus(idconf) == Status.ON || re.getStatus(idconf) == Status.PAUSED) {
 			db.addExpConfigDateEnd(idconf, new Date()); 
 		}
 		deleteRegisterQueue(idconf); //TODO: the list may not be empty, the events will be destroyed
@@ -235,9 +248,12 @@ public class ExperimentManager {
 		db.setExpConfigRunStatus(idconf, Status.OFF);
 	}
 
+	//all the users receives the control, instead of the corresponding treatment while paused
 	public void pause(JExperiment exp, JConfiguration conf) throws IOException, ValidationException, ParseException {
-		if (re.getStatus(conf.get_id()) == Status.ON) {
-			db.addExpConfigDateEnd(conf.get_id(), new Date());
+		Date last_started = null;
+		if (re.getStatus(conf.get_id()) == Status.OFF) {
+			last_started = new Date();
+			db.addExpConfigDateStart(conf.get_id(), last_started);
 		}
 		NamespaceConfig ns = re.getNsConfig(conf.get_id());
 		if (ns == null) ns = createNamespace(exp,conf);
@@ -245,7 +261,8 @@ public class ExperimentManager {
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
 		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposures(exp, conf)));
-		re.setExperiment(conf, ns, Status.PAUSED, erc, emc);
+		if (last_started == null) last_started = re.getLastStarted(conf.get_id());
+		re.setExperiment(conf, ns, Status.PAUSED, erc, emc, last_started);
 		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED);
 	}
 	

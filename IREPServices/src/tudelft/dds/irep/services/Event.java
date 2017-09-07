@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.experiment.RunningExpInfo;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Utils;
 
@@ -82,23 +84,25 @@ public class Event {
 		}
 	}
 	
-	@Path("/monitor/{idconf}")
-	@GET
-	@Consumes(MediaType.TEXT_PLAIN)
-	@Produces(MediaType.APPLICATION_JSON)
-	public String monitor(@PathParam("idconf") String idconf) {
-		try {
-			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Map<String, Integer> expcount = em.getExposures(idconf);
-			//return Response.ok(expcount,MediaType.APPLICATION_JSON).build();
-			ObjectMapper mapper = new ObjectMapper();
-			String expcountstr = mapper.writeValueAsString(expcount); 
-			return expcountstr;
-		} catch (BadRequestException | JsonProcessingException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
-		}
-	}
+//	@Path("/monitor/{idconf}")
+//	@GET
+//	@Consumes(MediaType.TEXT_PLAIN)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public String monitor(@PathParam("idconf") String idconf) {
+//		try {
+//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+//			Map<String, Integer> expcount = em.getExposures(idconf);
+//			//return Response.ok(expcount,MediaType.APPLICATION_JSON).build();
+//			ObjectMapper mapper = new ObjectMapper();
+//			String expcountstr = mapper.writeValueAsString(expcount); 
+//			return expcountstr;
+//		} catch (BadRequestException | JsonProcessingException e) {
+//			e.printStackTrace();
+//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+//		}
+//	}
+	
+
 
 	@Path("/delete")
 	@POST

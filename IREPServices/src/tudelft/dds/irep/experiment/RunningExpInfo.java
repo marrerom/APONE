@@ -7,20 +7,28 @@ import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
 
 public class RunningExpInfo {
-		public NamespaceConfig conf;
-		public Status status;
-		public EventRegisterConsumer regConsumer;
-		public EventMonitoringConsumer monConsumer;
-		public Date dateToEnd;
-		public Integer maxExposures;
+		private String idconfig;
+		private NamespaceConfig conf;
+		private Status status;
+		private EventRegisterConsumer regConsumer;
+		private EventMonitoringConsumer monConsumer;
+		private Date dateToEnd;
+		private Integer maxExposures;
+		private Date lastStarted;
 		
-		public RunningExpInfo(NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures) {
+		public RunningExpInfo(String idconfig, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted) {
+			this.idconfig = idconfig;
 			this.conf = conf;
 			this.status = status;
 			this.regConsumer = regConsumer;
 			this.monConsumer = monConsumer;
 			this.dateToEnd = dateToEnd;
 			this.maxExposures = maxExposures;
+			this.lastStarted = lastStarted;
+		}
+		
+		public String getIdconfig() {
+			return idconfig;
 		}
 
 		public NamespaceConfig getConf() {
@@ -47,4 +55,9 @@ public class RunningExpInfo {
 			return maxExposures;
 		}
 	
+		public Date getLastStarted() {
+			return lastStarted;
+		}
+
+
 }

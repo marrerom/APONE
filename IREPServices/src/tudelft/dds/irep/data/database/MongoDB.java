@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,12 +19,15 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Updates;
 
 import tudelft.dds.irep.data.schema.JConfiguration;
@@ -313,14 +317,24 @@ public class MongoDB implements Database {
 			condConfig.add(eq("run", st.toString()));
 		}
 
-		FindIterable<Document> docs = experiments.find(or(conditions)).projection(com.mongodb.client.model.Projections.elemMatch("config", or(condConfig)));
+		//WRONG! elemMatch returns just the first element
+		//FindIterable<Document> docs = experiments.find(or(conditions)).projection(com.mongodb.client.model.Projections.elemMatch("config", or(condConfig)));
+		
+		
+		Bson unwind = Aggregates.unwind("$config");
+	    List<Bson> list = new ArrayList<Bson>();
+	    list.add(Aggregates.match(or(conditions)));
+	    list.add(unwind);
+	    list.add(Aggregates.match(or(conditions)));
+        List<Document> docs = experiments.aggregate(list).into(
+                new ArrayList<Document>());
+	    
+	    
 		List<JConfiguration> result = new ArrayList<JConfiguration>();
 		ObjectMapper mapper = new ObjectMapper();
 		for (Document d:docs) {
-			ArrayList<Document> configArray = (ArrayList<Document>) d.get("config");
-			for (Document config: configArray) {
-				result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(config, JConfiguration.class)).toJson()),JConfiguration.class));
-			}
+			Document config = (Document) d.get("config");
+			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(config, JConfiguration.class)).toJson()),JConfiguration.class));
 		}
 		return result;
 	}
