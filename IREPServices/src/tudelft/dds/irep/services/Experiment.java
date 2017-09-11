@@ -18,6 +18,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -130,12 +132,15 @@ public class Experiment {
 	@Path("/start")
 	@PUT
 	@Consumes(MediaType.TEXT_PLAIN)
-	public void start(String idconf) {
+	public Response start(String idconf) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JConfiguration conf = em.getConfiguration(idconf);
 			JExperiment exp = em.getExperimentFromConf(idconf);
-			em.start(exp,conf);
+			boolean started = em.start(exp,conf);
+			if (!started)
+				return Response.status(Response.Status.NOT_ACCEPTABLE).build();
+			return Response.ok().build();
 		} catch (IOException | ParseException | ValidationException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
@@ -268,10 +273,10 @@ public class Experiment {
 		
 	}
 	
-	@Path("/monitor")
+	@Path("/monitor/treatments")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitor() {
+	public String monitorTreatments() {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			Collection<RunningExpInfo> running = em.getRunningExp();
@@ -289,7 +294,7 @@ public class Experiment {
 		        	treatments.add(treatment);
 		        }
 		        node.set("treatments", treatments);
-		        		
+	        		
 		        arrayNode.add(node);
 			}
 			return mapper.writeValueAsString(arrayNode);
@@ -299,6 +304,43 @@ public class Experiment {
 		}
 	}
 
+	@Path("/monitor/subtreatments/{idrun}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public String monitorSubtreatments(@PathParam("idrun") String idrun) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Collection<RunningExpInfo> running = em.getRunningExp();
+			ObjectMapper mapper = new ObjectMapper();
+			ArrayNode arrayNode = mapper.createArrayNode();
+			for (RunningExpInfo exp: running) {
+				ObjectNode node = mapper.createObjectNode();
+				node.put("idrun", exp.getIdconfig());
+				node.put("laststarted", exp.getLastStarted().getTime());
+		        ArrayNode treatments = mapper.createArrayNode();
+		        for (String treatname: exp.getMonConsumer().getSubtreatmentcount().keySet()){
+		        	ObjectNode treatment = mapper.createObjectNode();
+		        	treatment.put("name", treatname);
+		        	treatment.put("value", exp.getMonConsumer().getExposurecount().get(treatname));
+		        	ArrayNode subtreatments = mapper.createArrayNode();
+		        	ObjectNode subtreatment = mapper.createObjectNode();
+		        	for (Map.Entry<Map<String,?>, Integer> entry:exp.getMonConsumer().getSubtreatmentcount().get(treatname).entrySet()) {
+		        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
+		        		subtreatment.put("value", entry.getValue());
+		        		subtreatments.add(subtreatment);
+		        	}
+		        	treatment.set("subtreatments", subtreatments);
+		        }
+		        node.set("treatments", treatments);
+	        		
+		        arrayNode.add(node);
+			}
+			return mapper.writeValueAsString(arrayNode);
+		} catch (BadRequestException | JsonProcessingException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}
 	
 
 }
