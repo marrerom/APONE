@@ -30,6 +30,10 @@ public class RunningExperiments {
 		return idconfConfig.values();
 	}
 	
+	public RunningExpInfo getRunningExp(String idconf) {
+		return idconfConfig.get(idconf);
+	}
+	
 	public List<String> getExperiments(List<Status> status) {
 		List<String> result = new ArrayList<String>();
 		for (String idconfig: idconfConfig.keySet()) {
@@ -64,14 +68,13 @@ public class RunningExperiments {
 		return null;
 	}
 	
-	public void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted) throws IOException {
+	public synchronized void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted) throws IOException {
 		String idconf = conf.get_id();
 		Date dateToEnd = conf.getDate_to_end();
 		Integer maxExposures = conf.getMax_exposures();
 		if (targetStatus == Status.OFF)
 			setExperimentOFF(idconf);
 		else {
-			RunningExpInfo exp = getExpInfo(idconf);
 			if (targetStatus == Status.PAUSED) {
 				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted);
 			} else if (targetStatus == Status.ON){
@@ -80,7 +83,7 @@ public class RunningExperiments {
 		}
 	}
 
-	public void setExperimentOFF(String idconf) throws IOException {
+	public synchronized void setExperimentOFF(String idconf) throws IOException {
 		remove(idconf);
 	}
 	

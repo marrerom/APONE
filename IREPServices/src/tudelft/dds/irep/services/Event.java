@@ -35,6 +35,7 @@ import com.google.common.base.Preconditions;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
@@ -46,17 +47,23 @@ public class Event {
 	
 	@Context ServletContext context;
 	
+	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
 	@Path("/register")
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public void register(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
 			@FormDataParam("unitid") String unitid, @FormDataParam("binary") String binary, 
-			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue) {
+			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue, 
+		    @FormDataParam("paramvalues") String paramvalues) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			ObjectMapper mapper = new ObjectMapper();
-			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestamp);
+			JsonNode jnode = mapper.readTree(paramvalues);
+			JParamValues params = mapper.convertValue(jnode, JParamValues.class);
+			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
+			String treatment = em.getTreatment(unitExp, idconfig, unitid); //could be obtained from nsconfig if the experiment is running
+			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestamp,treatment, params);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);

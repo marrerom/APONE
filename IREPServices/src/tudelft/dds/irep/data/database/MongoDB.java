@@ -178,6 +178,9 @@ public class MongoDB implements Database {
 			
 		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
 		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
+//		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
+//		if (docmap.get("paramvalues") != null) conditions.add(regex("paramvalues", docmap.get("paramvalues").toString()));
+
 		
 		if (docmap.get("timestamp") != null) {
 			Date date = (Date) docmap.get("timestamp");

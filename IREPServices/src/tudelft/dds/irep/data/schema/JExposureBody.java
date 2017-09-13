@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class JExposureBody extends JCommon {
 
-	@JsonIgnore
-	public static final String EVENT_ENAME = "exposure";
 
 	
 	@JsonIgnore

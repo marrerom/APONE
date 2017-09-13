@@ -50,23 +50,23 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 	}
 	
 	private void loadEvent(JEvent exp) throws JsonProcessingException, IOException {
-		String expbody = exp.getEvalue();
-		JsonNode jnode = mapper.readTree(expbody);
-		JExposureBody jexpbody = mapper.convertValue(jnode, JExposureBody.class);
-		updateExposureCount(jexpbody);
-		updateSubtreatmentCount(jexpbody);
+//		String expbody = exp.getEvalue();
+//		JsonNode jnode = mapper.readTree(expbody);
+//		JExposureBody jexpbody = mapper.convertValue(jnode, JExposureBody.class);
+		updateExposureCount(exp);
+		updateSubtreatmentCount(exp);
 	}
 	
-	private void updateExposureCount(JExposureBody jexpbody) {
-		String treatment = jexpbody.getTreatment(); 
+	private void updateExposureCount(JEvent jevent) {
+		String treatment = jevent.getTreatment(); 
 		Integer counter = exposurecount.get(treatment);
 		if (counter == null) counter = 1; else counter++;
 		exposurecount.put(treatment, counter);
 	}
 	
-	private void updateSubtreatmentCount(JExposureBody jexpbody) {
-		String treatment = jexpbody.getTreatment();
-		Map<String,?> params =jexpbody.getParamvalues();
+	private void updateSubtreatmentCount(JEvent jevent) {
+		String treatment = jevent.getTreatment();
+		Map<String,?> params =mapper.convertValue(jevent.getParamvalues(), Map.class);
 		Map<Map<String, ?>, Integer> maptreatment = subtreatmentcount.get(treatment);
 		if (maptreatment == null) {
 			maptreatment = new HashMap<Map<String,?>, Integer>();
@@ -92,7 +92,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 		JEvent event;
 		try {
 			event = (JEvent) Utils.deserialize(body);
-			if (event.getEname().equals(JExposureBody.EVENT_ENAME)) {
+			if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
 				loadEvent(event);
 			}
 			this.getChannel().basicAck(envelope.getDeliveryTag(), true);

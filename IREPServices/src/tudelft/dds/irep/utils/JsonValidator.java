@@ -23,7 +23,11 @@ import tudelft.dds.irep.data.schema.JCommon;
 
 public class JsonValidator {
 	
-	private Map<Class<? extends JCommon>, JsonSchema> schemas = new HashMap<Class<? extends JCommon>, JsonSchema>();
+	private Map<Class<? extends JCommon>, JsonSchema> schemas;
+	
+	public JsonValidator() {
+		schemas = new HashMap<Class<? extends JCommon>, JsonSchema>();
+	}
 	
 	private JsonSchema getSchema(ServletContext sc, JCommon obj) throws FileNotFoundException, IOException, ProcessingException {
 		InputStream schemaStream = sc.getResourceAsStream(obj.getSchemaPath());
@@ -36,10 +40,17 @@ public class JsonValidator {
 	}
 	
 	public ProcessingReport validate(JCommon obj, JsonNode jnode, ServletContext sc) throws FileNotFoundException, IOException, ProcessingException {
-		if (!schemas.containsKey(this.getClass())){
-			schemas.put(obj.getClass(), getSchema(sc, obj));
+		synchronized(this) {
+			if (!schemas.containsKey(obj.getClass())){
+				schemas.put(obj.getClass(), getSchema(sc, obj));
+			}
 		}
+		try {
 		return schemas.get(obj.getClass()).validate(jnode);
+		} catch (NullPointerException e) {
+			System.out.println(e.getMessage());
+		}
+		return null;
 	}
 
 }

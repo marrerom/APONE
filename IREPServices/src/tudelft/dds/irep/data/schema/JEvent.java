@@ -17,6 +17,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class JEvent extends JCommon implements Serializable {
 	
 	@JsonIgnore
+	public static final String EXPOSURE_ENAME = "exposure";
+	
+	@JsonIgnore
 	private static final long serialVersionUID = 1L;
 	
 	@JsonIgnore
@@ -40,6 +43,8 @@ public class JEvent extends JCommon implements Serializable {
 	private String idconfig;
 	private Date timestamp;
 	private String unitid;
+	private String treatment;
+	private JParamValues paramvalues;
 	private String ename;
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
 	private Boolean binary; //if event value (evalue) is binary or not
@@ -76,6 +81,22 @@ public class JEvent extends JCommon implements Serializable {
 
 	public void setUnitid(String unitid) {
 		this.unitid = unitid;
+	}
+	
+	public String getTreatment() {
+		return treatment;
+	}
+
+	public void setTreatment(String treatment) {
+		this.treatment = treatment;
+	}
+
+	public JParamValues getParamvalues() {
+		return paramvalues;
+	}
+
+	public void setParamvalues(JParamValues paramvalues) {
+		this.paramvalues = paramvalues;
 	}
 
 	public String getEname() {

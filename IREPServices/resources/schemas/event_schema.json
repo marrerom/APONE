@@ -13,9 +13,18 @@
 	"idconfig": {"type":"string"},
 	"timestamp": {"type":"string"},
 	"unitid": {"type":"string"},
+	"treatment": {"type":"string"},
+	"paramvalues": {"$ref": "#/definitions/paramvalues" },
 	"ename": {"type":"string"},
 	"evalue": {"type":"string"},
 	"binary" : {"type":"boolean", "default":false}
+	},
+
+"definitions" : {
+	"paramvalues": 
+    	{
+		"type" : "object"
+		}
 	}
 
 }

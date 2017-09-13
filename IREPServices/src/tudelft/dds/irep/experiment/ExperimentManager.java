@@ -40,6 +40,7 @@ import tudelft.dds.irep.data.schema.JDistribution;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JExposureBody;
+import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
@@ -63,6 +64,10 @@ public class ExperimentManager {
 	
 	public Collection<RunningExpInfo> getRunningExp() {
 		return re.getRunningExp();
+	}
+	
+	public RunningExpInfo getRunningExp(String idconf) {
+		return re.getRunningExp(idconf);
 	}
 	
 	public ExperimentManager(Database db, RunningExperiments re, Channel channel) throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
@@ -183,15 +188,15 @@ public class ExperimentManager {
 		return PlanoutDSLCompiler.dsl_to_json(dsl); 
 	}
 	
-	public Map<String, ?> getParams(String unitExp, String idconf, String idunit) throws javax.ws.rs.BadRequestException {
+	public Map<String, ?> getParams(String unitExp, String idconf, String idunit, Map<String,?> overrides) throws javax.ws.rs.BadRequestException {
 		Status st = re.getStatus(idconf);
 		NamespaceConfig nsConfig = re.getNsConfig(idconf);
 		Map<String, ?> result = new HashMap<>();
 		if (st == Status.ON) {
-			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
+			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), overrides);
 			result = ns.getParams();
 		} else if (st == Status.PAUSED) {
-			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), null);
+			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), overrides);
 			result = ns.getParams();
 		} else if (st == Status.OFF) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
@@ -204,11 +209,13 @@ public class ExperimentManager {
 		NamespaceConfig nsConfig = re.getNsConfig(idconf);
 		String result = null;
 		if (st == Status.ON) {
-			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
-			result = ns.getExperiment().name;
+			result = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit)).name;
+			//Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
+			//result = ns.getExperiment().name;
 		} else if (st == Status.PAUSED) {
-			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), null);
-			result = ns.getExperiment().name; //should always be the default experiment
+			//Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), null);
+			//result = ns.getExperiment().name; //should always be the default experiment
+			result = nsConfig.getExperiment(ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true)).name;
 		} else if (st == Status.OFF) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}
@@ -227,7 +234,7 @@ public class ExperimentManager {
 	private List<JEvent> getExposureEvents(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		JEvent filter = new JEvent();
 		filter.setIdconfig(idconf);
-		filter.setEname(JExposureBody.EVENT_ENAME);
+		filter.setEname(JEvent.EXPOSURE_ENAME);
 		return db.getEvents(filter);
 	}
 	
@@ -338,12 +345,14 @@ public class ExperimentManager {
 		return emc.getExposurecount();
 	}
 	
-	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, String timestamp) throws IOException, ParseException {
+	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, String timestamp, String treatment, JParamValues params) throws IOException, ParseException {
 		JEvent event = new JEvent();
 		event.setBinary(false);
 		event.setEname(ename);
 		event.setIdconfig(idconf);
 		event.setUnitid(unitid);
+		event.setTreatment(treatment);
+		event.setParamvalues(params);
 		event.setTimestamp(Utils.getDate(timestamp));
 		event.setBinary(isBinary);
 		String valuestr;
@@ -357,25 +366,26 @@ public class ExperimentManager {
 		return event;
 	}
 	
-	public JExposureBody createExposureBody(String treatment, Map<String, ?> params) {
-		JExposureBody expbody = new JExposureBody();
-		expbody.setTreatment(treatment);
-		expbody.setParamvalues(params);
-		return expbody;
-	}
-	
-	public JEvent createExposureEvent(String idconfig, String idunit, String timestamp, JExposureBody expbody) throws IOException, ParseException {
-		ObjectMapper mapper = new ObjectMapper();
-		//InputStream is = new ByteArrayInputStream(mapper.convertValue(expbody, Map.class).toString().getBytes());
-		InputStream is = new ByteArrayInputStream(mapper.writeValueAsString(expbody).getBytes());
-		return createEvent(idconfig, idunit, JExposureBody.EVENT_ENAME, false, is, timestamp);
-	}
+//	public JExposureBody createExposureBody(String treatment, Map<String, ?> params) {
+//		JExposureBody expbody = new JExposureBody();
+//		expbody.setTreatment(treatment);
+//		expbody.setParamvalues(params);
+//		return expbody;
+//	}
+//	
+//	public JEvent createExposureEvent(String idconfig, String idunit, String timestamp, JExposureBody expbody) throws IOException, ParseException {
+//		ObjectMapper mapper = new ObjectMapper();
+//		//InputStream is = new ByteArrayInputStream(mapper.convertValue(expbody, Map.class).toString().getBytes());
+//		InputStream is = new ByteArrayInputStream(mapper.writeValueAsString(expbody).getBytes());
+//		return createEvent(idconfig, idunit, JExposureBody.EVENT_ENAME, false, is, timestamp);
+//	}
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
 		String nsName = exp.getName()+"@"+exp.getExperimenter()+"."+config.getName();
 		//String salt = nsName; //TODO: check conf. names are different for same experiment
 		String salt = config.get_id();
 		NamespaceConfig ns = new NamespaceConfig(nsName,TOTALSEGMENTS, exp.getUnit(), salt);
+		
 		
 		for (JTreatment treat: exp.getTreatment()) {
 			Map<String,?> dsl = PlanoutDSLCompiler.dsl_to_json(treat.getDefinition());

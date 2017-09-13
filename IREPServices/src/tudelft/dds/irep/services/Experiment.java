@@ -1,5 +1,6 @@
 package tudelft.dds.irep.services;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -37,6 +38,7 @@ import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JExposureBody;
+import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
@@ -192,12 +194,13 @@ public class Experiment {
 		}
 	}
 	
+	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
 	@Path("/getParams")
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getParams(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit, 
-			@FormDataParam("timestamp") String timestamp) {
+			@FormDataParam("timestamp") String timestamp, @FormDataParam("overrides") String overrides) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
@@ -205,16 +208,23 @@ public class Experiment {
 			ObjectMapper mapper = new ObjectMapper();
 			JExperiment exp = em.getExperimentFromConf(idconfig);
 			String unitExp = exp.getUnit();
-			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit);
+			JsonNode jnode = mapper.readTree(overrides);
+			Map<String,?> overridesMap = mapper.convertValue(jnode, Map.class);
+			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
+			
+			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
+			
 			String paramsstr = mapper.writeValueAsString(params);
 			
 			//TODO: is it possible to run asynchronously the following?
 			String treatment = em.getTreatment(unitExp, idconfig, idunit);
-			JExposureBody expbody = em.createExposureBody(treatment, params);
-			ProcessingReport pr = jval.validate(expbody,mapper.readTree(mapper.writeValueAsString(expbody)), context);
-			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
-			pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
+//			JExposureBody expbody = em.createExposureBody(treatment, params);
+//			ProcessingReport pr = jval.validate(expbody,mapper.readTree(mapper.writeValueAsString(expbody)), context);
+//			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+//			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
+			InputStream is = new ByteArrayInputStream("".getBytes());
+			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, false, is, timestamp, treatment, jparams);
+			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);
 			em.monitorEvent(event);
@@ -310,32 +320,29 @@ public class Experiment {
 	public String monitorSubtreatments(@PathParam("idrun") String idrun) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Collection<RunningExpInfo> running = em.getRunningExp();
+			RunningExpInfo exp = em.getRunningExp(idrun);
 			ObjectMapper mapper = new ObjectMapper();
-			ArrayNode arrayNode = mapper.createArrayNode();
-			for (RunningExpInfo exp: running) {
-				ObjectNode node = mapper.createObjectNode();
-				node.put("idrun", exp.getIdconfig());
-				node.put("laststarted", exp.getLastStarted().getTime());
-		        ArrayNode treatments = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getSubtreatmentcount().keySet()){
-		        	ObjectNode treatment = mapper.createObjectNode();
-		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getExposurecount().get(treatname));
-		        	ArrayNode subtreatments = mapper.createArrayNode();
-		        	ObjectNode subtreatment = mapper.createObjectNode();
-		        	for (Map.Entry<Map<String,?>, Integer> entry:exp.getMonConsumer().getSubtreatmentcount().get(treatname).entrySet()) {
-		        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
-		        		subtreatment.put("value", entry.getValue());
-		        		subtreatments.add(subtreatment);
-		        	}
-		        	treatment.set("subtreatments", subtreatments);
-		        }
-		        node.set("treatments", treatments);
-	        		
-		        arrayNode.add(node);
-			}
-			return mapper.writeValueAsString(arrayNode);
+			ObjectNode node = mapper.createObjectNode();
+			node.put("idrun", exp.getIdconfig());
+			node.put("laststarted", exp.getLastStarted().getTime());
+	        ArrayNode treatments = mapper.createArrayNode();
+	        for (String treatname: exp.getMonConsumer().getSubtreatmentcount().keySet()){
+	        	ObjectNode treatment = mapper.createObjectNode();
+	        	treatment.put("name", treatname);
+	        	treatment.put("value", exp.getMonConsumer().getExposurecount().get(treatname));
+	        	ArrayNode subtreatments = mapper.createArrayNode();
+	        	for (Map.Entry<Map<String,?>, Integer> entry:exp.getMonConsumer().getSubtreatmentcount().get(treatname).entrySet()) {
+	        		ObjectNode subtreatment = mapper.createObjectNode();
+	        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
+	        		subtreatment.put("value", entry.getValue());
+	        		subtreatments.add(subtreatment);
+	        	}
+	        	treatment.set("subtreatments", subtreatments);
+	        	treatments.add(treatment);
+	        }
+	        
+	        node.set("treatments", treatments);
+			return mapper.writeValueAsString(node);
 		} catch (BadRequestException | JsonProcessingException e) {
 			e.printStackTrace();
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
