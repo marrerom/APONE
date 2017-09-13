@@ -13,7 +13,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import tudelft.dds.irep.data.schema.JEvent;
-import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.utils.Utils;
 
 public class EventMonitoringConsumer extends DefaultConsumer {

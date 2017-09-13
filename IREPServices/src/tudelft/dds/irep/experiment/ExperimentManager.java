@@ -39,7 +39,6 @@ import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JDistribution;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
-import tudelft.dds.irep.data.schema.JExposureBody;
 import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
