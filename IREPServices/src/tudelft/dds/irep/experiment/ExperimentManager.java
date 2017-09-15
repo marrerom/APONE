@@ -2,11 +2,9 @@ package tudelft.dds.irep.experiment;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,14 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.swing.Timer;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glassdoor.planout4j.Experiment;
 import com.glassdoor.planout4j.Namespace;
 import com.glassdoor.planout4j.NamespaceConfig;
 import com.glassdoor.planout4j.compiler.PlanoutDSLCompiler;
@@ -208,13 +205,17 @@ public class ExperimentManager {
 		NamespaceConfig nsConfig = re.getNsConfig(idconf);
 		String result = null;
 		if (st == Status.ON) {
-			result = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit)).name;
+			Experiment planoutExp = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit));
+			if (planoutExp != null)
+				result = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit)).name;
+			else result = nsConfig.getDefaultExperiment().name;
 			//Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
 			//result = ns.getExperiment().name;
 		} else if (st == Status.PAUSED) {
+			result = nsConfig.getDefaultExperiment().name;
 			//Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true), null);
 			//result = ns.getExperiment().name; //should always be the default experiment
-			result = nsConfig.getExperiment(ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true)).name;
+			//result = nsConfig.getExperiment(ImmutableMap.of(unitExp, idunit, Namespace.BASELINE_KEY, true)).name;
 		} else if (st == Status.OFF) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}

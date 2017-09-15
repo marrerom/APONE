@@ -1,13 +1,23 @@
 package tudelft.dds.irep.services;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
@@ -17,23 +27,31 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
+import tudelft.dds.irep.data.schema.JEventCSV;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
@@ -168,6 +186,46 @@ public class Event {
 			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
 		}
 		
+	}
+
+	
+	@POST
+	@Path("/getCSV")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getCSV(String idevents) throws JsonProcessingException, IOException, ParseException {
+		ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode jnode = mapper.readTree(idevents);
+		List<JEvent> events = new ArrayList<JEvent>(); 
+		for (JsonNode item : jnode) {
+			String id = item.asText();
+			events.add(em.getEvent(id));
+		}
+		StreamingOutput stream = new StreamingOutput() {
+			@Override
+			public void write(OutputStream out) throws IOException, WebApplicationException {
+				CsvMapper csvmapper = new CsvMapper();
+				CsvSchema schema = csvmapper.schemaFor(JEventCSV.class);
+				schema = schema.withColumnSeparator('\t');
+				ObjectWriter myObjectWriter = csvmapper.writer(schema);
+
+				Writer writer = new BufferedWriter(new OutputStreamWriter(out));
+				SequenceWriter sw = myObjectWriter.writeValues(writer);
+				for (JEvent event : events) {
+					JEventCSV ecsv = new JEventCSV(event);
+					//myObjectWriter.write.writeValue(writer, ecsv);
+					sw.write(ecsv);
+				}
+				writer.flush();
+				sw.close();
+				
+			}
+		};
+
+		return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+				.header("Content-Disposition", "attachment; filename=\"" + "events.csv" + "\"") // optional
+				.build();
 	}
 
 	

@@ -2,19 +2,12 @@ package tudelft.dds.irep.data.schema;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-
-
-@JsonInclude(Include.NON_NULL)
-public class JEvent extends JCommon implements Serializable {
+public class JEventCSV extends JCommon implements Serializable {
 	@JsonIgnore
 	public static final String EXPOSURE_ENAME = "exposure";
 	
@@ -27,6 +20,28 @@ public class JEvent extends JCommon implements Serializable {
 	@JsonIgnore
 	private static final String rootElement = null;
 	
+	protected String _id;
+	protected String idconfig;
+	protected Date timestamp;
+	protected String unitid;
+	protected String treatment;
+	protected String ename;
+	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
+	protected Boolean binary; //if event value (evalue) is binary or not
+	protected String paramvalues;
+	
+	@JsonIgnore
+	public JEventCSV(JEvent event) {
+		this._id = event._id;
+		this.binary =event.binary;
+		this.ename = event.ename;
+		this.evalue = event.evalue;
+		this.idconfig = event.idconfig;
+		this.treatment = event.treatment;
+		this.timestamp = event.timestamp;
+		this.unitid = event.unitid;
+		this.paramvalues = event.paramvalues.any().toString(); //TODO:check!
+	}
 	
 	@JsonIgnore	
 	public String getSchemaPath() {
@@ -37,16 +52,6 @@ public class JEvent extends JCommon implements Serializable {
 	public String getRootElement() {
 		return rootElement;
 	}
-	
-	protected String _id;
-	protected String idconfig;
-	protected Date timestamp;
-	protected String unitid;
-	protected String treatment;
-	protected JParamValues paramvalues;
-	protected String ename;
-	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
-	protected Boolean binary; //if event value (evalue) is binary or not
 	
 	
 	public String get_id() {
@@ -90,11 +95,11 @@ public class JEvent extends JCommon implements Serializable {
 		this.treatment = treatment;
 	}
 
-	public JParamValues getParamvalues() {
+	public String getParamvalues() {
 		return paramvalues;
 	}
 
-	public void setParamvalues(JParamValues paramvalues) {
+	public void setParamvalues(String paramvalues) {
 		this.paramvalues = paramvalues;
 	}
 
@@ -122,6 +127,4 @@ public class JEvent extends JCommon implements Serializable {
 	public void setBinary(Boolean binary) {
 		this.binary = binary;
 	}
-
-
 }

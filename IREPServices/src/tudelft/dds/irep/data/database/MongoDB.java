@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -33,6 +34,7 @@ import com.mongodb.client.model.Updates;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.utils.Utils;
@@ -171,16 +173,31 @@ public class MongoDB implements Database {
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
-	private FindIterable<Document> getFilteredEvents(Map<String, Object> docmap){
+	private FindIterable<Document> getFilteredEvents(JEvent filter) throws ParseException{
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
+		docmap = new JacksonToMongo().convert(docmap, JEvent.class);
+
 		List<Bson> conditions = new ArrayList<Bson>();
 		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
 		if (docmap.get("ename") != null) conditions.add(eq("ename", docmap.get("ename")));	
 			
 		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
 		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
-//		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
-//		if (docmap.get("paramvalues") != null) conditions.add(regex("paramvalues", docmap.get("paramvalues").toString()));
-
+		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
+		
+		JParamValues jparams = filter.getParamvalues();
+		if (jparams != null) {
+			Map<String,?> params = jparams.any();
+			for (String key: params.keySet()) {
+				if (params.get(key).getClass() == String.class && StringUtils.isNumeric((String)params.get(key))) { //TODO: coming from the interface, we don't know the type
+					String value = (String) params.get(key);
+					conditions.add(or(eq("paramvalues."+key, params.get(key)), eq("paramvalues."+key, Integer.parseInt(value))));
+				} else {
+					conditions.add(eq("paramvalues."+key, params.get(key)));
+				}
+			}
+		}
 		
 		if (docmap.get("timestamp") != null) {
 			Date date = (Date) docmap.get("timestamp");
@@ -208,7 +225,10 @@ public class MongoDB implements Database {
 	}
 	
 
-	private FindIterable<Document> getFilteredExperiments(Map<String, Object> docmap) {
+	private FindIterable<Document> getFilteredExperiments(JExperiment filter) throws ParseException {
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
+		docmap = new JacksonToMongo().convert(docmap, JExperiment.class);
 		List<Bson> conditions = new ArrayList<Bson>();
 		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
 		if (docmap.get("name") != null) conditions.add(eq("name", docmap.get("name")));	
@@ -277,13 +297,9 @@ public class MongoDB implements Database {
 	}
 	
 	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
-		ObjectMapper mapper = new ObjectMapper();
 		List<JExperiment> result = new ArrayList<JExperiment>();
-		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
-		docmap = new JacksonToMongo().convert(docmap, JExperiment.class);
-		//FindIterable<Document> exps = getFilteredExperiments(filter);
-		FindIterable<Document> exps = getFilteredExperiments(docmap);
-		
+		FindIterable<Document> exps = getFilteredExperiments(filter);
+		ObjectMapper mapper = new ObjectMapper();		
 		for (Document exp: exps) {
 			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JExperiment.class)).toJson()),JExperiment.class));
 		}
@@ -291,12 +307,9 @@ public class MongoDB implements Database {
 	}
 	
 	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
-		ObjectMapper mapper = new ObjectMapper();
 		List<JEvent> result = new ArrayList<JEvent>();
-		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
-		docmap = new JacksonToMongo().convert(docmap, JEvent.class);
-		FindIterable<Document> exps = getFilteredEvents(docmap);
-		
+		FindIterable<Document> exps = getFilteredEvents(filter);
+		ObjectMapper mapper = new ObjectMapper();		
 		for (Document exp: exps) {
 			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JEvent.class)).toJson()),JEvent.class));
 		}
