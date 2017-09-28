@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -82,15 +83,17 @@ public class Experiment {
 	
 	@Path("/new/configuration")
 	@POST
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public String uploadConfiguration(@FormDataParam("idexp") String idexp, @FormDataParam("configuration") String configuration) {
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String uploadConfiguration(String inputJson) {
 		
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
 			ObjectMapper mapper = new ObjectMapper();
-			JsonNode jnode = mapper.readTree(configuration);
+			JsonNode inputNode = mapper.readTree(inputJson);
+			String idexp = inputNode.get("idexp").asText();
+			JsonNode jnode = inputNode.get("configuration");
 			JConfiguration conf = mapper.convertValue(jnode, JConfiguration.class);
 			ProcessingReport pr = jval.validate(conf,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
@@ -198,7 +201,7 @@ public class Experiment {
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getParams(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit, 
+	public String getParamsMultipart(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit, 
 			@FormDataParam("timestamp") String timestamp, @FormDataParam("overrides") String overrides) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -209,6 +212,54 @@ public class Experiment {
 			String unitExp = exp.getUnit();
 			JsonNode jnode = mapper.readTree(overrides);
 			Map<String,?> overridesMap = mapper.convertValue(jnode, Map.class);
+			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
+			
+			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
+			
+			String paramsstr = mapper.writeValueAsString(params);
+			
+			//TODO: is it possible to run asynchronously the following?
+			String treatment = em.getTreatment(unitExp, idconfig, idunit);
+//			JExposureBody expbody = em.createExposureBody(treatment, params);
+//			ProcessingReport pr = jval.validate(expbody,mapper.readTree(mapper.writeValueAsString(expbody)), context);
+//			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+//			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
+			InputStream is = new ByteArrayInputStream("".getBytes());
+			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, false, is, timestamp, treatment, jparams);
+			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			em.registerEvent(idconfig, event);
+			em.monitorEvent(event);
+			
+			return paramsstr;
+		} catch (IOException | ParseException | ProcessingException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}
+	
+	
+	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
+	@Path("/getParams")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getParamsJson(String inputJson) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+	
+			ObjectMapper mapper = new ObjectMapper();
+			
+			JsonNode inputNode = mapper.readTree(inputJson);
+			String idconfig = inputNode.get("idconfig").asText();
+			String idunit = inputNode.get("idunit").asText();
+			String timestamp = inputNode.get("timestamp").asText();
+			
+			JExperiment exp = em.getExperimentFromConf(idconfig);
+			String unitExp = exp.getUnit();
+			
+			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
 			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);

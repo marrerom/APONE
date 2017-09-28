@@ -1,7 +1,6 @@
-package tudelft.dds.irep.client;
+package tudelft.dds.irep.test;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -20,15 +19,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.json.simple.JSONObject;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-
-import tudelft.dds.irep.data.schema.JEvent;
-
-
-
-//import com.google.common.net.MediaType;
 
 
 public class ClientTest {

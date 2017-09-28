@@ -2,6 +2,7 @@ package tudelft.dds.irep.services;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,8 +70,8 @@ public class Event {
 	@Path("/register")
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public void register(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
-			@FormDataParam("unitid") String unitid, @FormDataParam("binary") String binary, 
+	public void registerMultipart(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
+			@FormDataParam("idunit") String idunit, @FormDataParam("binary") String binary, 
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue, 
 		    @FormDataParam("paramvalues") String paramvalues) {
 		try {
@@ -80,8 +81,8 @@ public class Event {
 			JsonNode jnode = mapper.readTree(paramvalues);
 			JParamValues params = mapper.convertValue(jnode, JParamValues.class);
 			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
-			String treatment = em.getTreatment(unitExp, idconfig, unitid); //could be obtained from nsconfig if the experiment is running
-			JEvent event = em.createEvent(idconfig, unitid, ename, Boolean.valueOf(binary), evalue, timestamp,treatment, params);
+			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
+			JEvent event = em.createEvent(idconfig, idunit, ename, Boolean.valueOf(binary), evalue, timestamp,treatment, params);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);
@@ -91,6 +92,38 @@ public class Event {
 		}
 	}
 	
+
+	@Path("/register")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void registerJson(String inputJson) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+			ObjectMapper mapper = new ObjectMapper();
+			
+			JsonNode inputNode = mapper.readTree(inputJson);
+			String idconfig = inputNode.get("idconfig").asText();
+			String idunit = inputNode.get("idunit").asText();
+			String timestamp = inputNode.get("timestamp").asText();
+			String binary = inputNode.get("binary").asText();
+			String ename = inputNode.get("ename").asText();
+			String evalue = inputNode.get("evalue").asText();
+			
+			JParamValues params = mapper.convertValue(inputNode.get("paramvalues").asText(), JParamValues.class);
+			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
+			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
+			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
+			JEvent event = em.createEvent(idconfig, idunit, ename, Boolean.valueOf(binary), stream, timestamp,treatment, params);
+			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			em.registerEvent(idconfig, event);
+		} catch (IOException | ProcessingException | ParseException e) {
+			e.printStackTrace();
+			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		}
+	}
+
 	
 	@Path("/get/{idevent}")
 	@GET

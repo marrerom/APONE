@@ -207,7 +207,7 @@ public class ExperimentManager {
 		if (st == Status.ON) {
 			Experiment planoutExp = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit));
 			if (planoutExp != null)
-				result = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit)).name;
+				result = planoutExp.name;
 			else result = nsConfig.getDefaultExperiment().name;
 			//Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), null);
 			//result = ns.getExperiment().name;

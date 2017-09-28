@@ -18,6 +18,6 @@
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="java-output-path" value="/planout4jTestJax/build/classes"/>
-        <property name="context-root" value="IREPServices"/>
+        <property name="context-root" value="IREPlatform"/>
     </wb-module>
 </project-modules>

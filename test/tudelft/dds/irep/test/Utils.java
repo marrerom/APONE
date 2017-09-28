@@ -1,4 +1,4 @@
-package tudelft.dds.irep.client;
+package tudelft.dds.irep.test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

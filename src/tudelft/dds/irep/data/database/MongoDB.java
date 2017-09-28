@@ -168,7 +168,8 @@ public class MongoDB implements Database {
 
 	public JExperiment getExpFromConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		checkExistConfiguration(idconf);
-		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment"))).first();
+		//Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment"))).first();
+		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).first();
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
