@@ -1,12 +1,17 @@
 package tudelft.dds.irep.data.database;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
-
+import org.bson.Document;
 import org.bson.types.ObjectId;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import tudelft.dds.irep.data.schema.JCommon;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -20,10 +25,25 @@ public class JacksonToMongo extends Conversor {
 	@Override
 	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
 		Boolean binary = (Boolean) mongodoc.get("binary");
-		if (binary!=null && binary && mongodoc.get("evalue")!=null) {
-			String str = (String) mongodoc.get("evalue");
-			byte[] bin = Utils.decodeBinary(str);
-			mongodoc.put("evalue", bin);
+		if (binary != null && mongodoc.get("evalue")!=null) {
+			if (binary) {
+				String str = (String) mongodoc.get("evalue");
+				byte[] bin = Utils.decodeBinary(str);
+				mongodoc.put("evalue", bin);
+			} else {
+				try {
+					String str = (String) mongodoc.get("evalue");
+					ObjectMapper mapper = new ObjectMapper();
+					JsonNode jnode = mapper.readTree(str);
+					Map<String,Object> map = mapper.convertValue(jnode, Map.class);
+					Document newdoc = new Document(map);
+					mongodoc.put("evalue", newdoc);
+				} catch (IOException e) {
+					//TODO: log unable convert evalue to json object. It is keep as string
+					mongodoc.put("evalue", mongodoc.get("evalue").toString());
+					System.err.println("Error converting evalue to json");
+				}
+			}
 		}
 		return mongodoc;
 	}

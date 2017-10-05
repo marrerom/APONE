@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
+import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
@@ -29,12 +30,21 @@ public class MongoToJackson extends Conversor {
 	
 	@Override
 	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
+		String ename = (String) mongodoc.get("ename");
 		boolean binary = (Boolean) mongodoc.get("binary");
 		if (binary) {
 			Binary bin = (Binary) mongodoc.get("evalue");
 			byte[] valuebin = bin.getData();
 			String valuestr = Utils.encodeBinary(valuebin);
 			mongodoc.put("evalue", valuestr);
+		} else {
+			try {
+				Document value = (Document) mongodoc.get("evalue");
+				mongodoc.put("evalue", value.toJson());
+			} catch (ClassCastException e) {
+				mongodoc.put("evalue", mongodoc.get("evalue").toString());
+			}
+			
 		}
 		return mongodoc;
 	}

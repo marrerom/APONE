@@ -23,7 +23,7 @@ import org.json.simple.JSONObject;
 
 public class ClientTest {
 	
-		final static String context = "http://localhost:8080/IREPServices/"; 
+		final static String context = "http://localhost:8080/IREPlatform/"; 
 		final static String jerseyServices = "service";
 		
 		
@@ -225,7 +225,7 @@ public class ClientTest {
 			
 			FormDataMultiPart mmap = new FormDataMultiPart();
 			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
-			FormDataBodyPart part2 = new FormDataBodyPart("unitid", unitid);
+			FormDataBodyPart part2 = new FormDataBodyPart("idunit", unitid);
 			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestampFormatted.toString());
 			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
 			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
@@ -320,6 +320,13 @@ public class ClientTest {
 		    
 		   try{
 			   
+			   Response resEvent1 = testGetEvent(client, "59d635dd2ada013a21922315"); //json
+			   String ev1 = resEvent1.readEntity(String.class);
+			   Response resEvent2 = testGetEvent(client, "59d635dd2ada013a21922316"); //string
+			   String ev2 = resEvent2.readEntity(String.class);
+			   Response resEvent3 = testGetEvent(client, "59d635d22ada013a21922308"); //exposure
+			   String ev3 = resEvent3.readEntity(String.class);
+			   
 //			   Response res = testSearch(client);
 //			   String results = res.readEntity(String.class);
 			   
@@ -334,12 +341,12 @@ public class ClientTest {
 					   Map<String, Object> overrides = new HashMap<String,Object>();
 					   //overrides.put("a", 11);
 					   String unitid = String.valueOf(i);
-					   Response res3 = testExperimentGetParams(client, "59b00e102ada012c1fa0b3ee", unitid, JSONObject.toJSONString(overrides));
+					   Response res3 = testExperimentGetParams(client, "59ca668f2ada012eec5088ee", unitid, JSONObject.toJSONString(overrides));
 					   String params = res3.readEntity(String.class);
 					   System.out.println("Unit "+unitid +" Params "+params);
 					   
-					   testRegisterEvent(client, "59b00e102ada012c1fa0b3ee", i.toString(), "testparam", "test param value",params);
-					   
+					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(), "rankingtestparam_json", "{\"test\":0, \"param\":1, \"value\":\"dos\"}",params);
+					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(), "rankingtestparam_string", "test param",params);
 				   }
 //		   		
 //		   		

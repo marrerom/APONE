@@ -110,7 +110,7 @@ public class Event {
 			String ename = inputNode.get("ename").asText();
 			String evalue = inputNode.get("evalue").asText();
 			
-			JParamValues params = mapper.convertValue(inputNode.get("paramvalues").asText(), JParamValues.class);
+			JParamValues params = mapper.convertValue(inputNode.get("paramvalues"), JParamValues.class);
 			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
 			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
