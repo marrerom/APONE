@@ -108,7 +108,8 @@ public class Event {
 			String timestamp = inputNode.get("timestamp").asText();
 			String binary = inputNode.get("binary").asText();
 			String ename = inputNode.get("ename").asText();
-			String evalue = inputNode.get("evalue").asText();
+			JsonNode evalueNode = inputNode.get("evalue");
+			String evalue = evalueNode.toString();
 			
 			JParamValues params = mapper.convertValue(inputNode.get("paramvalues"), JParamValues.class);
 			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
@@ -187,7 +188,7 @@ public class Event {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String search(String filter) {
-	
+		final Integer SNIPPET = 100;
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
@@ -207,8 +208,10 @@ public class Event {
 			    node.put("unitid", ev.getUnitid());
 			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
 			    node.put("binary", ev.isBinary());
-			    if (!ev.isBinary()) {
-			    	node.put("evalue", ev.getEvalue());
+			    if (!ev.isBinary() && !ev.getEvalue().isEmpty()) {
+			    	int len = ev.getEvalue().length();
+			    	if ( len > SNIPPET) len = SNIPPET; 
+			    	node.put("evalue", ev.getEvalue().substring(0, len));
 			    }
 		        arrayNode.add(node);
 			}
@@ -261,6 +264,38 @@ public class Event {
 				.build();
 	}
 
+	
+	@POST
+	@Path("/getJSON")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getJSON(String idevents) throws JsonProcessingException, IOException, ParseException {
+		ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode jnode = mapper.readTree(idevents);
+		List<JEvent> events = new ArrayList<JEvent>(); 
+		for (JsonNode item : jnode) {
+			String id = item.asText();
+			events.add(em.getEvent(id));
+		}
+		StreamingOutput stream = new StreamingOutput() {
+			@Override
+			public void write(OutputStream out) throws IOException, WebApplicationException {
+				Writer writer = new BufferedWriter(new OutputStreamWriter(out));
+				ObjectMapper mapper = new ObjectMapper();
+				for (JEvent event : events) {
+					writer.write(mapper.writeValueAsString(event));
+				}
+				writer.flush();
+				writer.close();
+				
+			}
+		};
+
+		return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+				.header("Content-Disposition", "attachment; filename=\"" + "events.json" + "\"") // optional
+				.build();
+	}
 	
 
 

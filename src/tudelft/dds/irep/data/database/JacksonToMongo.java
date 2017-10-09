@@ -41,7 +41,6 @@ public class JacksonToMongo extends Conversor {
 				} catch (IOException e) {
 					//TODO: log unable convert evalue to json object. It is keep as string
 					mongodoc.put("evalue", mongodoc.get("evalue").toString());
-					System.err.println("Error converting evalue to json");
 				}
 			}
 		}

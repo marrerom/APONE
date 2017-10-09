@@ -320,11 +320,11 @@ public class ClientTest {
 		    
 		   try{
 			   
-			   Response resEvent1 = testGetEvent(client, "59d635dd2ada013a21922315"); //json
+			   Response resEvent1 = testGetEvent(client, "59db93b62ada013d4b2a4eba"); //json
 			   String ev1 = resEvent1.readEntity(String.class);
-			   Response resEvent2 = testGetEvent(client, "59d635dd2ada013a21922316"); //string
+			   Response resEvent2 = testGetEvent(client, "59db93b52ada013d4b2a4eb8"); //string
 			   String ev2 = resEvent2.readEntity(String.class);
-			   Response resEvent3 = testGetEvent(client, "59d635d22ada013a21922308"); //exposure
+			   Response resEvent3 = testGetEvent(client, "59db93ad2ada013d4b2a4ea4"); //exposure
 			   String ev3 = resEvent3.readEntity(String.class);
 			   
 //			   Response res = testSearch(client);
