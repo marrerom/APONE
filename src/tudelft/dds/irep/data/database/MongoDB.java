@@ -17,6 +17,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
@@ -94,7 +95,7 @@ public class MongoDB implements Database {
 	}
 
 	
-	public String addExperiment(JExperiment experiment) throws ParseException {
+	public String addExperiment(JExperiment experiment) throws ParseException, JsonProcessingException, IOException {
 		for (JConfiguration conf:experiment.getConfig()) {
 			if (conf.get_id() == null || conf.get_id()=="") {
 				ObjectId idconf = new ObjectId();
@@ -110,7 +111,7 @@ public class MongoDB implements Database {
 		return idexp.toString();
 	}
 	
-	public String addExpConfig(String idexp, JConfiguration conf) throws ParseException {
+	public String addExpConfig(String idexp, JConfiguration conf) throws ParseException, JsonProcessingException, IOException {
 		checkExistExperiment(idexp);
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(conf, Map.class);
@@ -133,7 +134,7 @@ public class MongoDB implements Database {
 		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.push("config.$.date_ended", timestamp));
 	}
 	
-	public String addEvent(JEvent event) throws ParseException {
+	public String addEvent(JEvent event) throws ParseException, JsonProcessingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(event, Map.class);
 
@@ -174,7 +175,7 @@ public class MongoDB implements Database {
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
-	private FindIterable<Document> getFilteredEvents(JEvent filter) throws ParseException{
+	private FindIterable<Document> getFilteredEvents(JEvent filter) throws ParseException, JsonProcessingException, IOException{
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
 		docmap = new JacksonToMongo().convert(docmap, JEvent.class);
@@ -226,7 +227,7 @@ public class MongoDB implements Database {
 	}
 	
 
-	private FindIterable<Document> getFilteredExperiments(JExperiment filter) throws ParseException {
+	private FindIterable<Document> getFilteredExperiments(JExperiment filter) throws ParseException, JsonProcessingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
 		docmap = new JacksonToMongo().convert(docmap, JExperiment.class);

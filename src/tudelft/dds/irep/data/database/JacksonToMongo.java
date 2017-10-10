@@ -9,9 +9,11 @@ import java.util.Map;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JCommon;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -22,26 +24,22 @@ public class JacksonToMongo extends Conversor {
 
 	/*Binary*/
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
-		Boolean binary = (Boolean) mongodoc.get("binary");
-		if (binary != null && mongodoc.get("evalue")!=null) {
-			if (binary) {
-				String str = (String) mongodoc.get("evalue");
-				byte[] bin = Utils.decodeBinary(str);
-				mongodoc.put("evalue", bin);
-			} else {
-				try {
-					String str = (String) mongodoc.get("evalue");
-					ObjectMapper mapper = new ObjectMapper();
-					JsonNode jnode = mapper.readTree(str);
-					Map<String,Object> map = mapper.convertValue(jnode, Map.class);
-					Document newdoc = new Document(map);
-					mongodoc.put("evalue", newdoc);
-				} catch (IOException e) {
-					//TODO: log unable convert evalue to json object. It is keep as string
-					mongodoc.put("evalue", mongodoc.get("evalue").toString());
-				}
+	protected Map<String,Object> eType(Map<String,Object> mongodoc) throws JsonProcessingException, IOException {
+		String etype = (String) mongodoc.get("etype");
+		if (etype != null && mongodoc.get("evalue")!=null) {
+			EventType etypeEnum = EventType.valueOf(etype);
+			String str = (String) mongodoc.get("evalue");
+			if (etypeEnum == EventType.BINARY) {
+				byte[] value = Utils.decodeBinary(str);
+				mongodoc.put("evalue", value);
+			} else if (etypeEnum == EventType.JSON) {
+				ObjectMapper mapper = new ObjectMapper();
+				JsonNode jnode = mapper.readTree(str);
+				Map<String,Object> map = mapper.convertValue(jnode, Map.class);
+				Document value = new Document(map);
+				mongodoc.put("evalue", value);
 			}
 		}
 		return mongodoc;

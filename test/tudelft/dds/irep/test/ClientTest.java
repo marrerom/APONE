@@ -210,12 +210,10 @@ public class ClientTest {
 			return res;
 		}
 		
-		public static Response testRegisterEvent(Client client, String idconf, String unitid, String ename, String evalue, String paramvalues) {
+		public static Response testRegisterEvent(Client client, String idconf, String unitid, String etype, String ename, String evalue, String paramvalues) {
 			WebTarget base = client.target(context+jerseyServices);
 			
 			Date timestamp = new Date();
-			Boolean binary = false;
-			
 			WebTarget target =base.path("/event/timestampFormat");
 			Invocation.Builder builder = target.request();
 			String format = builder.get(String.class);
@@ -227,7 +225,7 @@ public class ClientTest {
 			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
 			FormDataBodyPart part2 = new FormDataBodyPart("idunit", unitid);
 			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestampFormatted.toString());
-			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
+			FormDataBodyPart part4 = new FormDataBodyPart("etype", etype);
 			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
 			FormDataBodyPart part6 = new FormDataBodyPart("evalue", evalue);
 			FormDataBodyPart part7 = new FormDataBodyPart("paramvalues", paramvalues);
@@ -252,7 +250,7 @@ public class ClientTest {
 			WebTarget base = client.target(context+jerseyServices);
 			
 			Date timestamp = new Date();
-			Boolean binary = true;
+			String etype = "STRING";
 			
 			WebTarget target =base.path("/event/timestampFormat");
 			Invocation.Builder builder = target.request();
@@ -265,7 +263,7 @@ public class ClientTest {
 			FormDataBodyPart part1 = new FormDataBodyPart("idconfig", idconf);
 			FormDataBodyPart part2 = new FormDataBodyPart("unitid", unitid);
 			FormDataBodyPart part3 = new FormDataBodyPart("timestamp", timestampFormatted.toString());
-			FormDataBodyPart part4 = new FormDataBodyPart("binary", binary.toString());
+			FormDataBodyPart part4 = new FormDataBodyPart("etype", etype);
 			FormDataBodyPart part5 = new FormDataBodyPart("ename", ename);
 			FormDataBodyPart part6 = new FormDataBodyPart("evalue", evalue, MediaType.APPLICATION_OCTET_STREAM_TYPE);
 			
@@ -345,8 +343,8 @@ public class ClientTest {
 					   String params = res3.readEntity(String.class);
 					   System.out.println("Unit "+unitid +" Params "+params);
 					   
-					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(), "rankingtestparam_json", "{\"test\":0, \"param\":1, \"value\":\"dos\"}",params);
-					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(), "rankingtestparam_string", "test param",params);
+					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(),"JSON", "rankingtestparam_json", "{\"test\":0, \"param\":1, \"value\":\"dos\"}",params);
+					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(),"STRING", "rankingtestparam_string", "test param",params);
 				   }
 //		   		
 //		   		

@@ -32,6 +32,7 @@ import com.rabbitmq.client.Channel;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.schema.Action;
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JDistribution;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -151,7 +152,7 @@ public class ExperimentManager {
 		return db.addExpConfig(idexp, config);
 	}
 	
-	public String addExperiment(JExperiment exp) throws ParseException, JsonProcessingException {
+	public String addExperiment(JExperiment exp) throws ParseException, IOException {
 		return db.addExperiment(exp);
 	}
 	
@@ -310,7 +311,7 @@ public class ExperimentManager {
 		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED);
 	}
 	
-	public String saveEvent(JEvent event) throws javax.ws.rs.BadRequestException, ParseException {
+	public String saveEvent(JEvent event) throws javax.ws.rs.BadRequestException, ParseException, JsonProcessingException, IOException {
 		String idconf = event.getIdconfig();
 		Status st = re.getStatus(idconf);
 		String result = null;
@@ -345,18 +346,17 @@ public class ExperimentManager {
 		return emc.getExposurecount();
 	}
 	
-	public JEvent createEvent(String idconf, String unitid, String ename, boolean isBinary, InputStream evalue, String timestamp, String treatment, JParamValues params) throws IOException, ParseException {
+	public JEvent createEvent(String idconf, String unitid, String ename, EventType etype, InputStream evalue, String timestamp, String treatment, JParamValues params) throws IOException, ParseException {
 		JEvent event = new JEvent();
-		event.setBinary(false);
+		event.setEtype(etype.toString());
 		event.setEname(ename);
 		event.setIdconfig(idconf);
 		event.setUnitid(unitid);
 		event.setTreatment(treatment);
 		event.setParamvalues(params);
 		event.setTimestamp(Utils.getDate(timestamp));
-		event.setBinary(isBinary);
 		String valuestr;
-		if (isBinary) {
+		if (etype == EventType.BINARY) {
 			byte[] valuebin = ByteStreams.toByteArray(evalue);
 			valuestr = Utils.encodeBinary(valuebin);
 		} else {

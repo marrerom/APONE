@@ -11,6 +11,7 @@ import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JCommon;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -29,22 +30,18 @@ public class MongoToJackson extends Conversor {
 	/*Binary*/
 	
 	@Override
-	protected Map<String,Object> binary(Map<String,Object> mongodoc) {
+	protected Map<String,Object> eType(Map<String,Object> mongodoc) {
 		String ename = (String) mongodoc.get("ename");
-		boolean binary = (Boolean) mongodoc.get("binary");
-		if (binary) {
+		String etype = (String) mongodoc.get("etype");
+		EventType etypeEnum = EventType.valueOf(etype);
+		if (etypeEnum == EventType.BINARY) {
 			Binary bin = (Binary) mongodoc.get("evalue");
 			byte[] valuebin = bin.getData();
 			String valuestr = Utils.encodeBinary(valuebin);
 			mongodoc.put("evalue", valuestr);
-		} else {
-			try {
+		} else if (etypeEnum == EventType.JSON){
 				Document value = (Document) mongodoc.get("evalue");
 				mongodoc.put("evalue", value.toJson());
-			} catch (ClassCastException e) {
-				mongodoc.put("evalue", mongodoc.get("evalue").toString());
-			}
-			
 		}
 		return mongodoc;
 	}

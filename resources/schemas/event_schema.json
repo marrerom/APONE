@@ -17,7 +17,7 @@
 	"paramvalues": {"$ref": "#/definitions/paramvalues" },
 	"ename": {"type":"string"},
 	"evalue": {"type":"string"},
-	"binary" : {"type":"boolean", "default":false}
+	"etype" : {"enum": ["BINARY", "STRING", "JSON"], "default":"STRING"}
 	},
 
 "definitions" : {

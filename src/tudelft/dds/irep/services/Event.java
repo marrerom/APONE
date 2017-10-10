@@ -50,6 +50,7 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JEventCSV;
@@ -71,7 +72,7 @@ public class Event {
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public void registerMultipart(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
-			@FormDataParam("idunit") String idunit, @FormDataParam("binary") String binary, 
+			@FormDataParam("idunit") String idunit, @FormDataParam("etype") String etype, 
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue, 
 		    @FormDataParam("paramvalues") String paramvalues) {
 		try {
@@ -82,7 +83,7 @@ public class Event {
 			JParamValues params = mapper.convertValue(jnode, JParamValues.class);
 			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
 			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
-			JEvent event = em.createEvent(idconfig, idunit, ename, Boolean.valueOf(binary), evalue, timestamp,treatment, params);
+			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalue, timestamp,treatment, params);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);
@@ -106,7 +107,7 @@ public class Event {
 			String idconfig = inputNode.get("idconfig").asText();
 			String idunit = inputNode.get("idunit").asText();
 			String timestamp = inputNode.get("timestamp").asText();
-			String binary = inputNode.get("binary").asText();
+			String etype = inputNode.get("etype").asText();
 			String ename = inputNode.get("ename").asText();
 			JsonNode evalueNode = inputNode.get("evalue");
 			String evalue = evalueNode.toString();
@@ -115,7 +116,7 @@ public class Event {
 			String unitExp = em.getExperimentFromConf(idconfig).getUnit();
 			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
-			JEvent event = em.createEvent(idconfig, idunit, ename, Boolean.valueOf(binary), stream, timestamp,treatment, params);
+			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params);
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);
@@ -207,12 +208,13 @@ public class Event {
 				node.put("ename", ev.getEname());
 			    node.put("unitid", ev.getUnitid());
 			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
-			    node.put("binary", ev.isBinary());
-			    if (!ev.isBinary() && !ev.getEvalue().isEmpty()) {
-			    	int len = ev.getEvalue().length();
-			    	if ( len > SNIPPET) len = SNIPPET; 
-			    	node.put("evalue", ev.getEvalue().substring(0, len));
-			    }
+			    node.put("etype", ev.getEtype());
+			    node.put("evalue", ev.getEvalue());
+//			    if (ev.getETypeEnum() != EventType.BINARY && !ev.getEvalue().isEmpty()) {
+//			    	int len = ev.getEvalue().length();
+//			    	if ( len > SNIPPET) len = SNIPPET; 
+//			    	node.put("evalue", ev.getEvalue().substring(0, len));
+//			    }
 		        arrayNode.add(node);
 			}
 			return mapper.writeValueAsString(arrayNode);

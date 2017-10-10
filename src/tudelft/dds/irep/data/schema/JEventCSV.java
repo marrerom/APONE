@@ -27,13 +27,13 @@ public class JEventCSV extends JCommon implements Serializable {
 	protected String treatment;
 	protected String ename;
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
-	protected Boolean binary; //if event value (evalue) is binary or not
+	protected String etype;
 	protected String paramvalues;
 	
 	@JsonIgnore
 	public JEventCSV(JEvent event) {
 		this._id = event._id;
-		this.binary =event.binary;
+		this.etype =event.etype;
 		this.ename = event.ename;
 		this.evalue = event.evalue;
 		this.idconfig = event.idconfig;
@@ -120,11 +120,17 @@ public class JEventCSV extends JCommon implements Serializable {
 		this.evalue = evalue;
 	}
 
-	public Boolean isBinary() {
-		return binary;
+	public String getEtype() {
+		return etype;
 	}
 
-	public void setBinary(Boolean binary) {
-		this.binary = binary;
+	public void setEtype(String etype) {
+		this.etype = etype;
 	}
+	
+	@JsonIgnore
+	public EventType getETypeEnum() { //at the moment of development, mongo driver does not support enum types
+		return EventType.valueOf(getEtype());
+	}
+	
 }

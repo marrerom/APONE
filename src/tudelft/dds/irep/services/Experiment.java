@@ -35,6 +35,7 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.glassdoor.planout4j.config.ValidationException;
 import com.google.common.base.Preconditions;
 
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
@@ -225,7 +226,7 @@ public class Experiment {
 //			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 //			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, false, is, timestamp, treatment, jparams);
+			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams);
 			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);
@@ -273,7 +274,7 @@ public class Experiment {
 //			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 //			JEvent event = em.createExposureEvent(idconfig, idunit, timestamp, expbody);
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, false, is, timestamp, treatment, jparams);
+			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams);
 			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event);

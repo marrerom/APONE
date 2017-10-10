@@ -35,15 +35,15 @@ public interface Database {
 	
 	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException;
 	
-	public String addExperiment(JExperiment experiment ) throws ParseException;
+	public String addExperiment(JExperiment experiment ) throws ParseException, JsonProcessingException, IOException;
 	
-	public String addExpConfig(String idexp,  JConfiguration conf) throws ParseException;
+	public String addExpConfig(String idexp,  JConfiguration conf) throws ParseException, JsonProcessingException, IOException;
 	
 	public void addExpConfigDateStart(String idconf, Date timestamp);
 	
 	public void addExpConfigDateEnd(String idconf, Date timestamp);
 	
-	public String addEvent(JEvent event) throws ParseException;
+	public String addEvent(JEvent event) throws ParseException, JsonProcessingException, IOException;
 	
 	public void setExpConfigRunStatus(String idconf, Status status);
 	
