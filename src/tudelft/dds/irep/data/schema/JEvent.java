@@ -1,5 +1,6 @@
 package tudelft.dds.irep.data.schema;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -47,6 +49,7 @@ public class JEvent extends JCommon implements Serializable {
 	protected String ename;
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
 	protected String etype; //one of the values of EventType
+	protected String useragent;
 	
 	
 	public String get_id() {
@@ -121,6 +124,14 @@ public class JEvent extends JCommon implements Serializable {
 
 	public void setEtype(String etype) {
 		this.etype = etype;
+	}
+	
+	public String getUseragent() {
+		return useragent;
+	}
+
+	public void setUseragent(String useragent) {
+		this.useragent = useragent;
 	}
 	
 	@JsonIgnore

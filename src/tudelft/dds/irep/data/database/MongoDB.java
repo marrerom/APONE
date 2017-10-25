@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import org.bson.conversions.Bson;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -32,6 +34,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Updates;
 
+import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
@@ -187,6 +190,7 @@ public class MongoDB implements Database {
 		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
 		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
 		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
+		if (docmap.get("useragent") != null) conditions.add(regex("useragent", docmap.get("useragent").toString()));
 		
 		JParamValues jparams = filter.getParamvalues();
 		if (jparams != null) {
@@ -207,15 +211,23 @@ public class MongoDB implements Database {
 			conditions.add(lte("timestamp", Utils.addDay(date) ));
 		}
 
-		Boolean binary  = (Boolean) docmap.get("binary");	
-		if (binary != null) conditions.add(eq("binary", docmap.get("binary")));
-		
-		
-		if (docmap.get("evalue") != null) { //if there is value here, assume the event is not binary
-			conditions.add(regex("evalue", docmap.get("evalue").toString()));
-			conditions.add(eq("binary", false));
+		String etype = null;
+		if (docmap.get("etype") != null) {
+			etype  = (String) docmap.get("etype");
+			conditions.add(eq("etype", etype));
 		}
 		
+		if (docmap.get("evalue") != null) { 
+			if (etype == null || EventType.valueOf(etype) == EventType.STRING) { 
+				conditions.add(regex("evalue", docmap.get("evalue").toString()));
+			} else if (etype != null && EventType.valueOf(etype) == EventType.JSON) {
+				JsonNode node = mapper.valueToTree(docmap.get("evalue"));
+				for (Iterator<String> iterator = node.fieldNames(); iterator.hasNext();) {
+					String field = iterator.next();
+					conditions.add(eq("evalue."+field, node.get(field).asText()));
+				}
+			}
+		}
 		
 		FindIterable<Document> results;
 		if (conditions.isEmpty())
@@ -242,6 +254,7 @@ public class MongoDB implements Database {
 			if (treatitem.get("name") != null) conditions.add(eq("treatment.name", treatitem.get("name")));
 			if (treatitem.get("description") != null) conditions.add(regex("treatment.description", treatitem.get("description").toString()));
 			if (treatitem.get("definition") != null) conditions.add(regex("treatment.definition", treatitem.get("definition").toString()));
+			if (treatitem.get("url") != null) conditions.add(regex("treatment.url", treatitem.get("url").toString()));
 			if (treatitem.get("control") != null) conditions.add(eq("treatment.control", treatitem.get("control")));
 		}
 

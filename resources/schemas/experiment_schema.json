@@ -27,7 +27,8 @@
 			"name":{"type":"string"},
 			"description": {"type":"string"},
 			"definition": {"type":"string"},
-			"iscontrol":{"type":"boolean"}
+			"iscontrol":{"type":"boolean"},
+			"url":{"type":"string"}
 			}
 		},
 	"configItem":

@@ -28,7 +28,16 @@ public class JTreatment extends JCommon {
 	private String definition; //planout language
 	private String description;
 	private Boolean control;
+	private String url;
 	
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
 
 	public Boolean isControl() {
 		return control;

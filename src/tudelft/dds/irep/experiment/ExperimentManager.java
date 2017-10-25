@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.swing.Timer;
 
@@ -108,7 +109,7 @@ public class ExperimentManager {
 			maxExposures = jconf.getMax_exposures();
 			if (maxExposures != null) {
 				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getExposureEvents(idconf)));
-				actualExposures = emc.getExposurecount().values().stream().mapToInt(Integer::intValue).sum();
+				actualExposures = emc.getTotalCount();
 				if (actualExposures >= maxExposures)
 					return true;
 			}
@@ -120,7 +121,7 @@ public class ExperimentManager {
 			maxExposures = re.getMaxExposures(idconf);
 			if (maxExposures != null) {
 				emc = re.getEventMonitoringConsumer(idconf);
-				actualExposures = emc.getExposurecount().values().stream().mapToInt(Integer::intValue).sum();
+				actualExposures = emc.getTotalCount();
 				if (actualExposures >= maxExposures)
 					return true;
 			}
@@ -221,6 +222,15 @@ public class ExperimentManager {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}
 		return result;
+	}
+	
+	public JTreatment getTreatment(JExperiment exp, String name) { 		
+	for (JTreatment treat: exp.getTreatment()) {
+		if (treat.getName().equals(name)) {
+			return treat;
+			}
+		}
+	return null;
 	}
 
 	public void load(JExperiment exp, JConfiguration conf) throws ValidationException, IOException,  ParseException {
@@ -340,13 +350,14 @@ public class ExperimentManager {
 		channel.basicPublish("", queue, null, body);
 	}
 	
-	public Map<String, Integer> getExposures(String idconfig) throws javax.ws.rs.BadRequestException {
+	public Map<String, Set<String>> getUnitCount(String idconfig) throws javax.ws.rs.BadRequestException {
 		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(idconfig);
 		if (emc == null) throw new javax.ws.rs.BadRequestException("The experiment is not running/paused");
-		return emc.getExposurecount();
+		return emc.getTreatmentCount();
 	}
 	
-	public JEvent createEvent(String idconf, String unitid, String ename, EventType etype, InputStream evalue, String timestamp, String treatment, JParamValues params) throws IOException, ParseException {
+	public JEvent createEvent(String idconf, String unitid, String ename, EventType etype, InputStream evalue, String timestamp, 
+			String treatment, JParamValues params, String useragent) throws IOException, ParseException {
 		JEvent event = new JEvent();
 		event.setEtype(etype.toString());
 		event.setEname(ename);
@@ -355,6 +366,7 @@ public class ExperimentManager {
 		event.setTreatment(treatment);
 		event.setParamvalues(params);
 		event.setTimestamp(Utils.getDate(timestamp));
+		event.setUseragent(useragent);
 		String valuestr;
 		if (etype == EventType.BINARY) {
 			byte[] valuebin = ByteStreams.toByteArray(evalue);

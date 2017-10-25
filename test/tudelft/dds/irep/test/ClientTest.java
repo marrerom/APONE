@@ -317,34 +317,27 @@ public class ClientTest {
 		   Client client = ClientBuilder.newClient().register(MultiPartFeature.class);
 		    
 		   try{
+			   String idnodef ="59e4bf132ada012336b6f884";
+			   String idranking = "59ca668f2ada012eec5088ee";
 			   
-			   Response resEvent1 = testGetEvent(client, "59db93b62ada013d4b2a4eba"); //json
-			   String ev1 = resEvent1.readEntity(String.class);
-			   Response resEvent2 = testGetEvent(client, "59db93b52ada013d4b2a4eb8"); //string
-			   String ev2 = resEvent2.readEntity(String.class);
-			   Response resEvent3 = testGetEvent(client, "59db93ad2ada013d4b2a4ea4"); //exposure
-			   String ev3 = resEvent3.readEntity(String.class);
+//			   Response resEvent1 = testGetEvent(client, "59db93b62ada013d4b2a4eba"); //json
+//			   String ev1 = resEvent1.readEntity(String.class);
+//			   Response resEvent2 = testGetEvent(client, "59db93b52ada013d4b2a4eb8"); //string
+//			   String ev2 = resEvent2.readEntity(String.class);
+//			   Response resEvent3 = testGetEvent(client, "59db93ad2ada013d4b2a4ea4"); //exposure
+//			   String ev3 = resEvent3.readEntity(String.class);
 			   
-//			   Response res = testSearch(client);
-//			   String results = res.readEntity(String.class);
-			   
-//		   		Response res1 =  testExperimentUpload(client);
-//		   		String idexp1 = res1.readEntity(String.class);
-//		   
-//		   		Response res2 = testExperimentStart(client, idexp1);
-//		   		String idconf1 = res2.readEntity(String.class);
-//
 				   for (Integer i=0;i<10;i++){
 					   
 					   Map<String, Object> overrides = new HashMap<String,Object>();
 					   //overrides.put("a", 11);
 					   String unitid = String.valueOf(i);
-					   Response res3 = testExperimentGetParams(client, "59ca668f2ada012eec5088ee", unitid, JSONObject.toJSONString(overrides));
+					   Response res3 = testExperimentGetParams(client, idnodef, unitid, JSONObject.toJSONString(overrides));
 					   String params = res3.readEntity(String.class);
 					   System.out.println("Unit "+unitid +" Params "+params);
 					   
-					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(),"JSON", "rankingtestparam_json", "{\"test\":0, \"param\":1, \"value\":\"dos\"}",params);
-					   testRegisterEvent(client, "59ca668f2ada012eec5088ee", i.toString(),"STRING", "rankingtestparam_string", "test param",params);
+					   testRegisterEvent(client, idnodef, i.toString(),"JSON", "rankingtestparam_json", "{\"test\":0, \"param\":1, \"value\":\"dos\"}",params);
+					   testRegisterEvent(client, idnodef, i.toString(),"STRING", "rankingtestparam_string", "test param",params);
 				   }
 //		   		
 //		   		
