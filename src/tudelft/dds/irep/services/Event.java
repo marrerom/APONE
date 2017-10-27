@@ -7,11 +7,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
@@ -26,6 +29,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -56,6 +60,8 @@ import tudelft.dds.irep.utils.Utils;
 
 @Path("/event")
 public class Event {
+	
+	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	@Context ServletContext context;
 	
@@ -94,9 +100,12 @@ public class Event {
 			    //response.allow("OPTIONS");
 			}
 		    return response.build();
-		} catch (IOException | ProcessingException | ParseException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		}
 	}
 	
@@ -145,9 +154,12 @@ public class Event {
 			    //response.allow("OPTIONS");
 			}
 			return response.build();
-		} catch (IOException | ProcessingException | ParseException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		}
 	}
 
@@ -163,9 +175,12 @@ public class Event {
 			ObjectMapper mapper = new ObjectMapper();
 			String eventstr = mapper.writeValueAsString(jevent); 
 			return eventstr;
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		}
 	}
 	
@@ -196,9 +211,12 @@ public class Event {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.deleteEvent(idevent);
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		}
 	}	 
 		
@@ -244,9 +262,12 @@ public class Event {
 			}
 			return mapper.writeValueAsString(arrayNode);
 			
-		} catch (IOException | ParseException | ProcessingException e) {
-			e.printStackTrace();
-			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
+		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
 		}
 		
 	}
@@ -256,39 +277,49 @@ public class Event {
 	@Path("/getCSV")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getCSV(String idevents) throws JsonProcessingException, IOException, ParseException {
-		ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode jnode = mapper.readTree(idevents);
-		List<JEvent> events = new ArrayList<JEvent>(); 
-		for (JsonNode item : jnode) {
-			String id = item.asText();
-			events.add(em.getEvent(id));
-		}
-		StreamingOutput stream = new StreamingOutput() {
-			@Override
-			public void write(OutputStream out) throws IOException, WebApplicationException {
-				CsvMapper csvmapper = new CsvMapper();
-				CsvSchema schema = csvmapper.schemaFor(JEventCSV.class);
-				schema = schema.withColumnSeparator('\t');
-				ObjectWriter myObjectWriter = csvmapper.writer(schema);
-
-				Writer writer = new BufferedWriter(new OutputStreamWriter(out));
-				SequenceWriter sw = myObjectWriter.writeValues(writer);
-				for (JEvent event : events) {
-					JEventCSV ecsv = new JEventCSV(event);
-					//myObjectWriter.write.writeValue(writer, ecsv);
-					sw.write(ecsv);
-				}
-				writer.flush();
-				sw.close();
-				
+	public Response getCSV(String idevents) {
+		try { 
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jnode = mapper.readTree(idevents);
+			List<JEvent> events = new ArrayList<JEvent>(); 
+			for (JsonNode item : jnode) {
+				String id = item.asText();
+				events.add(em.getEvent(id));
 			}
-		};
+			StreamingOutput stream = new StreamingOutput() {
+				@Override
+				public void write(OutputStream out) throws IOException, WebApplicationException {
+					CsvMapper csvmapper = new CsvMapper();
+					CsvSchema schema = csvmapper.schemaFor(JEventCSV.class);
+					schema = schema.withColumnSeparator('\t');
+					ObjectWriter myObjectWriter = csvmapper.writer(schema);
+	
+					Writer writer = new BufferedWriter(new OutputStreamWriter(out));
+					SequenceWriter sw = myObjectWriter.writeValues(writer);
+					for (JEvent event : events) {
+						JEventCSV ecsv = new JEventCSV(event);
+						//myObjectWriter.write.writeValue(writer, ecsv);
+						sw.write(ecsv);
+					}
+					writer.flush();
+					sw.close();
+					
+				}
+			};
+	
+			return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+					.header("Content-Disposition", "attachment; filename=\"" + "events.csv" + "\"") // optional
+					.build();
+		
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+		}
 
-		return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("Content-Disposition", "attachment; filename=\"" + "events.csv" + "\"") // optional
-				.build();
 	}
 
 	
@@ -297,44 +328,51 @@ public class Event {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getJSON(String idevents) throws JsonProcessingException, IOException, ParseException {
-		ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode jnode = mapper.readTree(idevents);
-		List<JEvent> events = new ArrayList<JEvent>(); 
-		for (JsonNode item : jnode) {
-			String id = item.asText();
-			events.add(em.getEvent(id));
-		}
-		StreamingOutput stream = new StreamingOutput() {
-			@Override
-			public void write(OutputStream out) throws IOException, WebApplicationException {
-				Writer writer = new BufferedWriter(new OutputStreamWriter(out));
-				ObjectMapper mapper = new ObjectMapper();
-				for (JEvent event : events) {
-					if (event.getETypeEnum() == EventType.JSON) {
-						try {
-							JsonNode eventNode = mapper.convertValue(event, JsonNode.class);
-							JsonNode evalueNode = mapper.readTree(event.getEvalue());
-							((ObjectNode)eventNode).replace("evalue", evalueNode);
-							writer.write(mapper.writeValueAsString(eventNode));
-						} catch (IOException e) {
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jnode = mapper.readTree(idevents);
+			List<JEvent> events = new ArrayList<JEvent>(); 
+			for (JsonNode item : jnode) {
+				String id = item.asText();
+				events.add(em.getEvent(id));
+			}
+			StreamingOutput stream = new StreamingOutput() {
+				@Override
+				public void write(OutputStream out) throws IOException, WebApplicationException {
+					Writer writer = new BufferedWriter(new OutputStreamWriter(out));
+					ObjectMapper mapper = new ObjectMapper();
+					for (JEvent event : events) {
+						if (event.getETypeEnum() == EventType.JSON) {
+							try {
+								JsonNode eventNode = mapper.convertValue(event, JsonNode.class);
+								JsonNode evalueNode = mapper.readTree(event.getEvalue());
+								((ObjectNode)eventNode).replace("evalue", evalueNode);
+								writer.write(mapper.writeValueAsString(eventNode));
+							} catch (IOException e) {
+								writer.write(mapper.writeValueAsString(event));
+							}
+						} else {
 							writer.write(mapper.writeValueAsString(event));
 						}
-					} else {
-						writer.write(mapper.writeValueAsString(event));
 					}
+					writer.flush();
+					writer.close();
+					
 				}
-				writer.flush();
-				writer.close();
-				
-			}
-		};
-
-		return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("Content-Disposition", "attachment; filename=\"" + "events.json" + "\"") // optional
-				.build();
-	}
+			};
 	
+			return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+					.header("Content-Disposition", "attachment; filename=\"" + "events.json" + "\"") // optional
+					.build();
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+		}
 
+	}
 
 }

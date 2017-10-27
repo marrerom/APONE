@@ -2,6 +2,8 @@ package tudelft.dds.irep.messaging;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
@@ -13,9 +15,13 @@ import com.rabbitmq.client.Envelope;
 
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.Utils;
 
 public class EventRegisterConsumer extends DefaultConsumer {
+	static public final int MAXATTEMPTS = 3;
+	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
+	
 	private ExperimentManager em;
 
 	public EventRegisterConsumer(Channel channel, ExperimentManager em) {
@@ -26,16 +32,25 @@ public class EventRegisterConsumer extends DefaultConsumer {
 	@Override
 	public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
 		JEvent event;
-		try {
-			event = (JEvent) Utils.deserialize(body);
-			em.saveEvent(event);
-			this.getChannel().basicAck(envelope.getDeliveryTag(), true);
-		} catch (ClassNotFoundException | IOException | BadRequestException | ParseException e) {
-			e.printStackTrace();
-			Thread.currentThread().interrupt();
-			//TODO: handle error properly 
+		int attempts = MAXATTEMPTS;
+		while (attempts > 0) {
+			try {
+				event = (JEvent) Utils.deserialize(body);
+				em.saveEvent(event);
+				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
+			} catch (ClassNotFoundException e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				Thread.currentThread().interrupt();
+			} catch (ParseException e) {
+				log.log(Level.WARNING, "Parse error. Event message lost. "+e.getMessage(), e);
+				attempts = 0;
+			} catch (IOException e) {
+				attempts =  attempts -1;
+				log.log(Level.WARNING, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". "+e.getMessage(), e);
+				if (attempts <= 0) {
+					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Event message lost. "+e.getMessage(), e);
+				}
+			}
 		}
-		
 	}
-
 }

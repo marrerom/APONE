@@ -101,7 +101,6 @@ public class RunningExperiments {
 		return null;
 	}
 	
-	
 	public EventRegisterConsumer getEventRegisterConsumer(String idconf) {
 		RunningExpInfo ei = getExpInfo(idconf);
 		if (ei != null)
@@ -116,7 +115,6 @@ public class RunningExperiments {
 		return null;
 	}
 
-
 	public RunningExpInfo getExpInfo(String idconf){
 		return idconfConfig.get(idconf);
 	}
@@ -128,8 +126,5 @@ public class RunningExperiments {
 	private RunningExpInfo remove(String idconf) throws IOException {
 		return idconfConfig.remove(idconf);
 	}
-	
-
-	
 
 }

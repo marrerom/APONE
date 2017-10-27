@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,9 +17,13 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import tudelft.dds.irep.data.schema.JEvent;
+import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.Utils;
 
 public class EventMonitoringConsumer extends DefaultConsumer {
+	static public final int MAXATTEMPTS = 3;
+	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
+	
 	private Map<String, Set<String>> treatcount;
 	ObjectMapper mapper = new ObjectMapper();
 	
@@ -100,16 +106,24 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 	@Override
 	public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
 		JEvent event;
-		try {
-			event = (JEvent) Utils.deserialize(body);
-			if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
-				loadEvent(event);
+		int attempts = MAXATTEMPTS;
+		while (attempts > 0) {
+			try {
+				event = (JEvent) Utils.deserialize(body);
+				if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
+					loadEvent(event);
+				}
+				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
+			} catch (ClassNotFoundException e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+				Thread.currentThread().interrupt();
+			} catch (IOException e) {
+				attempts = attempts -1 ;
+				log.log(Level.WARNING, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". "+e.getMessage(), e);
+				if (attempts <= 0) {
+					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Exposure message not processed for monitoring. "+e.getMessage(), e);
+				}
 			}
-			this.getChannel().basicAck(envelope.getDeliveryTag(), true);
-		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-			Thread.currentThread().interrupt();
-			//TODO: handle error properly 
 		}
 	}
 

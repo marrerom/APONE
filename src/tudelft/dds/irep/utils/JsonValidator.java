@@ -45,12 +45,7 @@ public class JsonValidator {
 				schemas.put(obj.getClass(), getSchema(sc, obj));
 			}
 		}
-		try {
 		return schemas.get(obj.getClass()).validate(jnode);
-		} catch (NullPointerException e) {
-			System.out.println(e.getMessage());
-		}
-		return null;
 	}
 
 }
