@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-handlers = 1catalina.org.apache.juli.AsyncFileHandler, 2localhost.org.apache.juli.AsyncFileHandler, 3manager.org.apache.juli.AsyncFileHandler, 4host-manager.org.apache.juli.AsyncFileHandler, java.util.logging.ConsoleHandler
+handlers = 1catalina.org.apache.juli.AsyncFileHandler, 2localhost.org.apache.juli.AsyncFileHandler, 3manager.org.apache.juli.AsyncFileHandler, 4host-manager.org.apache.juli.AsyncFileHandler, java.util.logging.ConsoleHandler, 5handler.org.apache.juli.FileHandler
 
-.handlers = java.util.logging.ConsoleHandler, 1catalina.org.apache.juli.AsyncFileHandler 
+.handlers = java.util.logging.ConsoleHandler, 5handler.org.apache.juli.FileHandler, 1catalina.org.apache.juli.AsyncFileHandler 
 
 ############################################################
 # Handler specific properties.
@@ -37,6 +37,10 @@ handlers = 1catalina.org.apache.juli.AsyncFileHandler, 2localhost.org.apache.jul
 4host-manager.org.apache.juli.AsyncFileHandler.level = FINE
 4host-manager.org.apache.juli.AsyncFileHandler.directory = ${catalina.base}/logs
 4host-manager.org.apache.juli.AsyncFileHandler.prefix = host-manager.
+
+5handler.org.apache.juli.FileHandler.level = INFO
+5handler.org.apache.juli.FileHandler.directory = ${catalina.base}/logs
+5handler.org.apache.juli.FileHandler.prefix = IREPlatform.
 
 java.util.logging.ConsoleHandler.level = INFO
 java.util.logging.ConsoleHandler.formatter = org.apache.juli.OneLineFormatter

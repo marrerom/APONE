@@ -55,6 +55,8 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.utils.BadRequestException;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Utils;
 
@@ -102,10 +104,10 @@ public class Event {
 		    return response.build();
 		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -156,10 +158,10 @@ public class Event {
 			return response.build();
 		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 
@@ -177,10 +179,10 @@ public class Event {
 			return eventstr;
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -213,10 +215,10 @@ public class Event {
 			em.deleteEvent(idevent);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}	 
 		
@@ -264,10 +266,10 @@ public class Event {
 			
 		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 		
 	}
@@ -289,7 +291,7 @@ public class Event {
 			}
 			StreamingOutput stream = new StreamingOutput() {
 				@Override
-				public void write(OutputStream out) throws IOException, WebApplicationException {
+				public void write(OutputStream out) throws IOException {
 					CsvMapper csvmapper = new CsvMapper();
 					CsvSchema schema = csvmapper.schemaFor(JEventCSV.class);
 					schema = schema.withColumnSeparator('\t');
@@ -314,10 +316,10 @@ public class Event {
 		
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 
 	}
@@ -339,7 +341,7 @@ public class Event {
 			}
 			StreamingOutput stream = new StreamingOutput() {
 				@Override
-				public void write(OutputStream out) throws IOException, WebApplicationException {
+				public void write(OutputStream out) throws IOException {
 					Writer writer = new BufferedWriter(new OutputStreamWriter(out));
 					ObjectMapper mapper = new ObjectMapper();
 					for (JEvent event : events) {
@@ -367,10 +369,10 @@ public class Event {
 					.build();
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 
 	}

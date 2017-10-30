@@ -17,37 +17,37 @@ import tudelft.dds.irep.data.schema.Status;
 
 public interface Database {
 	
-	public JExperiment getExperiment(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public JExperiment getExperiment(String idexp) throws IOException, ParseException;
 	
-	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public List<JExperiment> getExperiments(JExperiment filter) throws IOException, ParseException;
 
-	public List<JTreatment> getTreatments(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public List<JTreatment> getTreatments(String idexp) throws IOException, ParseException;
 	
-	public JExperiment getExpFromConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public JExperiment getExpFromConfiguration(String idconf) throws IOException, ParseException;
 	
-	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public JConfiguration getConfiguration(String idconf) throws IOException, ParseException;
 	
-	public List<JConfiguration> getConfigurations(Iterable<Status> status) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public List<JConfiguration> getConfigurations(Iterable<Status> status) throws IOException, ParseException;
 	
 	//List<JExperiment> searchExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException;
 	
-	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public JEvent getEvent(String idevent) throws IOException, ParseException;
 	
-	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public List<JEvent> getEvents(JEvent filter) throws IOException, ParseException;
 	
-	public String addExperiment(JExperiment experiment ) throws ParseException, JsonProcessingException, IOException;
+	public String addExperiment(JExperiment experiment ) throws IOException, ParseException;
 	
-	public String addExpConfig(String idexp,  JConfiguration conf) throws ParseException, JsonProcessingException, IOException;
+	public String addExpConfig(String idexp,  JConfiguration conf) throws IOException, ParseException;
 	
 	public void addExpConfigDateStart(String idconf, Date timestamp);
 	
 	public void addExpConfigDateEnd(String idconf, Date timestamp);
 	
-	public String addEvent(JEvent event) throws ParseException, JsonProcessingException, IOException;
+	public String addEvent(JEvent event) throws IOException, ParseException;
 	
 	public void setExpConfigRunStatus(String idconf, Status status);
 	
-	public void deleteConfig(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException;
+	public void deleteConfig(String idconf) throws IOException, ParseException;
 	
 	public void deleteEvent(String idevent);
 	

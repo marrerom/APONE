@@ -55,6 +55,8 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
+import tudelft.dds.irep.utils.BadRequestException;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Utils;
 
@@ -102,10 +104,11 @@ public class Experiment {
 			return em.addExperiment(exp);
 		} catch (JsonProcessingException | ProcessingException | ValidationException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			//throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -129,10 +132,10 @@ public class Experiment {
 			return em.addConfig(idexp, conf);
 		} catch (IllegalArgumentException | ProcessingException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -178,10 +181,10 @@ public class Experiment {
 			return Response.ok().build();
 		} catch (JsonProcessingException | ValidationException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 
@@ -195,7 +198,8 @@ public class Experiment {
 			em.stop(idconfig);
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());		}
+			throw new InternalServerException(e.getMessage());
+		}
 	}
 	
 	@Path("/delete")
@@ -208,10 +212,10 @@ public class Experiment {
 			em.deleteConfig(idconfig);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -228,10 +232,10 @@ public class Experiment {
 			return expstr;
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	
@@ -346,10 +350,10 @@ public class Experiment {
 			return mapper.writeValueAsString(arrayNode);
 		} catch (JsonProcessingException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 		
 	}
@@ -381,7 +385,7 @@ public class Experiment {
 			return mapper.writeValueAsString(arrayNode);
 		} catch (JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());		
+			throw new BadRequestException(e.getMessage());		
 		}
 	}
 
@@ -416,7 +420,7 @@ public class Experiment {
 			return mapper.writeValueAsString(node);
 		} catch (JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		}
 	}
 	
@@ -458,10 +462,10 @@ public class Experiment {
 			}
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 
 		return Response.status(Status.BAD_REQUEST).build();
@@ -495,10 +499,10 @@ public class Experiment {
 			}
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 
 	    
@@ -585,10 +589,10 @@ public class Experiment {
 			return response.build();
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 		
 	}
@@ -638,10 +642,10 @@ public class Experiment {
 			return response.build();
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
+			throw new BadRequestException(e.getMessage());
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+			throw new InternalServerException(e.getMessage());
 		}
 		
 	}
