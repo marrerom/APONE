@@ -362,7 +362,7 @@ public class ExperimentManager {
 		event.setEtype(etype.toString());
 		event.setEname(ename);
 		event.setIdconfig(idconf);
-		event.setUnitid(unitid);
+		event.setIdunit(unitid);
 		event.setTreatment(treatment);
 		event.setParamvalues(params);
 		event.setTimestamp(Utils.getDate(timestamp));

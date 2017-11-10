@@ -75,7 +75,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 			unitids = new HashSet<String>();
 			treatcount.put(treatment, unitids);
 		}
-		unitids.add(jevent.getUnitid());
+		unitids.add(jevent.getIdunit());
 	}
 	
 	private void updateSubtreatmentCount(JEvent jevent) {
@@ -100,7 +100,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 				maptreatment.put(params, unitids);
 			}
 		}
-		unitids.add(jevent.getUnitid());
+		unitids.add(jevent.getIdunit());
 	}
 	
 	@Override
@@ -114,6 +114,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 					loadEvent(event);
 				}
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
+				attempts = 0;
 			} catch (ClassNotFoundException e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 				Thread.currentThread().interrupt();

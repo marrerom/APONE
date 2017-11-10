@@ -25,7 +25,8 @@ import com.glassdoor.planout4j.config.ValidationException;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
@@ -82,18 +83,30 @@ public class ServerListener implements ServletContextListener {
 //    	String RABBITHOST = "localhost";
     	
     	try {
-    		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    		//PROPERTIES FILE
     		Properties prop = readProperties(sce.getServletContext());
     		
+    		//RABBITMQ
 			ConnectionFactory rabbitFactory = new ConnectionFactory();
 			rabbitFactory.setHost(prop.getProperty("RABBITHOST"));
 			Connection rabbitConnection = rabbitFactory.newConnection();
 			Channel channel = rabbitConnection.createChannel();
 			sce.getServletContext().setAttribute("MsgChannel", channel);
-    		
+			channel.addShutdownListener(new ShutdownListener() {
+		        public void shutdownCompleted (ShutdownSignalException cause) {
+		          log.log(Level.SEVERE, cause.getMessage(), cause);
+	        	  throw new RuntimeException(cause); //TODO: create new channel and rebind all existing queues?
+		        }
+		      });
+			
+			
+    		//MONGODB
     		MongoDB db = new MongoDB(prop.getProperty("DBHOST"),Integer.parseInt(prop.getProperty("DBPORT")), prop.getProperty("DB"), prop.getProperty("DBUSER"), prop.getProperty("DBPWD").toCharArray());
     		sce.getServletContext().setAttribute("DBManager", db);
-			sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,new RunningExperiments(), channel));
+			
+    		//EXPERIMENT MANAGER & JSON VALIDATOR
+    		sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,new RunningExperiments(), channel));
+    		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
 			
     	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
     		log.log(Level.SEVERE, e.getMessage(), e);

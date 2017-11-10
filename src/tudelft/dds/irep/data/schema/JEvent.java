@@ -43,7 +43,7 @@ public class JEvent extends JCommon implements Serializable {
 	protected String _id;
 	protected String idconfig;
 	protected Date timestamp;
-	protected String unitid;
+	protected String idunit;
 	protected String treatment;
 	protected JParamValues paramvalues;
 	protected String ename;
@@ -77,12 +77,12 @@ public class JEvent extends JCommon implements Serializable {
 		this.timestamp = timestamp;
 	}
 
-	public String getUnitid() {
-		return unitid;
+	public String getIdunit() {
+		return idunit;
 	}
 
-	public void setUnitid(String unitid) {
-		this.unitid = unitid;
+	public void setIdunit(String unitid) {
+		this.idunit = unitid;
 	}
 	
 	public String getTreatment() {

@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
@@ -27,6 +28,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
@@ -427,15 +429,12 @@ public class Experiment {
 	//Generate idunit by using UUID version 1 with the library JUG V.3.1.3 (https://github.com/cowtowncoder/java-uuid-generator)
 	@Path("/redirect/{idrun}")
 	@GET
-	public Response exposureRedirect(@PathParam("idrun") String idrun,@HeaderParam("user-agent") String useragent, @CookieParam(value = "user") String idunit, @Context UriInfo uriOrigin) {
+	public Response exposureRedirect(@PathParam("idrun") String idrun,@HeaderParam("user-agent") String useragent, @Context UriInfo uriOrigin, @Context HttpServletRequest request) {
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun);
 			
-			if (idunit == null || idunit.isEmpty()) {
-				UUID uuid = Generators.timeBasedGenerator().generate();
-				idunit = uuid.toString().toString();
-			}
+			String idunit = Utils.getRequestIdentifier(idrun,request);
 			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
 			String timestamp = Utils.getTimestamp(new Date());
@@ -453,9 +452,9 @@ public class Experiment {
 			if (target != null) {
 				URI uri = new URI(target+"?user="+idunit);
 					
-				NewCookie newcookieTarget = new NewCookie("user",idunit,uri.getPath().toString(),uri.getHost(),"",Integer.MAX_VALUE,false); //Only valid if same domain
+				NewCookie newcookieTarget = new NewCookie(idrun,idunit,uri.getPath().toString(),uri.getHost(),"",Integer.MAX_VALUE,false); //Only valid if same domain
 				//NewCookie newcookieOrigin1 = new NewCookie("user2",idunit,uriOrigin.getBaseUri().toString(), uriOrigin.getBaseUri().toString(),"",Integer.MAX_VALUE,false);
-				NewCookie newcookieOrigin = new NewCookie("user",idunit); 
+				NewCookie newcookieOrigin = new NewCookie(idrun,idunit); 
 						
 				Response response = Response.seeOther(uri).cookie(newcookieOrigin, newcookieTarget).build(); //302, temporaryRedirect(uri) for 301
 				return response;
@@ -578,7 +577,7 @@ public class Experiment {
 				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
 		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 		    	response.header("Access-Control-Allow-Credentials", "true");
-		    	response.header("Access-Control-Allow-Methods","GET, POST");
+		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 		    	//response.allow("OPTIONS");
 			}
 			if (response.build().getStatus() < 400) {
@@ -601,17 +600,14 @@ public class Experiment {
 	@Path("/getparams/{idrun}")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response exposureGetParams(@PathParam("idrun") String idrun, @CookieParam(value = "user") String idunit, @HeaderParam("user-agent") String useragent) {
+	public Response exposureGetParams(@PathParam("idrun") String idrun, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		String result= "{}";
 		try {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun);
 			
-			if (idunit == null || idunit.isEmpty()) {
-				UUID uuid = Generators.timeBasedGenerator().generate();
-				idunit = uuid.toString().toString();
-			}
-			
+			String idunit = Utils.getRequestIdentifier(idrun,request);
+
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
@@ -627,11 +623,15 @@ public class Experiment {
 			}
 			result = mapper.writeValueAsString(jparams);
 			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
+
+			NewCookie newcookie = new NewCookie(idrun,idunit); 
+			response.cookie(newcookie);
+			
 			if (origin != null) {
 				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
 		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 		    	response.header("Access-Control-Allow-Credentials", "true");
-		    	response.header("Access-Control-Allow-Methods","GET, POST");
+		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 		    	//response.allow("OPTIONS");
 			}
 			if (response.build().getStatus() < 400) {
@@ -648,6 +648,74 @@ public class Experiment {
 			throw new InternalServerException(e.getMessage());
 		}
 		
+	}
+	
+	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
+	@Path("/getparams")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response exposureGetParamsJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+		try {
+			String result= "{}";
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			ObjectMapper mapper = new ObjectMapper();
+			
+			JsonNode inputNode = mapper.readTree(inputJson);
+			String idrun = inputNode.get("idconfig").asText();
+			JExperiment jexp = em.getExperimentFromConf(idrun);
+			String unitExp = jexp.getUnit();
+			String idunit = null;
+			if (inputNode.get("idunit") != null)
+				idunit = inputNode.get("idunit").asText();
+			
+			if (idunit == null)
+				idunit = Utils.getRequestIdentifier(idrun,request);
+			
+			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
+			Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap);
+			
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			String timestamp = Utils.getTimestamp(new Date());
+
+			InputStream is = new ByteArrayInputStream("".getBytes());
+			
+			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
+			jparams.set("_idunit", idunit);
+			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			URI origin=null;
+			if (jtreat.getUrl() != null) {
+				origin = new URI(jtreat.getUrl());
+				jparams.set("_url", jtreat.getUrl());
+			}
+			result = mapper.writeValueAsString(jparams);
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
+			
+
+			NewCookie newcookie = new NewCookie(idrun,idunit); 
+			response.cookie(newcookie);
+			
+			if (origin != null) {
+				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
+		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+		    	response.header("Access-Control-Allow-Credentials", "true");
+		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+		    	//response.allow("OPTIONS");
+			}
+			if (response.build().getStatus() < 400) {
+				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
+				em.registerEvent(idrun, event);
+				em.monitorEvent(event);
+			}
+			return response.build();
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (URISyntaxException | IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		}
+			
 	}
 
 }

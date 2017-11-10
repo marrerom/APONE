@@ -23,7 +23,7 @@ public class JEventCSV extends JCommon implements Serializable {
 	protected String _id;
 	protected String idconfig;
 	protected Date timestamp;
-	protected String unitid;
+	protected String idunit;
 	protected String treatment;
 	protected String ename;
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
@@ -40,7 +40,7 @@ public class JEventCSV extends JCommon implements Serializable {
 		this.idconfig = event.idconfig;
 		this.treatment = event.treatment;
 		this.timestamp = event.timestamp;
-		this.unitid = event.unitid;
+		this.idunit = event.idunit;
 		this.paramvalues = event.paramvalues.any().toString(); //TODO:check!
 		this.useragent = event.useragent;
 	}
@@ -81,12 +81,12 @@ public class JEventCSV extends JCommon implements Serializable {
 		this.timestamp = timestamp;
 	}
 
-	public String getUnitid() {
-		return unitid;
+	public String getIdunit() {
+		return idunit;
 	}
 
-	public void setUnitid(String unitid) {
-		this.unitid = unitid;
+	public void setIdunit(String unitid) {
+		this.idunit = unitid;
 	}
 	
 	public String getTreatment() {

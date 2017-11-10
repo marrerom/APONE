@@ -98,7 +98,7 @@ public class Event {
 				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
 			    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 			    response.header("Access-Control-Allow-Credentials", "true");
-			    response.header("Access-Control-Allow-Methods","GET, POST");
+			    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 			    //response.allow("OPTIONS");
 			}
 		    return response.build();
@@ -152,7 +152,7 @@ public class Event {
 				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
 			    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 			    response.header("Access-Control-Allow-Credentials", "true");
-			    response.header("Access-Control-Allow-Methods","GET, POST");
+			    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 			    //response.allow("OPTIONS");
 			}
 			return response.build();
@@ -251,7 +251,7 @@ public class Event {
 				ObjectNode node = mapper.createObjectNode();
 				node.put("_id", ev.get_id());
 				node.put("ename", ev.getEname());
-			    node.put("unitid", ev.getUnitid());
+			    node.put("unitid", ev.getIdunit());
 			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
 			    node.put("etype", ev.getEtype());
 			    node.put("evalue", ev.getEvalue());

@@ -11,6 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.SimpleTimeZone;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.fasterxml.uuid.Generators;
+import com.google.common.base.Preconditions;
 
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 
@@ -62,6 +68,24 @@ public class Utils {
 	 
 	 public static String encodeBinary(byte[] valuebin) {
 		 return java.util.Base64.getEncoder().encodeToString(valuebin);
+	 }
+	 
+	 public static String getRequestIdentifier(String idrun, HttpServletRequest request) {
+		 String idunit = null;
+		 if (request.getCookies() != null) {
+			for (javax.servlet.http.Cookie c : request.getCookies()) {
+				if (c.getName().equals(idrun)) {
+					idunit = c.getValue();
+					break;
+				}
+			}
+		}
+			
+		if (idunit == null || idunit.isEmpty()) {
+			UUID uuid = Generators.timeBasedGenerator().generate();
+			idunit = uuid.toString().toString();
+		}
+		return idunit;
 	 }
 	 
 

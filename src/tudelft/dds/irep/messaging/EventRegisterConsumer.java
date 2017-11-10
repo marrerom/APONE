@@ -38,6 +38,7 @@ public class EventRegisterConsumer extends DefaultConsumer {
 				event = (JEvent) Utils.deserialize(body);
 				em.saveEvent(event);
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
+				attempts = 0;
 			} catch (ClassNotFoundException e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 				Thread.currentThread().interrupt();
