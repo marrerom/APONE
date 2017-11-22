@@ -59,7 +59,7 @@ public class ServerListener implements ServletContextListener {
 			con.close();
 			
 		} catch (IOException | TimeoutException e) {
-			//TODO: LOG
+			log.log(Level.SEVERE, e.getMessage(), e);
 		}
     }
     
@@ -75,12 +75,6 @@ public class ServerListener implements ServletContextListener {
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent sce)  { 
-//    	String DBHOST = "localhost";
-//    	int DBPORT = 27017;
-//    	String DB = "irep";
-//    	String DBUSER = "irepuser";
-//    	char[] DBPWD = new char[] {'0','0','0','0'};
-//    	String RABBITHOST = "localhost";
     	
     	try {
     		//PROPERTIES FILE
@@ -90,15 +84,23 @@ public class ServerListener implements ServletContextListener {
 			ConnectionFactory rabbitFactory = new ConnectionFactory();
 			rabbitFactory.setHost(prop.getProperty("RABBITHOST"));
 			Connection rabbitConnection = rabbitFactory.newConnection();
+			log.log(Level.INFO, "RabbitMQ Connection Created");
 			Channel channel = rabbitConnection.createChannel();
+			log.log(Level.INFO, "RabbitMQ Channel Created");
+			String exchangeName = prop.getProperty("RABBITEXCHANGE");
+			channel.exchangeDeclare(exchangeName, "direct", true);
+			log.log(Level.INFO, "RabbitMQ Channel binded to "+exchangeName+" exchange");
 			sce.getServletContext().setAttribute("MsgChannel", channel);
 			channel.addShutdownListener(new ShutdownListener() {
 		        public void shutdownCompleted (ShutdownSignalException cause) {
-		          log.log(Level.SEVERE, cause.getMessage(), cause);
-	        	  throw new RuntimeException(cause); //TODO: create new channel and rebind all existing queues?
+		        	if (cause.isInitiatedByApplication())
+		        		log.log(Level.INFO, "RabbitMQ closed");
+		        	else {
+		        		log.log(Level.SEVERE, "Connectivity to RabbitMQ has failed.  Reason received " + cause.getMessage(), cause);
+		        		throw new RuntimeException(cause); //TODO: create new channel and rebind all existing queues?
+		        	}
 		        }
 		      });
-			
 			
     		//MONGODB
     		MongoDB db = new MongoDB(prop.getProperty("DBHOST"),Integer.parseInt(prop.getProperty("DBPORT")), prop.getProperty("DB"), prop.getProperty("DBUSER"), prop.getProperty("DBPWD").toCharArray());

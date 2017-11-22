@@ -450,7 +450,7 @@ public class Experiment {
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
-				URI uri = new URI(target+"?user="+idunit);
+				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
 					
 				NewCookie newcookieTarget = new NewCookie(idrun,idunit,uri.getPath().toString(),uri.getHost(),"",Integer.MAX_VALUE,false); //Only valid if same domain
 				//NewCookie newcookieOrigin1 = new NewCookie("user2",idunit,uriOrigin.getBaseUri().toString(), uriOrigin.getBaseUri().toString(),"",Integer.MAX_VALUE,false);
@@ -492,7 +492,7 @@ public class Experiment {
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
-				URI uri = new URI(target+"?user="+idunit);
+				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
 				Response response = Response.seeOther(uri).cookie(new NewCookie("user",idunit)).build();
 				return response;
 			}
@@ -566,6 +566,7 @@ public class Experiment {
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			jparams.set("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			jparams.set("_variant", jtreat.getName());
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
@@ -616,6 +617,7 @@ public class Experiment {
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			jparams.set("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			jparams.set("_variant", jtreat.getName());
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
@@ -683,6 +685,7 @@ public class Experiment {
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			jparams.set("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			jparams.set("_variant", jtreat.getName());
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());

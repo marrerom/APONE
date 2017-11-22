@@ -50,7 +50,7 @@ import static com.mongodb.client.model.Projections.*;
 
 public class MongoDB implements Database {
 	
-	public final String DB = "test"; //irep in production
+	//public final String DB = "test"; //irep in production, test for testing purposes
 	public final String EXP_COL = "experiment";
 	public final String EVENT_COL = "event";
 
@@ -61,7 +61,7 @@ public class MongoDB implements Database {
 	public MongoDB(String host, int port, String db, String user, char[] pwd){
 		MongoCredential credential = MongoCredential.createCredential(user, db, pwd);
 		mongo = new MongoClient(new ServerAddress( host , port ), Arrays.asList(credential));
-		MongoDatabase database = mongo.getDatabase(DB);
+		MongoDatabase database = mongo.getDatabase(db);
 		experiments = database.getCollection(EXP_COL);
 		events = database.getCollection(EVENT_COL);
 	}

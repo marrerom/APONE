@@ -5,11 +5,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
 
@@ -86,6 +90,23 @@ public class Utils {
 			idunit = uuid.toString().toString();
 		}
 		return idunit;
+	 }
+	 
+	 public static String getVariantURL(String target, Map<String,?> params, String idunit, String variant) throws UnsupportedEncodingException {
+		 String query = "";
+		 for (String key: params.keySet()) {
+			 String encodedValue = URLEncoder.encode(params.get(key).toString(), StandardCharsets.UTF_8.toString());
+			 query = query + key+"="+encodedValue +"&";
+		 }
+		 query = query + "_idunit="+URLEncoder.encode(idunit, StandardCharsets.UTF_8.toString()) +"&";
+		 query = query + "_variant="+URLEncoder.encode(variant, StandardCharsets.UTF_8.toString());
+		 
+		 if (target.contains("?"))
+			 target = target + "&" + query;
+		 else
+			 target = target + "?" + query;
+		 
+		 return target;
 	 }
 	 
 
