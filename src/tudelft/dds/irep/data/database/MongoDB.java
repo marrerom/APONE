@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ws.rs.NotAuthorizedException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonDocument;
@@ -41,6 +45,9 @@ import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.User;
 import tudelft.dds.irep.utils.Utils;
 
 import static com.mongodb.client.model.Filters.*;
@@ -49,6 +56,8 @@ import static com.mongodb.client.model.Projections.*;
 
 
 public class MongoDB implements Database {
+	
+	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	//public final String DB = "test"; //irep in production, test for testing purposes
 	public final String EXP_COL = "experiment";
@@ -70,35 +79,42 @@ public class MongoDB implements Database {
 		mongo.close();
 	}
 	
-	private Document checkExistExperiment(String idexp) {
+	private Document checkExistExperiment(String idexp, User authuser) {
 		try {
-			return experiments.find(eq("_id", new ObjectId(idexp))).first();
+			return experiments.find(and(getExperimenterFilter(authuser),eq("_id", new ObjectId(idexp)))).first();
 		} catch (NullPointerException e) {
-			throw new NullPointerException("Experiment "+idexp+" does not exist");
+			String msg = "Experiment "+idexp+" does not exist or you don't have authorization to access it";
+			log.log(Level.WARNING, msg, e);
+			throw new NullPointerException(msg);
 		}
 	}
 
-	private Document checkExistConfiguration(String idconf) {
+	private Document checkExistConfiguration(String idconf, User authuser) {
 		try {
-			Document doc = experiments.find(eq("config._id", new ObjectId(idconf)))
+			Document doc = experiments.find(and(getExperimenterFilter(authuser),eq("config._id", new ObjectId(idconf))))
 					.projection(elemMatch("config"))
 					.first();
 			return ((ArrayList<Document>)doc.get("config")).get(0);
 		} catch (NullPointerException e) {
-			throw new NullPointerException("Experiment Configuration "+idconf+" does not exist");
+			String msg = "Experiment configuration "+idconf+" does not exist or you don't have authorization to access it";
+			log.log(Level.WARNING, msg, e);
+			throw new NullPointerException(msg);
 		}
 	}
 	
-	private Document checkExistEvent(String idevent) {
+	private Document checkExistEvent(String idevent, User authuser) {
 		try {
-			return events.find(eq("_id", new ObjectId(idevent))).first();
+			return events.find(and(getExperimenterFilter(authuser),eq("_id", new ObjectId(idevent)))).first();
 		} catch (NullPointerException e) {
-			throw new NullPointerException("Event "+idevent+" does not exist");
+			String msg = "Event "+idevent+" does not exist or you don't have authorization to access it";
+			log.log(Level.WARNING, msg, e);
+			throw new NullPointerException(msg);
 		}
 	}
-
 	
-	public String addExperiment(JExperiment experiment) throws ParseException, JsonProcessingException, IOException {
+	
+	public String addExperiment(JExperiment experiment, User authuser) throws ParseException, JsonProcessingException, IOException {
+		Security.checkAuthorized(authuser, experiment.getExperimenter());
 		for (JConfiguration conf:experiment.getConfig()) {
 			if (conf.get_id() == null || conf.get_id()=="") {
 				ObjectId idconf = new ObjectId();
@@ -114,8 +130,8 @@ public class MongoDB implements Database {
 		return idexp.toString();
 	}
 	
-	public String addExpConfig(String idexp, JConfiguration conf) throws ParseException, JsonProcessingException, IOException {
-		checkExistExperiment(idexp);
+	public String addExpConfig(String idexp, JConfiguration conf, User authuser) throws ParseException, JsonProcessingException, IOException {
+		checkExistExperiment(idexp, authuser);
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(conf, Map.class);
 		ObjectId idrun = new ObjectId();
@@ -127,17 +143,18 @@ public class MongoDB implements Database {
 		 
 	}
 	
-	public void addExpConfigDateStart(String idconf, Date timestamp) {
-		checkExistConfiguration(idconf);
+	public void addExpConfigDateStart(String idconf, Date timestamp, User authuser) {
+		checkExistConfiguration(idconf, authuser);
 		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.push("config.$.date_started", timestamp));
 	}
 
-	public void addExpConfigDateEnd(String idconf, Date timestamp) {
-		checkExistConfiguration(idconf);
+	public void addExpConfigDateEnd(String idconf, Date timestamp, User authuser) {
+		checkExistConfiguration(idconf, authuser);
 		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.push("config.$.date_ended", timestamp));
 	}
 	
-	public String addEvent(JEvent event) throws ParseException, JsonProcessingException, IOException {
+	public String addEvent(JEvent event, User authuser) throws ParseException, JsonProcessingException, IOException {
+		Security.checkAuthorized(authuser, event.getExperimenter());
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(event, Map.class);
 
@@ -152,33 +169,33 @@ public class MongoDB implements Database {
 		return idevent.toString();
 	}
 	
-	public void setExpConfigRunStatus(String idconf, Status status) {
-		checkExistConfiguration(idconf);
+	public void setExpConfigRunStatus(String idconf, Status status, User authuser) {
+		checkExistConfiguration(idconf, authuser);
 		experiments.updateOne(eq("config._id", new ObjectId(idconf)), Updates.set("config.$.run", status.toString()));
 	}
 		
 	
-	public JExperiment getExperiment(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		Document doc = checkExistExperiment(idexp);
+	public JExperiment getExperiment(String idexp, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		Document doc = checkExistExperiment(idexp, authuser);
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc,JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
-	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		Document doc = checkExistEvent(idevent);
+	public JEvent getEvent(String idevent, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		Document doc = checkExistEvent(idevent, authuser);
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc,JEvent.class)).toJson()),JEvent.class);
 	}
 
-	public JExperiment getExpFromConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		checkExistConfiguration(idconf);
+	public JExperiment getExpFromConfiguration(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		checkExistConfiguration(idconf, authuser);
 		//Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment"))).first();
 		Document doc = experiments.find(eq("config._id", new ObjectId(idconf))).first();
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class);
 	}
 	
-	private FindIterable<Document> getFilteredEvents(JEvent filter) throws ParseException, JsonProcessingException, IOException{
+	private FindIterable<Document> getFilteredEvents(JEvent filter, User authuser) throws ParseException, JsonProcessingException, IOException{
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
 		docmap = new JacksonToMongo().convert(docmap, JEvent.class);
@@ -186,7 +203,7 @@ public class MongoDB implements Database {
 		List<Bson> conditions = new ArrayList<Bson>();
 		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
 		if (docmap.get("ename") != null) conditions.add(eq("ename", docmap.get("ename")));	
-			
+		if (docmap.get("experimenter") != null) conditions.add(eq("experimenter", docmap.get("experimenter")));	
 		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
 		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
 		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
@@ -229,17 +246,14 @@ public class MongoDB implements Database {
 			}
 		}
 		
-		FindIterable<Document> results;
-		if (conditions.isEmpty())
-			results = events.find();
-		else
-			results = events.find(and(conditions));
+		conditions.add(getExperimenterFilter(authuser));
+		FindIterable<Document> results = events.find(and(conditions));
 		return results;
 
 	}
 	
 
-	private FindIterable<Document> getFilteredExperiments(JExperiment filter) throws ParseException, JsonProcessingException, IOException {
+	private FindIterable<Document> getFilteredExperiments(JExperiment filter, User authuser) throws ParseException, JsonProcessingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap =  mapper.convertValue(filter, Map.class);
 		docmap = new JacksonToMongo().convert(docmap, JExperiment.class);
@@ -300,20 +314,16 @@ public class MongoDB implements Database {
 			}
 		}
 
-		
-		FindIterable<Document> results;
-		if (conditions.isEmpty())
-			results = experiments.find();
-		else
-			results = experiments.find(and(conditions));
+		conditions.add(getExperimenterFilter(authuser));
+		FindIterable<Document> results = experiments.find(and(conditions));
 		if (configsearch)
 			results = results.projection(fields(elemMatch("config"),include("name", "experimenter", "description", "unit", "treatment")));
 		return results;
 	}
 	
-	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+	public List<JExperiment> getExperiments(JExperiment filter, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		List<JExperiment> result = new ArrayList<JExperiment>();
-		FindIterable<Document> exps = getFilteredExperiments(filter);
+		FindIterable<Document> exps = getFilteredExperiments(filter, authuser);
 		ObjectMapper mapper = new ObjectMapper();		
 		for (Document exp: exps) {
 			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JExperiment.class)).toJson()),JExperiment.class));
@@ -321,9 +331,9 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
+	public List<JEvent> getEvents(JEvent filter, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		List<JEvent> result = new ArrayList<JEvent>();
-		FindIterable<Document> exps = getFilteredEvents(filter);
+		FindIterable<Document> exps = getFilteredEvents(filter, authuser);
 		ObjectMapper mapper = new ObjectMapper();		
 		for (Document exp: exps) {
 			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(exp, JEvent.class)).toJson()),JEvent.class));
@@ -331,18 +341,19 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		Document doc = checkExistConfiguration(idconf);
+	public JConfiguration getConfiguration(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		Document doc = checkExistConfiguration(idconf, authuser);
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JConfiguration.class)).toJson()),JConfiguration.class);
 	}
 	
-	public List<JConfiguration> getConfigurations(Iterable<Status> status) throws JsonParseException, JsonMappingException, IOException, ParseException {
+	public List<JConfiguration> getConfigurations(Iterable<Status> status, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		List<Bson> conditions = new ArrayList<Bson>();
 		for (Status st:status) {
-			conditions.add(eq("config.run", st.toString()));
+			conditions.add(and(getExperimenterFilter(authuser),eq("config.run", st.toString())));
 		}
 		
+		//TODO: check! condConfig is not used
 		List<Bson> condConfig = new ArrayList<Bson>();
 		for (Status st:status) {
 			condConfig.add(eq("run", st.toString()));
@@ -370,9 +381,9 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public List<JTreatment> getTreatments(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException {
+	public List<JTreatment> getTreatments(String idexp, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		List<JTreatment> result = new ArrayList<JTreatment>();
-		Document doc = checkExistExperiment(idexp);
+		Document doc = checkExistExperiment(idexp, authuser);
 		ObjectMapper mapper = new ObjectMapper();
 		ArrayList<Document> treatArray = (ArrayList<Document>) doc.get("treatment");
 		for (Document tdoc: treatArray) {
@@ -381,9 +392,9 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public List<JEvent> getEvents(String idconfig, String ename) throws JsonParseException, JsonMappingException, IOException, ParseException{
+	public List<JEvent> getEvents(String idconfig, String ename, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		List<JEvent> result = new ArrayList<JEvent>();
-		FindIterable<Document> docs = events.find(and(eq("idconfig", idconfig), eq("ename",ename)));
+		FindIterable<Document> docs = events.find(and(getExperimenterFilter(authuser),eq("idconfig", idconfig), eq("ename",ename)));
 		ObjectMapper mapper = new ObjectMapper();
 		for (Document doc: docs) {
 			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JEvent.class)).toJson()),JEvent.class));
@@ -391,18 +402,24 @@ public class MongoDB implements Database {
 		return result;
 	}
 	
-	public void deleteConfig(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		JExperiment exp= getExpFromConfiguration(idconf);
+	public void deleteConfig(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JExperiment exp= getExpFromConfiguration(idconf, authuser);
 		if (exp.getConfig().length <= 1) {
-			experiments.deleteOne(eq("_id", new ObjectId(exp.get_id())));	
+			experiments.deleteOne(and(getExperimenterFilter(authuser),eq("_id", new ObjectId(exp.get_id()))));	
 		} else {
 			BasicDBObject update = new BasicDBObject("config", new BasicDBObject("_id", new ObjectId(idconf)));
-			experiments.updateOne(eq("config._id", new ObjectId(idconf)), new BasicDBObject("$pull", update));
+			experiments.updateOne(and(getExperimenterFilter(authuser),eq("config._id", new ObjectId(idconf))), new BasicDBObject("$pull", update));
 		}
 	}
 	
-	public void deleteEvent(String idevent) {
-		events.deleteMany(eq("_id", new ObjectId(idevent)));
+	public void deleteEvent(String idevent, User authuser) {
+		events.deleteMany(and(getExperimenterFilter(authuser),eq("_id", new ObjectId(idevent))));
+	}
+	
+	private Bson getExperimenterFilter(User authuser) {
+		if (authuser.isAdmin())
+			return regex("experimenter", ".*");
+		return eq("experimenter", authuser);
 	}
 	
 //	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{

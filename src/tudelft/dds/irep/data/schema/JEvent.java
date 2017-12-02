@@ -50,6 +50,7 @@ public class JEvent extends JCommon implements Serializable {
 	protected String evalue; //in case the value is binary, it is saved in base64 (using Java.Encode64)
 	protected String etype; //one of the values of EventType
 	protected String useragent;
+	protected String experimenter;
 	
 	
 	public String get_id() {
@@ -109,7 +110,6 @@ public class JEvent extends JCommon implements Serializable {
 		this.ename = ename;
 	}
 
-	
 	public String getEvalue() {
 		return evalue;
 	}
@@ -133,6 +133,15 @@ public class JEvent extends JCommon implements Serializable {
 	public void setUseragent(String useragent) {
 		this.useragent = useragent;
 	}
+
+	public String getExperimenter() {
+		return experimenter;
+	}
+
+	public void setExperimenter(String experimenter) {
+		this.experimenter = experimenter;
+	}
+
 	
 	@JsonIgnore
 	public EventType getETypeEnum() { //at the moment of development, mongo driver does not support enum types

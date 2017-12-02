@@ -30,6 +30,7 @@ public class JEventCSV extends JCommon implements Serializable {
 	protected String etype;
 	protected String paramvalues;
 	protected String useragent;
+	protected String experimenter;
 	
 	@JsonIgnore
 	public JEventCSV(JEvent event) {
@@ -43,6 +44,7 @@ public class JEventCSV extends JCommon implements Serializable {
 		this.idunit = event.idunit;
 		this.paramvalues = event.paramvalues.any().toString(); //TODO:check!
 		this.useragent = event.useragent;
+		this.experimenter = event.experimenter;
 	}
 	
 	@JsonIgnore	
@@ -55,7 +57,7 @@ public class JEventCSV extends JCommon implements Serializable {
 		return rootElement;
 	}
 	
-	
+
 	public String get_id() {
 		return _id;
 	}
@@ -136,6 +138,14 @@ public class JEventCSV extends JCommon implements Serializable {
 
 	public void setUseragent(String useragent) {
 		this.useragent = useragent;
+	}
+
+	public String getExperimenter() {
+		return experimenter;
+	}
+
+	public void setExperimenter(String experimenter) {
+		this.experimenter = experimenter;
 	}
 
 

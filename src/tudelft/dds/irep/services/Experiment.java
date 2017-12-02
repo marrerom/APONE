@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,9 +58,12 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
+import tudelft.dds.irep.utils.AuthenticationException;
+import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.User;
 import tudelft.dds.irep.utils.Utils;
 
 @Path("/experiment")
@@ -72,20 +76,25 @@ public class Experiment {
 	@Path("/new/experiment")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String uploadExperiment(String experiment) {
+	public String uploadExperiment(String experiment, @Context HttpServletRequest request) {
 		
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(experiment);
 			JExperiment exp = mapper.convertValue(jnode, JExperiment.class);
+			
 			ProcessingReport pr = jval.validate(exp,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			
 			if (exp.getUnit() == null || exp.getUnit().isEmpty())
 				exp.setUnit("defaultunit");
+			
+			if (request.getUserPrincipal() != null)
+				exp.setExperimenter(request.getUserPrincipal().getName());
 
 			UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
 			JTreatment[] treatments = exp.getTreatment();
@@ -103,7 +112,7 @@ public class Experiment {
 				c.setRun("OFF");
 			}
 			
-			return em.addExperiment(exp);
+			return em.addExperiment(exp, authuser);
 		} catch (JsonProcessingException | ProcessingException | ValidationException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			//throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
@@ -111,15 +120,18 @@ public class Experiment {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
 	@Path("/new/configuration")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String uploadConfiguration(String inputJson) {
+	public String uploadConfiguration(String inputJson, @Context HttpServletRequest request) {
 		
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
@@ -131,13 +143,15 @@ public class Experiment {
 			ProcessingReport pr = jval.validate(conf,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			conf.setRun("OFF");
-			return em.addConfig(idexp, conf);
+			return em.addConfig(idexp, conf, authuser);
 		} catch (IllegalArgumentException | ProcessingException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -172,12 +186,13 @@ public class Experiment {
 	@Path("/start")
 	@PUT
 	@Consumes(MediaType.TEXT_PLAIN)
-	public Response start(String idconf) {
+	public Response start(String idconf, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JConfiguration conf = em.getConfiguration(idconf);
-			JExperiment exp = em.getExperimentFromConf(idconf);
-			boolean started = em.start(exp,conf);
+			JConfiguration conf = em.getConfiguration(idconf, authuser);
+			JExperiment exp = em.getExperimentFromConf(idconf, authuser);
+			boolean started = em.start(exp,conf, authuser);
 			if (!started)
 				return Response.status(Response.Status.NOT_ACCEPTABLE).build();
 			return Response.ok().build();
@@ -187,6 +202,8 @@ public class Experiment {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 
@@ -194,30 +211,36 @@ public class Experiment {
 	@Path("/stop")
 	@PUT
 	@Consumes(MediaType.TEXT_PLAIN)
-	public void stop(String idconfig) {
+	public void stop(String idconfig, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			em.stop(idconfig);
+			em.stop(idconfig, authuser);
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
 	@Path("/delete")
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
-	public void delete(String idconfig) {
+	public void delete(String idconfig, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			em.stop(idconfig);
-			em.deleteConfig(idconfig);
+			em.stop(idconfig, authuser);
+			em.deleteConfig(idconfig, authuser);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -225,10 +248,11 @@ public class Experiment {
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String register(@PathParam("idrun") String idrun) {
+	public String register(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun);
+			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			ObjectMapper mapper = new ObjectMapper();
 			String expstr = mapper.writeValueAsString(jexp); 
 			return expstr;
@@ -238,6 +262,8 @@ public class Experiment {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -323,19 +349,20 @@ public class Experiment {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String search(String filter) {
+	public Response search(String filter, @Context HttpServletRequest request) {
 	
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-
+			
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(filter);
 			JExperiment expfilter = mapper.convertValue(jnode, JExperiment.class);
 			ProcessingReport pr = jval.validate(expfilter,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			
-			List<JExperiment> experiments = em.getExperiments(expfilter);
+			List<JExperiment> experiments = em.getExperiments(expfilter,authuser);
 			ArrayNode arrayNode = mapper.createArrayNode();
 			for (JExperiment exp: experiments) {
 				for (JConfiguration conf:exp.getConfig()) {
@@ -349,13 +376,15 @@ public class Experiment {
 			        arrayNode.add(node);
 				}
 			}
-			return mapper.writeValueAsString(arrayNode);
+			return Response.ok(mapper.writeValueAsString(arrayNode), MediaType.TEXT_PLAIN).build();
 		} catch (JsonProcessingException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 		
 	}
@@ -363,10 +392,11 @@ public class Experiment {
 	@Path("/monitor/treatments")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitorTreatments() {
+	public String monitorTreatments(@Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Collection<RunningExpInfo> running = em.getRunningExp();
+			Collection<RunningExpInfo> running = em.getRunningExp(authuser);
 			ObjectMapper mapper = new ObjectMapper();
 			ArrayNode arrayNode = mapper.createArrayNode();
 			for (RunningExpInfo exp: running) {
@@ -388,16 +418,19 @@ public class Experiment {
 		} catch (JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());		
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 
 	@Path("/monitor/subtreatments/{idrun}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitorSubtreatments(@PathParam("idrun") String idrun) {
+	public String monitorSubtreatments(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			RunningExpInfo exp = em.getRunningExp(idrun);
+			RunningExpInfo exp = em.getRunningExp(idrun, authuser);
 			ObjectMapper mapper = new ObjectMapper();
 			ObjectNode node = mapper.createObjectNode();
 			node.put("idrun", exp.getIdconfig());
@@ -423,6 +456,8 @@ public class Experiment {
 		} catch (JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -431,21 +466,23 @@ public class Experiment {
 	@GET
 	public Response exposureRedirect(@PathParam("idrun") String idrun,@HeaderParam("user-agent") String useragent, @Context UriInfo uriOrigin, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun);
+			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			
 			String idunit = Utils.getRequestIdentifier(idrun,request);
 			
-			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>());
+			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 
-			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
-			em.registerEvent(idrun, event);
+			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+			em.registerEvent(idrun, event, authuser);
 			em.monitorEvent(event);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
@@ -465,6 +502,8 @@ public class Experiment {
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 
 		return Response.status(Status.BAD_REQUEST).build();
@@ -474,20 +513,22 @@ public class Experiment {
 	
 	@Path("/redirect/{idrun}/{idunit}")
 	@GET
-	public Response exposureRedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent) {
+	public Response exposureRedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun);
-			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>());
+			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 
-			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
-			em.registerEvent(idrun, event);
+			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+			em.registerEvent(idrun, event, authuser);
 			em.monitorEvent(event);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
@@ -502,6 +543,8 @@ public class Experiment {
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 
 	    
@@ -553,16 +596,18 @@ public class Experiment {
 	@Path("/getparams/{idrun}/{idunit}")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response exposureGetParamsUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent) {
+	public Response exposureGetParamsUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		String result= "{}";
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun);
-			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			JExperiment jexp = em.getExperimentFromConf(idrun, null);
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>());
+			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			jparams.set("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
@@ -574,16 +619,17 @@ public class Experiment {
 			}
 			result = mapper.writeValueAsString(jparams);
 			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			if (origin != null) {
-				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-		    	response.header("Access-Control-Allow-Credentials", "true");
-		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-		    	//response.allow("OPTIONS");
-			}
+			response.header("Access-Control-Allow-Origin", "*");
+	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+	    	response.header("Access-Control-Allow-Credentials", "true");
+	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+//			if (origin != null) {
+//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
+//		    	//response.allow("OPTIONS");
+//			}
 			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
-				em.registerEvent(idrun, event);
+				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+				em.registerEvent(idrun, event, authuser);
 				em.monitorEvent(event);
 			}
 			return response.build();
@@ -593,6 +639,8 @@ public class Experiment {
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 		
 	}
@@ -604,16 +652,18 @@ public class Experiment {
 	public Response exposureGetParams(@PathParam("idrun") String idrun, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		String result= "{}";
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun);
+			JExperiment jexp = em.getExperimentFromConf(idrun, null);
 			
 			String idunit = Utils.getRequestIdentifier(idrun,request);
 
-			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
 			InputStream is = new ByteArrayInputStream("".getBytes());
-			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>());
+			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			jparams.set("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
@@ -628,17 +678,18 @@ public class Experiment {
 
 			NewCookie newcookie = new NewCookie(idrun,idunit); 
 			response.cookie(newcookie);
-			
-			if (origin != null) {
-				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-		    	response.header("Access-Control-Allow-Credentials", "true");
-		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-		    	//response.allow("OPTIONS");
-			}
+			response.header("Access-Control-Allow-Origin", "*");
+	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+	    	response.header("Access-Control-Allow-Credentials", "true");
+	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+
+//			if (origin != null) {
+//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
+//		    	//response.allow("OPTIONS");
+//			}
 			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
-				em.registerEvent(idrun, event);
+				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+				em.registerEvent(idrun, event, authuser);
 				em.monitorEvent(event);
 			}
 			return response.build();
@@ -648,6 +699,8 @@ public class Experiment {
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 		
 	}
@@ -659,13 +712,15 @@ public class Experiment {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response exposureGetParamsJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			String result= "{}";
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			ObjectMapper mapper = new ObjectMapper();
 			
 			JsonNode inputNode = mapper.readTree(inputJson);
 			String idrun = inputNode.get("idconfig").asText();
-			JExperiment jexp = em.getExperimentFromConf(idrun);
+			JExperiment jexp = em.getExperimentFromConf(idrun, null);
 			String unitExp = jexp.getUnit();
 			String idunit = null;
 			if (inputNode.get("idunit") != null)
@@ -675,9 +730,9 @@ public class Experiment {
 				idunit = Utils.getRequestIdentifier(idrun,request);
 			
 			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
-			Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap);
+			Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap, authuser);
 			
-			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit);
+			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 
 			InputStream is = new ByteArrayInputStream("".getBytes());
@@ -697,17 +752,18 @@ public class Experiment {
 
 			NewCookie newcookie = new NewCookie(idrun,idunit); 
 			response.cookie(newcookie);
-			
-			if (origin != null) {
-				response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-		    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-		    	response.header("Access-Control-Allow-Credentials", "true");
-		    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-		    	//response.allow("OPTIONS");
-			}
+			response.header("Access-Control-Allow-Origin", "*");
+	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+	    	response.header("Access-Control-Allow-Credentials", "true");
+	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+
+//			if (origin != null) {
+//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
+//		    	//response.allow("OPTIONS");
+//			}
 			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent);
-				em.registerEvent(idrun, event);
+				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+				em.registerEvent(idrun, event, authuser);
 				em.monitorEvent(event);
 			}
 			return response.build();
@@ -717,8 +773,14 @@ public class Experiment {
 		} catch (URISyntaxException | IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 			
 	}
+	
+
+	
+
 
 }

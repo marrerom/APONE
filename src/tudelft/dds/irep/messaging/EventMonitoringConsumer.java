@@ -16,6 +16,8 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.ShutdownSignalException;
+
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.Utils;
@@ -58,8 +60,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 			try {
 				loadEvent(exp);
 			} catch (IOException e) {
-				//TODO: handle error properly -log
-				e.printStackTrace();
+				log.log(Level.SEVERE, "IO ERROR in EventMonitoringConsumer while loading events",e);
 			}
 	}
 	
@@ -125,6 +126,14 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Exposure message not processed for monitoring. "+e.getMessage(), e);
 				}
 			}
+		}
+	}
+	
+	public void handleShutdownSignal​(String consumerTag, ShutdownSignalException sig) {
+		try {
+			this.getChannel().basicCancel(consumerTag);
+		} catch (IOException e) {
+			log.log(Level.SEVERE, "IO ERROR. EventMonitoringConsumer basic cancel error", sig.getCause());
 		}
 	}
 

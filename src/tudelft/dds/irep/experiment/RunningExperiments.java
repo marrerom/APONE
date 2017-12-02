@@ -5,10 +5,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ws.rs.NotAuthorizedException;
 
 import com.glassdoor.planout4j.NamespaceConfig;
 
@@ -16,8 +21,13 @@ import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
+import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.User;
 
 public class RunningExperiments {
+	
+	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	private Map<String, RunningExpInfo> idconfConfig;
 	
@@ -26,105 +36,136 @@ public class RunningExperiments {
 		idconfConfig = new HashMap<String, RunningExpInfo>();
 	}
 	
-	public Collection<RunningExpInfo> getRunningExp(){
-		return idconfConfig.values();
+	public Collection<RunningExpInfo> getRunningExp(User authuser){
+		return filterByOwnership(authuser, idconfConfig.values());
 	}
 	
-	public RunningExpInfo getRunningExp(String idconf) {
-		return idconfConfig.get(idconf);
+//	public RunningExpInfo getRunningExp(String idconf, User authuser) {
+//		RunningExpInfo runningExp = idconfConfig.get(idconf);
+//		Authorization.checkAuthorized(authuser, runningExp.getExperimenter());
+//		return runningExp;	
+//	}
+	
+	public RunningExpInfo getExpInfo(String idconf, User authuser){
+		RunningExpInfo runningExp = idconfConfig.get(idconf);
+		Security.checkAuthorized(authuser, runningExp.getExperimenter());
+		return runningExp;
 	}
 	
-	public List<String> getExperiments(List<Status> status) {
-		List<String> result = new ArrayList<String>();
-		for (String idconfig: idconfConfig.keySet()) {
-			if (status.contains(getStatus(idconfig))){
-				result.add(idconfig);
-			}
-		}
-		return result;
-	}
-	
-	public Status getStatus(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null) {
-			return ei.getStatus();
-		}
-		return Status.OFF;
-	}
-	
-	public Date getDateToEnd(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null) {
-			return ei.getDateToEnd();
-		}
-		return null;
-	}
-	
-	public Integer getMaxExposures(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null) {
-			return ei.getMaxExposures();
-		}
-		return null;
-	}
-	
-	public synchronized void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted) throws IOException {
+	public synchronized void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted, String expowner, User authuser) throws IOException {
 		String idconf = conf.get_id();
 		Date dateToEnd = conf.getDate_to_end();
 		Integer maxExposures = conf.getMax_exposures();
 		if (targetStatus == Status.OFF)
-			setExperimentOFF(idconf);
+			setExperimentOFF(idconf, authuser);
 		else {
 			if (targetStatus == Status.PAUSED) {
-				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted);
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted, expowner, authuser);
 			} else if (targetStatus == Status.ON){
-				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted);
+				put(idconf, nsconf, targetStatus, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted, expowner, authuser);
 			}
 		}
 	}
 
-	public synchronized void setExperimentOFF(String idconf) throws IOException {
-		remove(idconf);
-	}
-	
-	public NamespaceConfig getNsConfig(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null)
-			return ei.getConf();
-		return null;
-	}
-	
-	public EventMonitoringConsumer getEventMonitoringConsumer(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null)
-			return ei.getMonConsumer();
-		return null;
-	}
-	
-	public EventRegisterConsumer getEventRegisterConsumer(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null)
-			return ei.getRegConsumer();
-		return null;
-	}
-	
-	public Date getLastStarted(String idconf) {
-		RunningExpInfo ei = getExpInfo(idconf);
-		if (ei != null)
-			return ei.getLastStarted();
-		return null;
+	public synchronized void setExperimentOFF(String idconf, User authuser) throws IOException {
+		remove(idconf, authuser);
 	}
 
-	public RunningExpInfo getExpInfo(String idconf){
-		return idconfConfig.get(idconf);
+	
+	private Collection<RunningExpInfo> filterByOwnership(User authuser, Collection<RunningExpInfo> runningExp) {
+		Collection<RunningExpInfo> results = new HashSet<RunningExpInfo>();
+		for (RunningExpInfo exp:runningExp) {
+			if (Security.isAuthorized(authuser, exp.getExperimenter())) {
+				results.add(exp);
+			}
+		}
+		return results;
 	}
 	
-	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted){
-		return idconfConfig.put(idconf,new RunningExpInfo(idconf,conf,status, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted));
+	
+//	private RunningExpInfo authorize(User authuser, RunningExpInfo runningExp) {
+//		if (runningExp != null && !Authorization.isAuthorized(authuser,runningExp.getExperimenter())) {
+//			String msg = "Access to experiment "+runningExp.getIdconfig()+" not authorized";
+//			NotAuthorizedException e = new NotAuthorizedException(msg);
+//			log.log(Level.WARNING, msg, e);
+//			throw e;
+//		}
+//		return runningExp;
+//	}
+	
+	
+	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted, String expowner, User authuser){
+		RunningExpInfo newExp = new RunningExpInfo(idconf,conf,status, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted, expowner);
+		Security.checkAuthorized(authuser, newExp.getExperimenter());
+		return idconfConfig.put(idconf,newExp);
 	}
 	
-	private RunningExpInfo remove(String idconf) throws IOException {
-		return idconfConfig.remove(idconf);
+	private RunningExpInfo remove(String idconf, User authuser) throws IOException {
+		RunningExpInfo toremove = idconfConfig.get(idconf);
+		if (toremove != null) {
+			Security.checkAuthorized(authuser, toremove.getExperimenter());
+			return idconfConfig.remove(toremove.getIdconfig());
+		}
+		return null;
 	}
+	
+
+	
+//	public Status getStatus(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null) {
+//			return ei.getStatus();
+//		}
+//		return Status.OFF;
+//	}
+//	
+//	public Date getDateToEnd(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null) {
+//			return ei.getDateToEnd();
+//		}
+//		return null;
+//	}
+//	
+//	public Integer getMaxExposures(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null) {
+//			return ei.getMaxExposures();
+//		}
+//		return null;
+//	}
+	
+
+	
+//	public NamespaceConfig getNsConfig(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null)
+//			return ei.getConf();
+//		return null;
+//	}
+//	
+//	public EventMonitoringConsumer getEventMonitoringConsumer(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null)
+//			return ei.getMonConsumer();
+//		return null;
+//	}
+//	
+//	public EventRegisterConsumer getEventRegisterConsumer(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null)
+//			return ei.getRegConsumer();
+//		return null;
+//	}
+//	
+//	public Date getLastStarted(String idconf, User authuser) {
+//		RunningExpInfo ei = getExpInfo(idconf, authuser);
+//		if (ei != null)
+//			return ei.getLastStarted();
+//		return null;
+//	}
+
+	
+
 
 }

@@ -18,7 +18,8 @@
 	"ename": {"type":"string"},
 	"evalue": {"type":"string"},
 	"etype" : {"enum": ["BINARY", "STRING", "JSON"], "default":"STRING"},
-	"useragent" : {"type":"string"}
+	"useragent" : {"type":"string"},
+	"experimenter" : {"type":"string"}
 	},
 
 "definitions" : {

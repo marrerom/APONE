@@ -1,0 +1,28 @@
+html, body {
+	height: 100%;
+   	}
+/* .ui.grid { */
+/*    	height: 90%; */
+/* 	} */
+#contents_conf {
+    display: none;
+}
+.ui.row.top {
+	height: 60%;
+}
+/* #contents_event { */
+/*     display: none; */
+/* } */
+/* #contents_mon { */
+/*     display: none; */
+/* } */
+/* #contents_expnew { */
+/*     display: none; */
+/* } */
+/* #contents_expnew_adv { */
+/*     display: none; */
+/* } */
+.ui.error.message {
+	display: none;
+}
+

@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -55,9 +56,12 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
+import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.User;
 import tudelft.dds.irep.utils.Utils;
 
 @Path("/event")
@@ -74,8 +78,10 @@ public class Event {
 	public Response registerMultipart(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp, 
 			@FormDataParam("idunit") String idunit, @FormDataParam("etype") String etype, 
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue, 
-		    @FormDataParam("paramvalues") String paramvalues, @HeaderParam("user-agent") String useragent) {
+		    @FormDataParam("paramvalues") String paramvalues, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			
@@ -85,22 +91,24 @@ public class Event {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(paramvalues);
 			JParamValues params = mapper.convertValue(jnode, JParamValues.class);
-			JExperiment jexp = em.getExperimentFromConf(idconfig);
+			JExperiment jexp = em.getExperimentFromConf(idconfig,authuser);
 			String unitExp = jexp.getUnit();
-			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
+			String treatment = em.getTreatment(unitExp, idconfig, idunit, authuser); //could be obtained from nsconfig if the experiment is running
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
-			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalue, timestamp,treatment, params, useragent);
+			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalue, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			em.registerEvent(idconfig, event);
+			em.registerEvent(idconfig, event, authuser);
 			ResponseBuilder response = Response.ok();
-			if (jtreat.getUrl() != null) {
-				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
-			    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-			    response.header("Access-Control-Allow-Credentials", "true");
-			    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-			    //response.allow("OPTIONS");
-			}
+			response.header("Access-Control-Allow-Origin", "*");
+		    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+		    response.header("Access-Control-Allow-Credentials", "true");
+		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+
+//			if (jtreat.getUrl() != null) {
+//				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
+//			    //response.allow("OPTIONS");
+//			}
 		    return response.build();
 		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -108,6 +116,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -115,8 +125,10 @@ public class Event {
 	@Path("/register")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent) {
+	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getClientUser();
+			authuser.setAsAdmin();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			ObjectMapper mapper = new ObjectMapper();
@@ -138,23 +150,25 @@ public class Event {
 				timestamp = Utils.getTimestamp(new Date());
 			
 			JParamValues params = mapper.convertValue(inputNode.get("paramvalues"), JParamValues.class);
-			JExperiment jexp = em.getExperimentFromConf(idconfig);
+			JExperiment jexp = em.getExperimentFromConf(idconfig, authuser);
 			String unitExp = jexp.getUnit();
-			String treatment = em.getTreatment(unitExp, idconfig, idunit); //could be obtained from nsconfig if the experiment is running
+			String treatment = em.getTreatment(unitExp, idconfig, idunit, authuser); //could be obtained from nsconfig if the experiment is running
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
-			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params, useragent);
+			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-			em.registerEvent(idconfig, event);
+			em.registerEvent(idconfig, event, authuser);
 			ResponseBuilder response = Response.ok();
-			if (jtreat.getUrl() != null) {
-				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
-			    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-			    response.header("Access-Control-Allow-Credentials", "true");
-			    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-			    //response.allow("OPTIONS");
-			}
+			response.header("Access-Control-Allow-Origin", "*");
+		    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
+		    response.header("Access-Control-Allow-Credentials", "true");
+		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+
+//			if (jtreat.getUrl() != null) {
+//				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
+//			    //response.allow("OPTIONS");
+//			}
 			return response.build();
 		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -162,6 +176,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 
@@ -170,10 +186,11 @@ public class Event {
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String register(@PathParam("idevent") String idevent) {
+	public String register(@PathParam("idevent") String idevent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JEvent jevent = em.getEvent(idevent);
+			JEvent jevent = em.getEvent(idevent, authuser);
 			ObjectMapper mapper = new ObjectMapper();
 			String eventstr = mapper.writeValueAsString(jevent); 
 			return eventstr;
@@ -183,6 +200,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}
 	
@@ -209,16 +228,19 @@ public class Event {
 	@Path("/delete")
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
-	public void delete(String idevent) {
+	public void delete(String idevent, @Context HttpServletRequest request) {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			em.deleteEvent(idevent);
+			em.deleteEvent(idevent,authuser);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 	}	 
 		
@@ -228,14 +250,17 @@ public class Event {
 	public String getTimestampFormat() {
 		return JsonDateSerializer.timestampFormat;
 	}
+	
+
 
 	@Path("/search")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String search(String filter) {
+	public String search(String filter, @Context HttpServletRequest request) {
 		//final Integer SNIPPET = 100;
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
@@ -245,16 +270,17 @@ public class Event {
 			ProcessingReport pr = jval.validate(eventfilter,jnode, context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			
-			List<JEvent> events = em.getEvents(eventfilter);
+			List<JEvent> events = em.getEvents(eventfilter,authuser);
 			ArrayNode arrayNode = mapper.createArrayNode();
 			for (JEvent ev: events) {
 				ObjectNode node = mapper.createObjectNode();
 				node.put("_id", ev.get_id());
 				node.put("ename", ev.getEname());
-			    node.put("unitid", ev.getIdunit());
+			    //node.put("unitid", ev.getIdunit()); In any case it is 'idunit', not 'unitid'
 			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
 			    node.put("etype", ev.getEtype());
 			    node.put("evalue", ev.getEvalue());
+			    node.put("experimenter", ev.getExperimenter());
 //			    if (ev.getETypeEnum() != EventType.BINARY && !ev.getEvalue().isEmpty()) {
 //			    	int len = ev.getEvalue().length();
 //			    	if ( len > SNIPPET) len = SNIPPET; 
@@ -270,6 +296,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 		
 	}
@@ -279,15 +307,16 @@ public class Event {
 	@Path("/getCSV")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getCSV(String idevents) {
+	public Response getCSV(String idevents, @Context HttpServletRequest request) {
 		try { 
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(idevents);
 			List<JEvent> events = new ArrayList<JEvent>(); 
 			for (JsonNode item : jnode) {
 				String id = item.asText();
-				events.add(em.getEvent(id));
+				events.add(em.getEvent(id,authuser));
 			}
 			StreamingOutput stream = new StreamingOutput() {
 				@Override
@@ -320,6 +349,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 
 	}
@@ -329,15 +360,16 @@ public class Event {
 	@Path("/getJSON")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getJSON(String idevents) throws JsonProcessingException, IOException, ParseException {
+	public Response getJSON(String idevents, @Context HttpServletRequest request) throws JsonProcessingException, IOException, ParseException {
 		try {
+			User authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(idevents);
 			List<JEvent> events = new ArrayList<JEvent>(); 
 			for (JsonNode item : jnode) {
 				String id = item.asText();
-				events.add(em.getEvent(id));
+				events.add(em.getEvent(id,authuser));
 			}
 			StreamingOutput stream = new StreamingOutput() {
 				@Override
@@ -373,6 +405,8 @@ public class Event {
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
 		}
 
 	}

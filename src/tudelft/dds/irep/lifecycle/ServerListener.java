@@ -55,10 +55,13 @@ public class ServerListener implements ServletContextListener {
          
         	Channel channel = (Channel) sce.getServletContext().getAttribute("MsgChannel");
 			Connection con = channel.getConnection();
-			channel.close();
-			con.close();
 			
-		} catch (IOException | TimeoutException e) {
+			//channel.close();
+			//con.close();
+			channel.abort();
+			con.abort();
+			
+		} catch (IOException  e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 		}
     }
@@ -91,6 +94,7 @@ public class ServerListener implements ServletContextListener {
 			channel.exchangeDeclare(exchangeName, "direct", true);
 			log.log(Level.INFO, "RabbitMQ Channel binded to "+exchangeName+" exchange");
 			sce.getServletContext().setAttribute("MsgChannel", channel);
+			
 			channel.addShutdownListener(new ShutdownListener() {
 		        public void shutdownCompleted (ShutdownSignalException cause) {
 		        	if (cause.isInitiatedByApplication())

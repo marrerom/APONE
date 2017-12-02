@@ -15,8 +15,10 @@ public class RunningExpInfo {
 		private Date dateToEnd;
 		private Integer maxExposures;
 		private Date lastStarted;
+		private String experimenter;
 		
-		public RunningExpInfo(String idconfig, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted) {
+
+		public RunningExpInfo(String idconfig, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted, String experimenter) {
 			this.idconfig = idconfig;
 			this.conf = conf;
 			this.status = status;
@@ -25,6 +27,7 @@ public class RunningExpInfo {
 			this.dateToEnd = dateToEnd;
 			this.maxExposures = maxExposures;
 			this.lastStarted = lastStarted;
+			this.experimenter = experimenter;
 		}
 		
 		public String getIdconfig() {
@@ -57,6 +60,14 @@ public class RunningExpInfo {
 	
 		public Date getLastStarted() {
 			return lastStarted;
+		}
+
+		public String getExperimenter() {
+			return experimenter;
+		}
+
+		public void setExperimenter(String experimenter) {
+			this.experimenter = experimenter;
 		}
 
 

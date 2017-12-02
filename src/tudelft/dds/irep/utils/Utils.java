@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -109,5 +110,16 @@ public class Utils {
 		 return target;
 	 }
 	 
+	 /*If the user has admin rol, the user is set to null, because is the same value if there is no authentication.
+	  * 
+	  */
+//	 public static String getExperimenter(HttpServletRequest request) {
+//		 if (request.isUserInRole("irepadmin"))
+//			 return null;
+//		 if (request.getUserPrincipal() != null)
+//			 return request.getUserPrincipal().getName();
+//		 return null;
+//	 }
 
+	 
 }

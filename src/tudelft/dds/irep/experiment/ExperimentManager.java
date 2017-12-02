@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +44,8 @@ import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.messaging.EventMonitoringConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
+import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.User;
 import tudelft.dds.irep.utils.Utils;
 
 public class ExperimentManager {
@@ -60,26 +63,38 @@ public class ExperimentManager {
 	private Channel channel;
 
 	
-	public Collection<RunningExpInfo> getRunningExp() {
-		return re.getRunningExp();
+	public Collection<RunningExpInfo> getRunningExp(User authuser) {
+		return re.getRunningExp(authuser);
 	}
 	
-	public RunningExpInfo getRunningExp(String idconf) {
-		return re.getRunningExp(idconf);
+	public RunningExpInfo getRunningExp(String idconf, User authuser) {
+		return re.getExpInfo(idconf, authuser);
 	}
+	
+	public Collection<String> getExperiments(List<Status> status, User authuser) {
+		Collection<RunningExpInfo> experiments = re.getRunningExp(authuser);
+		Set<String> result = new HashSet<String>();
+		for (RunningExpInfo exp: experiments) {
+		if (status.contains(exp.getStatus())){
+			result.add(exp.getIdconfig());
+		}
+	}
+	return result;
+}
 	
 	public ExperimentManager(Database db, RunningExperiments re, Channel channel) throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
 		this.db = db;
 		this.re = re;
 		this.channel = channel;
-		dbSynchronize(); //save in re running/paused experiments in db
+		User authuser = Security.getMasterUser();
+		dbSynchronize(authuser); //save in re running/paused experiments in db
 		int delay = 10000; //milliseconds
 		ActionListener taskPerformer = new ActionListener() {
 		      public void actionPerformed(ActionEvent evt) {
-		    	  for (String idconf:re.getExperiments(Arrays.asList(Status.ON, Status.PAUSED))) {
+		    	  for (String idconf:getExperiments(Arrays.asList(Status.ON, Status.PAUSED), authuser)) {
 		    		  try {
-		    		  if (matchStopConditions(idconf)) 
-							stop(idconf); //TODO: what if I stop and there is a service currently running related to the experiment?
+		    		  if (matchStopConditions(idconf, authuser)) 
+							stop(idconf, null); //TODO: what if I stop and there is a service currently running related to the experiment?
 						} catch (IOException | ParseException e) {
 							e.printStackTrace();
 							Thread.currentThread().interrupt();
@@ -94,33 +109,33 @@ public class ExperimentManager {
 	}
 	
 	//even if the experiment if OFF (in order to decide if we can start it again or not)
-	private boolean matchStopConditions(String idconf)
+	private boolean matchStopConditions(String idconf, User authuser)
 			throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Date dateToEnd;
 		Integer maxExposures;
 		Integer actualExposures;
 		EventMonitoringConsumer emc;
-		if (re.getStatus(idconf) == Status.OFF) {
-			JConfiguration jconf = db.getConfiguration(idconf);
+		if (re.getExpInfo(idconf, authuser).getStatus() == Status.OFF) {
+			JConfiguration jconf = db.getConfiguration(idconf, authuser);
 			dateToEnd = jconf.getDate_to_end();
 			if (dateToEnd != null && dateToEnd.compareTo(new Date()) < 0) {
 				return true;
 			}
 			maxExposures = jconf.getMax_exposures();
 			if (maxExposures != null) {
-				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getExposureEvents(idconf)));
+				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getExposureEvents(idconf, authuser)));
 				actualExposures = emc.getTotalCount();
 				if (actualExposures >= maxExposures)
 					return true;
 			}
 		} else {
-			dateToEnd = re.getDateToEnd(idconf);
+			dateToEnd = re.getExpInfo(idconf, authuser).getDateToEnd();
 			if (dateToEnd != null && dateToEnd.compareTo(new Date()) < 0) {
 				return true;
 			}
-			maxExposures = re.getMaxExposures(idconf);
+			maxExposures = re.getExpInfo(idconf, authuser).getMaxExposures();
 			if (maxExposures != null) {
-				emc = re.getEventMonitoringConsumer(idconf);
+				emc = re.getExpInfo(idconf, authuser).getMonConsumer();
 				actualExposures = emc.getTotalCount();
 				if (actualExposures >= maxExposures)
 					return true;
@@ -132,53 +147,53 @@ public class ExperimentManager {
 	
 	
 	
-	private void dbSynchronize() throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
+	private void dbSynchronize(User authuser) throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
 		ImmutableList<Status> conditions = ImmutableList.of(Status.ON, Status.PAUSED);
-		for (JConfiguration conf: db.getConfigurations(conditions)) {
-			JExperiment exp = db.getExpFromConfiguration(conf.get_id());
-			load(exp,conf);
+		for (JConfiguration conf: db.getConfigurations(conditions, authuser)) {
+			JExperiment exp = db.getExpFromConfiguration(conf.get_id(), authuser);
+			load(exp,conf, authuser);
 		}
 	}
 	
 	//removes exp only if there are no more configurations
-	public void deleteConfig(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		db.deleteConfig(idconf);
+	public void deleteConfig(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		db.deleteConfig(idconf, authuser);
 	}
 	
-	public void deleteEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		db.deleteEvent(idevent);
+	public void deleteEvent(String idevent, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		db.deleteEvent(idevent, authuser);
 	}
 	
-	public String addConfig(String idexp, JConfiguration config) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		return db.addExpConfig(idexp, config);
+	public String addConfig(String idexp, JConfiguration config, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.addExpConfig(idexp, config, authuser);
 	}
 	
-	public String addExperiment(JExperiment exp) throws ParseException, IOException {
-		return db.addExperiment(exp);
+	public String addExperiment(JExperiment exp, User authuser) throws ParseException, IOException {
+		return db.addExperiment(exp, authuser);
 	}
 	
-	public JExperiment getExperiment(String idexp) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		return db.getExperiment(idexp);
+	public JExperiment getExperiment(String idexp, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.getExperiment(idexp, authuser);
 	}
 	
-	public JExperiment getExperimentFromConf(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		return db.getExpFromConfiguration(idconf);
+	public JExperiment getExperimentFromConf(String idconf,  User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.getExpFromConfiguration(idconf, authuser);
 	}
 	
-	public JConfiguration getConfiguration(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		return db.getConfiguration(idconf);
+	public JConfiguration getConfiguration(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.getConfiguration(idconf, authuser);
 	}
 	
-	public JEvent getEvent(String idevent) throws JsonParseException, JsonMappingException, IOException, ParseException {
-		return db.getEvent(idevent);
+	public JEvent getEvent(String idevent, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		return db.getEvent(idevent, authuser);
 	}
 	
-	public List<JExperiment> getExperiments(JExperiment filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
-		return db.getExperiments(filter);
+	public List<JExperiment> getExperiments(JExperiment filter, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		return db.getExperiments(filter, authuser);
 	}
 	
-	public List<JEvent> getEvents(JEvent filter) throws JsonParseException, JsonMappingException, IOException, ParseException{
-		return db.getEvents(filter);
+	public List<JEvent> getEvents(JEvent filter, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		return db.getEvents(filter, authuser);
 	}
 		
 	public Map<String,?> treatment_to_json(JTreatment treatment) throws ValidationException {
@@ -186,9 +201,9 @@ public class ExperimentManager {
 		return PlanoutDSLCompiler.dsl_to_json(dsl); 
 	}
 	
-	public Map<String, ?> getParams(String unitExp, String idconf, String idunit, Map<String,?> overrides) throws javax.ws.rs.BadRequestException {
-		Status st = re.getStatus(idconf);
-		NamespaceConfig nsConfig = re.getNsConfig(idconf);
+	public Map<String, ?> getParams(String unitExp, String idconf, String idunit, Map<String,?> overrides, User authuser) throws javax.ws.rs.BadRequestException {
+		Status st = re.getExpInfo(idconf, authuser).getStatus();
+		NamespaceConfig nsConfig = re.getExpInfo(idconf, authuser).getConf();
 		Map<String, ?> result = new HashMap<>();
 		if (st == Status.ON) {
 			Namespace ns = new Namespace(nsConfig, ImmutableMap.of(unitExp, idunit), overrides);
@@ -202,9 +217,9 @@ public class ExperimentManager {
 		return result;
 	}
 	
-	public String getTreatment(String unitExp, String idconf, String idunit) throws javax.ws.rs.BadRequestException {
-		Status st = re.getStatus(idconf);
-		NamespaceConfig nsConfig = re.getNsConfig(idconf);
+	public String getTreatment(String unitExp, String idconf, String idunit, User authuser) throws javax.ws.rs.BadRequestException {
+		Status st = re.getExpInfo(idconf, authuser).getStatus();
+		NamespaceConfig nsConfig = re.getExpInfo(idconf, authuser).getConf();
 		String result = null;
 		if (st == Status.ON) {
 			Experiment planoutExp = nsConfig.getExperiment(ImmutableMap.of(unitExp,idunit));
@@ -224,7 +239,7 @@ public class ExperimentManager {
 		return result;
 	}
 	
-	public JTreatment getTreatment(JExperiment exp, String name) { 		
+	public JTreatment getTreatment(JExperiment exp, String name) {  		
 	for (JTreatment treat: exp.getTreatment()) {
 		if (treat.getName().equals(name)) {
 			return treat;
@@ -233,20 +248,20 @@ public class ExperimentManager {
 	return null;
 	}
 
-	public void load(JExperiment exp, JConfiguration conf) throws ValidationException, IOException,  ParseException {
+	public void load(JExperiment exp, JConfiguration conf, User authuser) throws ValidationException, IOException,  ParseException {
 		Status dbstatus =Status.valueOf(conf.getRun());
 		Date last_started = conf.getDate_started()[conf.getDate_started().length-1]; //There is at least one value
 		NamespaceConfig ns  = createNamespace(exp,conf);
 		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
-		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id())));
-		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started);
+		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id(), authuser)));
+		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started, exp.getExperimenter(), authuser);
 	}
 	
-	private List<JEvent> getExposureEvents(String idconf) throws JsonParseException, JsonMappingException, IOException, ParseException{
+	private List<JEvent> getExposureEvents(String idconf, User authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		JEvent filter = new JEvent();
 		filter.setIdconfig(idconf);
 		filter.setEname(JEvent.EXPOSURE_ENAME);
-		return db.getEvents(filter);
+		return db.getEvents(filter, authuser);
 	}
 	
 //	private Map<String, Integer> getExposures(JExperiment exp, JConfiguration conf) throws JsonParseException, JsonMappingException, IOException, ParseException{
@@ -272,61 +287,61 @@ public class ExperimentManager {
 //	}
 	
 	//It should do nothing if the current status is on or paused
-	public boolean start(JExperiment exp, JConfiguration conf) throws IOException, ValidationException, ParseException {
-		Status st = re.getStatus(conf.get_id());
+	public boolean start(JExperiment exp, JConfiguration conf, User authuser) throws IOException, ValidationException, ParseException {
+		Status st = re.getExpInfo(conf.get_id(), authuser).getStatus();
 		Date last_started = null;
 		if (st == Status.OFF) {
-			if (matchStopConditions(conf.get_id()))
+			if (matchStopConditions(conf.get_id(),authuser))
 				return false;
 			last_started = new Date();
-			db.addExpConfigDateStart(conf.get_id(), last_started);
+			db.addExpConfigDateStart(conf.get_id(), last_started, authuser);
 		}
-		NamespaceConfig ns = re.getNsConfig(conf.get_id());
+		NamespaceConfig ns = re.getExpInfo(conf.get_id(), authuser).getConf();
 		if (ns == null) ns = createNamespace(exp,conf);
-		EventRegisterConsumer erc = re.getEventRegisterConsumer(conf.get_id());
+		EventRegisterConsumer erc = re.getExpInfo(conf.get_id(), authuser).getRegConsumer();
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
-		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
-		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id())));
-		if (last_started == null) last_started = re.getLastStarted(conf.get_id());
-		re.setExperiment(conf, ns, Status.ON, erc, emc, last_started);
-		db.setExpConfigRunStatus(conf.get_id(), Status.ON);
+		EventMonitoringConsumer emc = re.getExpInfo(conf.get_id(), authuser).getMonConsumer(); 
+		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id(), authuser)));
+		if (last_started == null) last_started = re.getExpInfo(conf.get_id(), authuser).getLastStarted();
+		re.setExperiment(conf, ns, Status.ON, erc, emc, last_started, exp.getExperimenter(), authuser);
+		db.setExpConfigRunStatus(conf.get_id(), Status.ON, authuser);
 		return true;
 	}
 	
-	public void stop(String idconf) throws IOException {
-		if (re.getStatus(idconf) == Status.ON || re.getStatus(idconf) == Status.PAUSED) {
-			db.addExpConfigDateEnd(idconf, new Date()); 
+	public void stop(String idconf, User authuser) throws IOException {
+		if (re.getExpInfo(idconf, authuser).getStatus() == Status.ON || re.getExpInfo(idconf, authuser).getStatus() == Status.PAUSED) {
+			db.addExpConfigDateEnd(idconf, new Date(), authuser); 
 		}
 		deleteRegisterQueue(idconf); //TODO: the list may not be empty, the events will be destroyed
 		deleteMonitoringQueue(idconf);
-		re.setExperimentOFF(idconf); 
-		db.setExpConfigRunStatus(idconf, Status.OFF);
+		re.setExperimentOFF(idconf, authuser); 
+		db.setExpConfigRunStatus(idconf, Status.OFF, authuser);
 	}
 
 	//all the users receives the control, instead of the corresponding treatment while paused
-	public void pause(JExperiment exp, JConfiguration conf) throws IOException, ValidationException, ParseException {
+	public void pause(JExperiment exp, JConfiguration conf, User authuser) throws IOException, ValidationException, ParseException {
 		Date last_started = null;
-		if (re.getStatus(conf.get_id()) == Status.OFF) {
+		if (re.getExpInfo(conf.get_id(), authuser).getStatus() == Status.OFF) {
 			last_started = new Date();
-			db.addExpConfigDateStart(conf.get_id(), last_started);
+			db.addExpConfigDateStart(conf.get_id(), last_started, authuser);
 		}
-		NamespaceConfig ns = re.getNsConfig(conf.get_id());
+		NamespaceConfig ns = re.getExpInfo(conf.get_id(), authuser).getConf();
 		if (ns == null) ns = createNamespace(exp,conf);
-		EventRegisterConsumer erc = re.getEventRegisterConsumer(conf.get_id());
+		EventRegisterConsumer erc = re.getExpInfo(conf.get_id(), authuser).getRegConsumer();
 		if (erc == null) erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
-		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(conf.get_id()); 
-		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id())));
-		if (last_started == null) last_started = re.getLastStarted(conf.get_id());
-		re.setExperiment(conf, ns, Status.PAUSED, erc, emc, last_started);
-		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED);
+		EventMonitoringConsumer emc = re.getExpInfo(conf.get_id(), authuser).getMonConsumer(); 
+		if (emc == null) emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getExposureEvents(conf.get_id(), authuser)));
+		if (last_started == null) last_started = re.getExpInfo(conf.get_id(), authuser).getLastStarted();
+		re.setExperiment(conf, ns, Status.PAUSED, erc, emc, last_started, exp.getExperimenter(), authuser);
+		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED, authuser);
 	}
 	
-	public String saveEvent(JEvent event) throws javax.ws.rs.BadRequestException, ParseException, JsonProcessingException, IOException {
+	public String saveEvent(JEvent event, User authuser) throws javax.ws.rs.BadRequestException, ParseException, JsonProcessingException, IOException {
 		String idconf = event.getIdconfig();
-		Status st = re.getStatus(idconf);
+		Status st = re.getExpInfo(idconf, authuser).getStatus();
 		String result = null;
 		if (st == Status.ON) {
-			result = db.addEvent(event);
+			result = db.addEvent(event, authuser);
 		} else if (st == Status.PAUSED || st == Status.OFF) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}
@@ -334,8 +349,8 @@ public class ExperimentManager {
 
 	}
 	
-	public void registerEvent(String idconf, JEvent event) throws IOException {
-		Status st = re.getStatus(idconf);
+	public void registerEvent(String idconf, JEvent event, User authuser) throws IOException {
+		Status st = re.getExpInfo(idconf, authuser).getStatus();
 		if (st != Status.ON && st != Status.PAUSED) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}
@@ -350,14 +365,14 @@ public class ExperimentManager {
 		channel.basicPublish("", queue, null, body);
 	}
 	
-	public Map<String, Set<String>> getUnitCount(String idconfig) throws javax.ws.rs.BadRequestException {
-		EventMonitoringConsumer emc = re.getEventMonitoringConsumer(idconfig);
+	public Map<String, Set<String>> getUnitCount(String idconfig, User authuser) throws javax.ws.rs.BadRequestException {
+		EventMonitoringConsumer emc = re.getExpInfo(idconfig, authuser).getMonConsumer();
 		if (emc == null) throw new javax.ws.rs.BadRequestException("The experiment is not running/paused");
 		return emc.getTreatmentCount();
 	}
 	
 	public JEvent createEvent(String idconf, String unitid, String ename, EventType etype, InputStream evalue, String timestamp, 
-			String treatment, JParamValues params, String useragent) throws IOException, ParseException {
+			String treatment, JParamValues params, String useragent, String expowner) throws IOException, ParseException {
 		JEvent event = new JEvent();
 		event.setEtype(etype.toString());
 		event.setEname(ename);
@@ -367,6 +382,7 @@ public class ExperimentManager {
 		event.setParamvalues(params);
 		event.setTimestamp(Utils.getDate(timestamp));
 		event.setUseragent(useragent);
+		event.setExperimenter(expowner);
 		String valuestr;
 		if (etype == EventType.BINARY) {
 			byte[] valuebin = ByteStreams.toByteArray(evalue);

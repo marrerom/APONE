@@ -12,6 +12,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.ShutdownSignalException;
 
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.experiment.ExperimentManager;
@@ -36,7 +37,7 @@ public class EventRegisterConsumer extends DefaultConsumer {
 		while (attempts > 0) {
 			try {
 				event = (JEvent) Utils.deserialize(body);
-				em.saveEvent(event);
+				em.saveEvent(event, null);
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 				attempts = 0;
 			} catch (ClassNotFoundException e) {
@@ -52,6 +53,14 @@ public class EventRegisterConsumer extends DefaultConsumer {
 					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Event message lost. "+e.getMessage(), e);
 				}
 			}
+		}
+	}
+	
+	public void handleShutdownSignal​(String consumerTag, ShutdownSignalException sig) {
+		try {
+			this.getChannel().basicCancel(consumerTag);
+		} catch (IOException e) {
+			log.log(Level.SEVERE, "IO ERROR. EventRegisterConsumer basic cancel error", sig.getCause());
 		}
 	}
 }
