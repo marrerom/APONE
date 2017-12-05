@@ -54,6 +54,7 @@ import tudelft.dds.irep.data.schema.JEventCSV;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
+import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.utils.Security;
@@ -61,7 +62,6 @@ import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
-import tudelft.dds.irep.utils.User;
 import tudelft.dds.irep.utils.Utils;
 
 @Path("/event")
@@ -80,8 +80,7 @@ public class Event {
 			@FormDataParam("ename") String ename, @FormDataParam("evalue") InputStream evalue, 
 		    @FormDataParam("paramvalues") String paramvalues, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
-			User authuser = Security.getClientUser();
-			authuser.setAsAdmin();
+			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			
@@ -127,8 +126,7 @@ public class Event {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
-			User authuser = Security.getClientUser();
-			authuser.setAsAdmin();
+			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			ObjectMapper mapper = new ObjectMapper();
@@ -188,7 +186,7 @@ public class Event {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String register(@PathParam("idevent") String idevent, @Context HttpServletRequest request) {
 		try {
-			User authuser = Security.getAuthenticatedUser(request);
+			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JEvent jevent = em.getEvent(idevent, authuser);
 			ObjectMapper mapper = new ObjectMapper();
@@ -230,7 +228,7 @@ public class Event {
 	@Consumes(MediaType.TEXT_PLAIN)
 	public void delete(String idevent, @Context HttpServletRequest request) {
 		try {
-			User authuser = Security.getAuthenticatedUser(request);
+			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.deleteEvent(idevent,authuser);
 		} catch (ParseException e) {
@@ -260,7 +258,7 @@ public class Event {
 	public String search(String filter, @Context HttpServletRequest request) {
 		//final Integer SNIPPET = 100;
 		try {
-			User authuser = Security.getAuthenticatedUser(request);
+			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 
@@ -309,7 +307,7 @@ public class Event {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getCSV(String idevents, @Context HttpServletRequest request) {
 		try { 
-			User authuser = Security.getAuthenticatedUser(request);
+			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(idevents);
@@ -362,7 +360,7 @@ public class Event {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getJSON(String idevents, @Context HttpServletRequest request) throws JsonProcessingException, IOException, ParseException {
 		try {
-			User authuser = Security.getAuthenticatedUser(request);
+			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(idevents);

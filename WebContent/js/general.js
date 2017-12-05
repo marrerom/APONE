@@ -20,6 +20,9 @@ var removeURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/delete";
 var removeEventsURL = IREPLATFORM_URI + "/IREPlatform/service/event/delete";
 var getExperimentURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/get";
 var getUserURL = IREPLATFORM_URI + "/IREPlatform/service/authenticatedUser";
+var monitorUsersURL = IREPLATFORM_URI + "/IREPlatform/service/user/monitoring"
+var assignmentURL = IREPLATFORM_URI + "/IREPlatform/service/user/assign"
+
 
 function alertError(xhr, errorMessage){
 	var what = errorMessage;
@@ -156,24 +159,14 @@ function sortTable(tableClass, n) {
 		 */
 	 function init(){
  		$("#menu_expsearch").on("click",function(){
-//	 		$("#menu").find(".active.item").removeClass("active");
 	 		location.href='expExplore.jsp';
-//	 		$("#contents > :visible").hide();
-//	 		$("#contents_expsearch").show(); 
-//	 		$("#menu_expsearch").addClass("active");
-//	 		$("#contents_expsearch").trigger("menu_selection");
 	 	});
 	 	
 	 	$("#menu_expnew").on("click",function(event, data){
-//	 		$("#menu").find(".active.item").removeClass("active");
 	 		if (data)
 	 			location.href='expCreate.jsp?data='+encodeURIComponent(JSON.stringify(data));
 	 		else
 	 			location.href='expCreate.jsp';
-//	 		$("#contents > :visible").hide();
-//	 		$("#contents_expnew").show();
-//	 		$("#menu_expnew").addClass("active");
-//	 		$("#contents_expnew").trigger("menu_selection");
 	 	});
 	 	
 	 	$("#menu_expnew_adv").on("click",function(event, data){
@@ -181,12 +174,6 @@ function sortTable(tableClass, n) {
 	 			location.href='expCreateAdv.jsp?data='+encodeURIComponent(JSON.stringify(data));
 	 		else
 	 			location.href='expCreateAdv.jsp';
-		
-//	 		$("#menu").find(".active.item").removeClass("active");
-//	 		$("#contents > :visible").hide();
-//	 		$("#contents_expnew_adv").show();
-//	 		$("#menu_expnew_adv").addClass("active");
-//	 		$("#contents_expnew_adv").trigger("menu_selection");
 	 	});
 	 	
 	 	$("#menu_event").on("click",function(event, data){
@@ -194,20 +181,14 @@ function sortTable(tableClass, n) {
 	 			location.href='eventExplore.jsp?data='+encodeURIComponent(JSON.stringify(data));
 	 		else
 	 			location.href='eventExplore.jsp';
-//	 		$("#menu").find(".active.item").removeClass("active");
-//	 		$("#contents > :visible").hide();
-//	 		$("#contents_event").show();
-//	 		$("#menu_event").addClass("active");
-//	 		$("#contents_event").trigger("menu_selection");
 	 	});
 	 	
-	 	$("#menu_mon").on("click",function(){
-	 		location.href='expMonitor.jsp';
-//	 		$("#menu").find(".active.item").removeClass("active");
-//	 		$("#contents > :visible").hide();
-//	 		$("#contents_mon").show();
-//	 		$("#menu_mon").addClass("active");
-//	 		$("#contents_mon").trigger("menu_selection");
+	 	$("#menu_monexp").on("click",function(){
+	 		location.href='monExperiments.jsp';
+	 	});
+	 	
+	 	$("#menu_monusr").on("click",function(){
+	 		location.href='monUsers.jsp';
 	 	});
 	 }
 

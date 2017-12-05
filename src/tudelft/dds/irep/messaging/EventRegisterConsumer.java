@@ -17,6 +17,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.utils.Utils;
 
 public class EventRegisterConsumer extends DefaultConsumer {
@@ -37,7 +38,7 @@ public class EventRegisterConsumer extends DefaultConsumer {
 		while (attempts > 0) {
 			try {
 				event = (JEvent) Utils.deserialize(body);
-				em.saveEvent(event, null);
+				em.saveEvent(event, Security.getClientUser());
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 				attempts = 0;
 			} catch (ClassNotFoundException e) {

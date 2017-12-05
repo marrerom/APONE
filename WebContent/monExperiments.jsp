@@ -11,15 +11,15 @@
 <script src='js/semantic.min.js'></script>
 <script src='js/general.js'></script>
 <script src='js/calendar.min.js'></script>
-<script src='js/expMonitor.js'></script>
+<script src='js/monExperiments.js'></script>
 </head>
 <body>
 
 <%
     session=request.getSession(false);
-    if(session.getAttribute("user")==null)
+    if(session.getAttribute("authuser")==null)
     {
-        response.sendRedirect(request.getContextPath() + "/service/authenticate");
+        response.sendRedirect(request.getContextPath() + "/service/user/authenticate");
     }
 
 %> 
@@ -49,15 +49,15 @@
 				<div class="item">
 					<div class="header">Monitoring</div>
 					<div class="menu">
-						<a id='menu_mon' class="active item">Dashboard</a>
-
+						<a id='menu_monexp' class="active item">Experiments</a>
+						<a id='menu_monusr' class="item">Users</a>
 					</div>
 				</div>
 
 			</div>
 		</div>
 
-		<div id='contents_mon' class='fourteen wide stretched column'>
+		<div id='contents_monexp' class='fourteen wide stretched column'>
 
 			<!-- <div id='contents_mon' class='ui grid' style='height: 100%;'>  -->
 

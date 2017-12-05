@@ -16,6 +16,7 @@ import tudelft.dds.irep.data.schema.JCommon;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.JsonDateSerializer;
 import tudelft.dds.irep.utils.Utils;
 
@@ -92,7 +93,7 @@ public class MongoToJackson extends Conversor {
 	/*Id*/
 	@SuppressWarnings("unchecked")
 	protected Map<String,Object> convertId(Map<String,Object> mongodoc, Class<? extends JCommon> jacksonclass) {
-	if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class) {
+	if (jacksonclass == JConfiguration.class || jacksonclass == JEvent.class || jacksonclass == JUser.class) {
 		id(mongodoc);
 	} else if (jacksonclass == JExperiment.class) {
 		id(mongodoc);

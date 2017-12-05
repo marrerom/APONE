@@ -1,7 +1,7 @@
 /**
  * Experiment Monitoring
  */
-var tabexpmon;
+var tabmonexp;
 
 $(document).ready(function() {
 	
@@ -19,9 +19,9 @@ $(document).ready(function() {
 	var monrunning,monfinished;
 	
 	function init(){
-		tabexpmon = $("#contents_mon");
-		monrunning = tabexpmon.find(".ui.compact.red.celled.table._running > tbody");
-		monfinished = tabexpmon.find(".ui.compact.grey.celled.table._finished > tbody");
+		tabmonexp = $("#contents_monexp");
+		monrunning = tabmonexp.find(".ui.compact.red.celled.table._running > tbody");
+		monfinished = tabmonexp.find(".ui.compact.grey.celled.table._finished > tbody");
 		refresh();
 		setInterval(function(){ refresh(); }, REFRESH); 
 	}

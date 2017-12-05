@@ -16,9 +16,9 @@
 <body>
 <%
     session=request.getSession(false);
-    if(session.getAttribute("user")==null)
+    if(session.getAttribute("authuser")==null)
     {
-        response.sendRedirect(request.getContextPath() + "/service/authenticate");
+        response.sendRedirect(request.getContextPath() + "/service/user/authenticate");
     }
 
 %> 
@@ -48,8 +48,8 @@
 				<div class="item">
 					<div class="header">Monitoring</div>
 					<div class="menu">
-						<a id='menu_mon' class="item">Dashboard</a>
-
+						<a id='menu_monexp' class="item">Experiments</a>
+						<a id='menu_monusr' class="item">Users</a>
 					</div>
 				</div>
 

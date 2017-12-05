@@ -1,0 +1,20 @@
+{
+"$schema" : "http://json-schema.org/schema#",
+
+"title" : "User schema",
+
+"description" : "Data related to the users registered who are authorized to use the app",
+
+"type" : "object",
+
+"properties" : 
+	{
+	"_id": {"type":"string"},
+	"idTwitter": {"type": "number"},
+	"name": {"type":"string"},
+	"namesuffix": {"type":"number"},
+	"rol" : {"enum": ["USER", "ADMIN"], "default":"USER"},
+	"participatedexps" : {"type":"array", "items": {"type":"string" } }
+	}
+
+}
