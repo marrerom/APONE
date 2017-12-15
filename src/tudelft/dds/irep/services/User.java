@@ -15,11 +15,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -39,6 +44,7 @@ import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 
 import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.data.schema.JConfiguration;
+import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
@@ -99,8 +105,10 @@ public class User {
 			
 			//TODO: check if valid user in db and rol
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Security.setAuthenticatedUser(request, em, ((Long)tok.getUserId()).toString());			
-			URI uri = new URI("http://localhost:8080/IREPlatform"); // Redirect to IREPGUI
+			Security.setAuthenticatedUser(request, em, ((Long)tok.getUserId()).toString(), tok.getScreenName());			
+			//URI uri = new URI("http://ireplatform.ewi.tudelft.nl:8080/IREPlatform");
+			
+			URI uri = new URI(request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getServletContext().getContextPath());
 			Response response = Response.seeOther(uri).build();
 			return response;
 		} catch (Exception e) {
@@ -132,9 +140,9 @@ public class User {
 				node.put("_id", user.get_id());
 				node.put("idname", user.getIdname());
 				node.put("rol", user.getRol());
-				node.put("nparticipated", user.getParticipatedexps().length);
+				node.put("nparticipated", getCompletedExperiments(em, user).size());
 				node.put("ncreated", getOwnExperiments(em,user).size());
-				node.put("nleft", getLeft(em, getCandidateExperiments(em,user), user, restrictedTo ).size());
+				node.put("nleft", getCandidateExperiments(getCompletedExperiments(em, user), em,user,restrictedTo).size());
 				arrayNode.add(node);
 			}
 		return Response.ok(mapper.writeValueAsString(arrayNode), MediaType.APPLICATION_JSON).build();
@@ -152,7 +160,7 @@ public class User {
 	
 	
 	
-	@Path("/assign")
+	@Path("/assignexp")
 	@GET
 	public String assign(@Context HttpServletRequest request, @Context UriInfo uriInfo) {
 		try {
@@ -160,22 +168,16 @@ public class User {
 			UserRol restrictedTo = null; //assignment of experiments to participate restricted to this rol. Null means no restriction
 			List<Pair<String, Integer>> exp_participants = new ArrayList<Pair<String, Integer>>();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Collection<RunningExpInfo> leftlist = getLeft(em, getCandidateExperiments(em, authuser), authuser, restrictedTo);
+			Collection<RunningExpInfo> leftlist = getCandidateExperiments(getCompletedExperiments(em, authuser), em, authuser, restrictedTo);
 			if (leftlist.isEmpty())
 				throw new BadRequestException("No more running experiments left to participate");
 			for (RunningExpInfo left: leftlist) {
-				Integer participants = left.getMonConsumer().getTotalCount();
+				Integer participants = left.getMonConsumer().getExposureEvents().getTotalCount();
 				Pair<String,Integer> newpair = Pair.of(left.getIdconfig(), participants);
 				exp_participants.add(newpair);
 			}
 			exp_participants.sort((a,b)->a.getRight().compareTo(b.getRight()));
 			String idexp = exp_participants.get(0).getLeft();
-			Set<String> list = new HashSet<String>();
-			list.addAll(Arrays.asList(authuser.getParticipatedexps()));
-			list.add(idexp);
-			String[] array = list.toArray(new String[list.size()]);
-			em.updateUserParticipation(authuser,array, Security.getMasterUser());
-			Security.setAuthenticatedUser(request, em, authuser.getIdTwitter());
 			URI redirection = new URI(uriInfo.getBaseUri()+"experiment/redirect/"+idexp+"/"+authuser.getIdTwitter());
 			return redirection.toString();
 		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
@@ -188,6 +190,44 @@ public class User {
 			throw new AuthenticationException();
 		}
 	}
+	
+	@Path("/checkCompletedExp/{idrun}/{idunit}")
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public String userCompletedExp(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getClientUser();
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JEvent filter = new JEvent();
+			filter.setEname(JEvent.COMPLETED_ENAME);
+			filter.setIdunit(idunit);
+			filter.setIdconfig(idrun);
+			Boolean result = false;
+			if (!em.getEvents(filter, authuser).isEmpty())
+				result = true;
+			return result.toString();
+		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		}
+	}
+	
+//	@Path("/setCompletedExp/{idrun}/{idunit}")
+//	@PUT
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public void setCompletedExp() {
+//		Set<String> list = new HashSet<String>();
+//		list.addAll(Arrays.asList(authuser.getParticipatedexps()));
+//		list.add(idexp);
+//		String[] array = list.toArray(new String[list.size()]);
+//		em.updateUserParticipation(authuser,array, Security.getMasterUser());
+//Security.setAuthenticatedUser(request, em, authuser.getIdTwitter());
+//	}
 	
 	
 	private Collection<JConfiguration> getOwnExperiments(ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException{
@@ -202,36 +242,53 @@ public class User {
 		return result;
 	}
 	
+	private Collection<String> getCompletedExperiments(ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException{
+		JUser authuser = Security.getMasterUser();
+		JEvent filterEvent = new JEvent();
+		filterEvent.setEname(JEvent.COMPLETED_ENAME);
+		filterEvent.setIdunit(user.getIdTwitter());
+		Set<String> completedExps = em.getEvents(filterEvent,authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());
+		return completedExps;
+	}
 	
-	//get running experiments not created by the user
-	private Collection<RunningExpInfo> getCandidateExperiments(ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException {
+	
+	//get running experiments not created by the user, on and not done previously by the user (event ename=COMPLETED_ENAME)
+	private Collection<RunningExpInfo> getCandidateExperiments(Collection<String> completedExperiments, ExperimentManager em, JUser user, UserRol restrictToRol) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JUser authuser = Security.getMasterUser();
+		Set<String> running = em.getRunningExp(authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());;
+		JUser filterUser = new JUser();
+		if (restrictToRol != null)
+			filterUser.setRol(restrictToRol.toString());;
+		Set<String> validusers = em.getUsers(filterUser, authuser).stream().map(p->p.getIdname()).collect(Collectors.toSet());;
+		running.removeAll(completedExperiments);
+		validusers.remove(user.getIdname());
 		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
-		Collection<RunningExpInfo> running = em.getRunningExp(Security.getMasterUser());
-		for (RunningExpInfo exp:running) {
-			if (!exp.getExperimenter().equals(user.getIdname())) {
-				result.add(exp);
+		for (String idconf:running) {
+			RunningExpInfo rei = em.getRunningExp(idconf, authuser);
+			if (validusers.contains(rei.getExperimenter())) {
+				result.add(rei);
 			}
 		}
 		return result;
 	}
 	
-	private Collection<RunningExpInfo> getLeft(ExperimentManager em, Collection<RunningExpInfo> candidates, JUser user, UserRol restrictToRol) throws IOException, ParseException{
-		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
-		List<String> list = Arrays.asList(user.getParticipatedexps());
-		
-		for (RunningExpInfo exp: candidates) {
-			if (!list.contains(exp.getIdconfig())) {
-				if (restrictToRol == null)
-					result.add(exp);
-				else {
-					JUser expuser = em.getUserByIdname(exp.getExperimenter(), Security.getMasterUser());
-					if (expuser.getRolEnum() == restrictToRol)
-						result.add(exp);
-				}
-			}
-		}
-		return result;
-	}
+//	private Collection<RunningExpInfo> getLeft(ExperimentManager em, Collection<RunningExpInfo> candidates, JUser user, UserRol restrictToRol) throws IOException, ParseException{
+//		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
+//		List<String> list = Arrays.asList(user.getParticipatedexps());
+//		
+//		for (RunningExpInfo exp: candidates) {
+//			if (!list.contains(exp.getIdconfig())) {
+//				if (restrictToRol == null)
+//					result.add(exp);
+//				else {
+//					JUser expuser = em.getUserByIdname(exp.getExperimenter(), Security.getMasterUser());
+//					if (expuser.getRolEnum() == restrictToRol)
+//						result.add(exp);
+//				}
+//			}
+//		}
+//		return result;
+//	}
 	
 
 }

@@ -12,16 +12,18 @@ var removeEventURL = IREPLATFORM_URI + "/IREPlatform/service/event/delete";
 var getCSVURL = IREPLATFORM_URI + "/IREPlatform/service/event/getCSV";
 var getJSONURL = IREPLATFORM_URI + "/IREPlatform/service/event/getJSON";
 var monitorTreatmentsURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/treatments";
-var monitorSubtreatmentsURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/subtreatments";
+var monitorSubtreatExposureURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/subtreatments/exposure";
+var monitorSubtreatCompletedURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/subtreatments/completed";
 var expsearchURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/search";
 var startURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/start";
 var stopURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/stop";
 var removeURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/delete";
 var removeEventsURL = IREPLATFORM_URI + "/IREPlatform/service/event/delete";
 var getExperimentURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/get";
-var getUserURL = IREPLATFORM_URI + "/IREPlatform/service/authenticatedUser";
-var monitorUsersURL = IREPLATFORM_URI + "/IREPlatform/service/user/monitoring"
-var assignmentURL = IREPLATFORM_URI + "/IREPlatform/service/user/assign"
+var getUserURL = IREPLATFORM_URI + "/IREPlatform/service/user/authenticatedUser";
+var monitorUsersURL = IREPLATFORM_URI + "/IREPlatform/service/user/monitoring";
+var assignmentURL = IREPLATFORM_URI + "/IREPlatform/service/user/assignexp";
+var completedURL = IREPLATFORM_URI + "/IREPlatform/service/user/completedexp";
 
 
 function alertError(xhr, errorMessage){

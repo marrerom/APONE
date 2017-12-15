@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +19,9 @@ import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.NewCookie;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -111,7 +114,18 @@ public class Utils {
 		 else
 			 target = target + "?" + query;
 		 
+		 String[] urlparts = target.split("\\?");
+		 if (urlparts.length == 2) {
+			 String encoded64Query = Utils.encodeBinary(urlparts[1].getBytes());
+			 target = urlparts[0] + "?" + URLEncoder.encode(encoded64Query, StandardCharsets.UTF_8.toString());
+		 }
+		 
 		 return target;
+	 }
+	 
+	 public static NewCookie getCookie(URI target, String idrun, String idunit) {
+		 NewCookie newcookie = new NewCookie(idrun,idunit,"/",target.getHost(),"",Integer.MAX_VALUE,false); //Only valid if same domain
+		 return newcookie;
 	 }
 	 
 	 /*If the user has admin rol, the user is set to null, because is the same value if there is no authentication.

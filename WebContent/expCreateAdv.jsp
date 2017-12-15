@@ -170,7 +170,7 @@
 
 									</div>
 									<div class='field'>
-										<label>Max.Units</label> <input name='maxexp'
+										<label>Max.Completed Units</label> <input name='maxexp'
 											placeholder='Max. units' type='text'
 											title='Maximum number of different experimental units to expose to the experiment'>
 									</div>

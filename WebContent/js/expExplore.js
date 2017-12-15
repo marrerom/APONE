@@ -307,7 +307,6 @@ $(document).ready(function() {
 			  type: 'POST',
 			  url: removeEventsURL,
 			  data: idrun,
-			  error: removeEventsError,
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});	
 	}

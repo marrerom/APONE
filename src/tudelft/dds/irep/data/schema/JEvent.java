@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class JEvent extends JCommon implements Serializable {
 	@JsonIgnore
 	public static final String EXPOSURE_ENAME = "exposure";
+	public static final String COMPLETED_ENAME = "completed";
 	
 	@JsonIgnore
 	private static final long serialVersionUID = 1L;

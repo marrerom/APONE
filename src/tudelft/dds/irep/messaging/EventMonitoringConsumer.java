@@ -1,6 +1,7 @@
 package tudelft.dds.irep.messaging;
 
 import java.io.IOException;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,86 +24,38 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.Utils;
 
+
+
+
 public class EventMonitoringConsumer extends DefaultConsumer {
 	static public final int MAXATTEMPTS = 3;
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
-	
-	private Map<String, Set<String>> treatcount;
-	ObjectMapper mapper = new ObjectMapper();
-	
-	private Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentcount; //treatment - set<unitid>
 
-	public Map<String, Map<Map<String, ?>, Set<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
-		return subtreatmentcount;
-	}
-
-	public Map<String, Set<String>> getTreatmentCount() {
-		return treatcount;
-	}
-	
-	public Integer getTotalCount() {
-		int count = 0;
-		for (Set<String> value:treatcount.values())
-			count += value.size();
-		return count;
-	}
+	ExposureEventMonitoring exposureEvents;
+	CompleteEventMonitoring completeEvents;
 
 	public EventMonitoringConsumer(Channel channel) {
 		super(channel);
-		treatcount = new HashMap<String, Set<String>>(); //pairs treatment-set unitids
-		subtreatmentcount = new HashMap<String, Map<Map<String,?>, Set<String>>>();  //pairs treatment - <map pararms, count>
+		exposureEvents = new ExposureEventMonitoring();
+		completeEvents = new CompleteEventMonitoring();
 	}
 	
-	public EventMonitoringConsumer(Channel channel, Collection<JEvent> expEvents) {
+	public EventMonitoringConsumer(Channel channel, Collection<JEvent> monitoringEvents) {
 		super(channel);
-		treatcount = new HashMap<String, Set<String>>(); //pairs treatment-counter
-		subtreatmentcount = new HashMap<String, Map<Map<String,?>, Set<String>>>();  //pairs treatment - <map pararms, count>
-		for (JEvent exp:expEvents)
-			try {
-				loadEvent(exp);
-			} catch (IOException e) {
-				log.log(Level.SEVERE, "IO ERROR in EventMonitoringConsumer while loading events",e);
-			}
+		Collection<JEvent> exposures = monitoringEvents.stream().filter(p->p.getEname().equals(JEvent.EXPOSURE_ENAME)).collect(Collectors.toList());
+		exposureEvents = new ExposureEventMonitoring(exposures);
+	
+		Collection<JEvent> complete = monitoringEvents.stream().filter(p->p.getEname().equals(JEvent.COMPLETED_ENAME)).collect(Collectors.toList());
+		completeEvents = new CompleteEventMonitoring(complete);
+		
 	}
 	
-	private void loadEvent(JEvent exp) throws JsonProcessingException, IOException {
-		updateTreatmentCount(exp);
-		updateSubtreatmentCount(exp);
+	public ExposureEventMonitoring getExposureEvents() {
+		return exposureEvents;
 	}
-	
-	private void updateTreatmentCount(JEvent jevent) {
-		String treatment = jevent.getTreatment(); 
-		Set<String> unitids = treatcount.get(treatment);
-		if (unitids == null) {
-			unitids = new HashSet<String>();
-			treatcount.put(treatment, unitids);
-		}
-		unitids.add(jevent.getIdunit());
-	}
-	
-	private void updateSubtreatmentCount(JEvent jevent) {
-		String treatment = jevent.getTreatment();
-		Map<String,?> params =mapper.convertValue(jevent.getParamvalues(), Map.class);
-		Map<Map<String, ?>, Set<String>> maptreatment = subtreatmentcount.get(treatment);
-		Set<String> unitids=null;
-		if (maptreatment == null) {
-			maptreatment = new HashMap<Map<String,?>, Set<String>>();
-			unitids = new HashSet<String>();
-			maptreatment.put(params, unitids);
-			subtreatmentcount.put(treatment, maptreatment);
-		} else {
-			for (Map<String,?> mapparams: maptreatment.keySet()) {
-				if (params.equals(mapparams)) {  //function equals in Map compares the entries of both Maps (key-value). TODO: another more efficient approach?
-					unitids = maptreatment.get(mapparams);
-					break;
-				}
-			}
-			if (unitids == null) {
-				unitids = new HashSet<String>();
-				maptreatment.put(params, unitids);
-			}
-		}
-		unitids.add(jevent.getIdunit());
+
+	public CompleteEventMonitoring getCompleteEvents() {
+		return completeEvents;
 	}
 	
 	@Override
@@ -112,8 +66,11 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 			try {
 				event = (JEvent) Utils.deserialize(body);
 				if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
-					loadEvent(event);
+					exposureEvents.loadEvent(event);
+				} else if (event.getEname().equals(JEvent.COMPLETED_ENAME)) {
+					completeEvents.loadEvent(event);
 				}
+					
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 				attempts = 0;
 			} catch (ClassNotFoundException e) {
@@ -123,7 +80,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 				attempts = attempts -1 ;
 				log.log(Level.WARNING, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". "+e.getMessage(), e);
 				if (attempts <= 0) {
-					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Exposure message not processed for monitoring. "+e.getMessage(), e);
+					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Monitoring Event message not processed for monitoring. "+e.getMessage(), e);
 				}
 			}
 		}

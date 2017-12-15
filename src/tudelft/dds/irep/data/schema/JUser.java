@@ -35,7 +35,6 @@ public class JUser extends JCommon implements Serializable {
 	protected String idname; //unique name assigned. The actual name in twitter of someone may change, but this id must stay the same
 	protected String name; //screen name in twitter (it can be changed in twitter)
 	protected String rol;
-	protected String[] participatedexps = {};
 	
 	public JUser() {
 		
@@ -86,13 +85,6 @@ public class JUser extends JCommon implements Serializable {
 		this.rol = rol;
 	}
 
-	public String[] getParticipatedexps() {
-		return participatedexps;
-	}
-
-	public void setParticipatedexps(String[] participatedexps) {
-		this.participatedexps = participatedexps;
-	}
 	
 	@JsonIgnore
 	public boolean isAdmin() {
@@ -111,16 +103,7 @@ public class JUser extends JCommon implements Serializable {
 	public UserRol getRolEnum() { //at the moment of development, mongo driver does not support enum types
 		return UserRol.valueOf(getRol());
 	}
-	
-//	@JsonIgnore
-//	public void addParticipatedexps(String newexp) {
-//		Set<String> list = new HashSet<String>();
-//		list.addAll(Arrays.asList(this.getParticipatedexps()));
-//		list.add(newexp);
-//		String[] array = list.toArray(new String[list.size()]);
-//		
-//		this.setParticipatedexps(array);
-//	}
+
 
 	
 }

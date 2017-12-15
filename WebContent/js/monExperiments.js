@@ -34,17 +34,24 @@ $(document).ready(function() {
 //		console.error("There was an error loading the running experiments");
 //	}
 	
-	function getTreatmentsHTML(treatments){
+	function getTreatmentsHTML(exposures, completed){
 		var result = "";
-		var total = 0;
-		$.each(treatments, function (index, value) {
-			total = total + parseInt(value.value);
+		var totalexposures = 0;
+		$.each(exposures, function (index, value) {
+			totalexposures = totalexposures + parseInt(value.value);
 		});
-		$.each(treatments, function (index, value) {
-			var per = Math.round((parseInt(value.value) / total) * 100);
-			result = result +"<div class='ui mini statistic'><div class='value'>"+value.value+" ("+per+"%)</div><div class='label'>"+value.name+"</div></div>";
+//		$.each(treatments, function (index, value) {
+//			var per = Math.round((parseInt(value.value) / total) * 100);
+//			result = result +"<div class='ui mini statistic'><div class='value'>"+value.value+" ("+per+"%)</div><div class='label'>"+value.name+"</div></div>";
+//		});
+		result = result + "<div class='ui mini statistic exposures'><div class='value sort'>"+totalexposures+"</div><div class='label'> Exposures </div></div>";
+		
+		var totalcompleted = 0;
+		$.each(completed, function (index, value) {
+			totalcompleted = totalcompleted + parseInt(value.value);
 		});
-		result = result + "<div class='ui mini statistic'><div class='value sort'>"+total+"</div><div class='label'> Total </div></div>";
+		result = result + "<div class='ui mini statistic completed'><div class='value sort'>"+totalcompleted+"</div><div class='label'> Completed </div></div>";
+	
 		return result;
 	}
 	
@@ -60,7 +67,16 @@ $(document).ready(function() {
 			var id = value.idrun+"-"+value.laststarted;
 			var item = monrunning.find("#"+id);
 			if (item.length > 0){ //if match, update, else take to finish
-				item.find(".treatments").html(getTreatmentsHTML(value.treatments));
+				item.find(".treatments").html(getTreatmentsHTML(value.exposures, value.completed));
+				item.find(".ui.mini.statistic.exposures").on("click", function(){
+					displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatExposureURL);
+				});
+				item.find(".ui.mini.statistic.exposures").css( 'cursor', 'pointer' );
+				item.find(".ui.mini.statistic.completed").on("click", function(){
+					displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatCompletedURL);
+				});
+				item.find(".ui.mini.statistic.completed").css( 'cursor', 'pointer' );
+
 				tofinish.splice($.inArray(id, tofinish),1);
 			} else {
 				tocreate.push(value);
@@ -81,7 +97,9 @@ $(document).ready(function() {
 	function finish(id){
 		item = monrunning.find("#"+id);
 		item.find("[name=toggle]").prop("checked", false);
-		item.find(".treatments").off(); //removes click event
+		//item.find(".treatments").off(); //removes click event
+		item.find(".ui.mini.statistic.exposure").off();
+		item.find(".ui.mini.statistic.completed").off();
 		item.css( 'cursor', 'default' );
 		monfinished.prepend(item);
 		getExperimentFinished(id.substr(0,id.indexOf("-")));
@@ -100,17 +118,31 @@ $(document).ready(function() {
 				}
 			 }
 		});
-		newrow.find(".treatments").on("click", function(){
-			var id = newrow.attr("id");
-			displayParamValues(id.substr(0,id.indexOf("-")));
-		});
-		newrow.find(".treatments").css( 'cursor', 'pointer' );
+//		newrow.find(".treatments").on("click", function(){
+//			var id = newrow.attr("id");
+//			displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatExposureURL);
+//		});
+//		newrow.find(".treatments").css( 'cursor', 'pointer' );
+	
+		
 		var date_started = new Date(value.laststarted);
 		//newrow.find(".date_started").text(date_started.toLocaleDateString()+" "+date_started.toLocaleTimeString());
 		newrow.find(".date_started").html("<span hidden class='sort date'>"+date_started+"</span><span>"+date_started.toLocaleDateString()+" "+date_started.toLocaleTimeString()+"</span>");
 		monrunning.prepend(newrow);
 		getExperimentCreate(value.idrun);
-		newrow.find(".treatments").html(getTreatmentsHTML(value.treatments));
+		newrow.find(".treatments").html(getTreatmentsHTML(value.exposures, value.completed));
+
+		newrow.find(".ui.mini.statistic.exposures").on("click", function(){
+		var id = newrow.attr("id");
+		displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatExposureURL);
+		});
+		newrow.find(".ui.mini.statistic.exposures").css( 'cursor', 'pointer' );
+		
+		newrow.find(".ui.mini.statistic.completed").on("click", function(){
+			var id = newrow.attr("id");
+			displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatCompletedURL);
+			});
+		newrow.find(".ui.mini.statistic.completed").css( 'cursor', 'pointer' );
 	}
 	
 //	function displayParamError(xhr, status, error){
@@ -142,12 +174,12 @@ $(document).ready(function() {
 	}
 
 	
-	function displayParamValues(idconf){
+	function displayParamValues(idconf, url){
 		var errorMessage = "<p>There was an error loading data from experiment +"+$(this).attr("data")+"</p>";
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
-			  url: monitorSubtreatmentsURL+"/"+idconf,
+			  url: url+"/"+idconf,
 			  success: displayParamSuccess,
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});

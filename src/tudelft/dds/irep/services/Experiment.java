@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -381,13 +382,13 @@ public class Experiment {
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
 		}
-		
 	}
+	
 	
 	@Path("/monitor/treatments")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitorTreatments(@Context HttpServletRequest request) {
+	public String monitorTreatmentsComplete(@PathParam("ename") String ename, @Context HttpServletRequest request) {
 		try {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -398,15 +399,22 @@ public class Experiment {
 				ObjectNode node = mapper.createObjectNode();
 				node.put("idrun", exp.getIdconfig());
 				node.put("laststarted", exp.getLastStarted().getTime());
-		        ArrayNode treatments = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getTreatmentCount().keySet()){
+		        ArrayNode exposures = mapper.createArrayNode();
+		        for (String treatname: exp.getMonConsumer().getExposureEvents().getTreatmentCount().keySet()){
 		        	ObjectNode treatment = mapper.createObjectNode();
 		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getTreatmentCount().get(treatname).size());
-		        	treatments.add(treatment);
+		        	treatment.put("value", exp.getMonConsumer().getExposureEvents().getTreatmentCount().get(treatname).size());
+		        	exposures.add(treatment);
 		        }
-		        node.set("treatments", treatments);
-	        		
+		        node.set("exposures", exposures);
+		        ArrayNode completed = mapper.createArrayNode();
+		        for (String treatname: exp.getMonConsumer().getCompleteEvents().getTreatmentCount().keySet()){
+		        	ObjectNode treatment = mapper.createObjectNode();
+		        	treatment.put("name", treatname);
+		        	treatment.put("value", exp.getMonConsumer().getCompleteEvents().getTreatmentCount().get(treatname).size());
+		        	completed.add(treatment);
+		        }
+		        node.set("completed", completed);
 		        arrayNode.add(node);
 			}
 			return mapper.writeValueAsString(arrayNode);
@@ -418,10 +426,10 @@ public class Experiment {
 		}
 	}
 
-	@Path("/monitor/subtreatments/{idrun}")
+	@Path("/monitor/subtreatments/{ename}/{idrun}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitorSubtreatments(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
+	public String monitorSubtreatments(@PathParam("ename") String ename, @PathParam("idrun") String idrun, @Context HttpServletRequest request) {
 		try {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -431,12 +439,18 @@ public class Experiment {
 			node.put("idrun", exp.getIdconfig());
 			node.put("laststarted", exp.getLastStarted().getTime());
 	        ArrayNode treatments = mapper.createArrayNode();
-	        for (String treatname: exp.getMonConsumer().getSubtreatmentCount().keySet()){
+	        Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, Set<String>>>();
+	        if (ename.equals(JEvent.EXPOSURE_ENAME)) //TODO: this service could deal with any event, not only exposure and complete
+	        	subtreatmentCount = exp.getMonConsumer().getExposureEvents().getSubtreatmentCount();
+	        else if (ename.equals(JEvent.COMPLETED_ENAME))
+	        	subtreatmentCount = exp.getMonConsumer().getCompleteEvents().getSubtreatmentCount();
+
+	        for (String treatname: subtreatmentCount.keySet()){
 	        	ObjectNode treatment = mapper.createObjectNode();
 	        	treatment.put("name", treatname);
-	        	treatment.put("value", exp.getMonConsumer().getTreatmentCount().get(treatname).size());
+	        	treatment.put("value", subtreatmentCount.get(treatname).size());
 	        	ArrayNode subtreatments = mapper.createArrayNode();
-	        	for (Map.Entry<Map<String,?>, Set<String>> entry:exp.getMonConsumer().getSubtreatmentCount().get(treatname).entrySet()) {
+	        	for (Map.Entry<Map<String,?>, Set<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
 	        		ObjectNode subtreatment = mapper.createObjectNode();
 	        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
 	        		subtreatment.put("value", entry.getValue().size());
@@ -460,12 +474,20 @@ public class Experiment {
 	@Path("/redirect/{idrun}")
 	@GET
 	public Response exposureRedirect(@PathParam("idrun") String idrun,@HeaderParam("user-agent") String useragent, @Context UriInfo uriOrigin, @Context HttpServletRequest request) {
+		String idunit = null;
 		try {
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			
-			String idunit = Utils.getRequestIdentifier(idrun,request);
+			if (request.getCookies()!=null) {
+				for (Cookie cookie: request.getCookies()) {
+					if (cookie.getName().equals(idrun))
+						idunit = cookie.getName();
+				}
+			}
+			if (idunit == null)
+				idunit = Utils.getRequestIdentifier(idrun,request);
 			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
@@ -477,17 +499,12 @@ public class Experiment {
 
 			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
 			em.registerEvent(idrun, event, authuser);
-			em.monitorEvent(event);
+			//em.monitorEvent(event);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-					
-				NewCookie newcookieTarget = new NewCookie(idrun,idunit,uri.getPath().toString(),uri.getHost(),"",Integer.MAX_VALUE,false); //Only valid if same domain
-				//NewCookie newcookieOrigin1 = new NewCookie("user2",idunit,uriOrigin.getBaseUri().toString(), uriOrigin.getBaseUri().toString(),"",Integer.MAX_VALUE,false);
-				NewCookie newcookieOrigin = new NewCookie(idrun,idunit); 
-						
-				Response response = Response.seeOther(uri).cookie(newcookieOrigin, newcookieTarget).build(); //302, temporaryRedirect(uri) for 301
+				Response response = Response.seeOther(uri).cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
 				return response;
 			}
 		} catch (ParseException e) {
@@ -522,12 +539,12 @@ public class Experiment {
 
 			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
 			em.registerEvent(idrun, event, authuser);
-			em.monitorEvent(event);
+			//em.monitorEvent(event);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-				Response response = Response.seeOther(uri).cookie(new NewCookie("user",idunit)).build();
+				Response response = Response.seeOther(uri).build();
 				return response;
 			}
 		} catch (ParseException e) {
@@ -587,7 +604,7 @@ public class Experiment {
 //	}
 	
 	@Path("/getparams/{idrun}/{idunit}")
-	@POST
+	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response exposureGetParamsUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		String result= "{}";
@@ -601,28 +618,27 @@ public class Experiment {
 			InputStream is = new ByteArrayInputStream("".getBytes());
 			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-			jparams.set("_idunit", idunit);
+			ObjectNode node = mapper.createObjectNode();
+			
+			node.putPOJO("params", jparams);
+			node.put("_idunit", idunit);
+			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
-			jparams.set("_variant", jtreat.getName());
+			node.put("_variant", jtreat.getName());
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
-				jparams.set("_url", jtreat.getUrl());
+				node.put("_url", jtreat.getUrl());
+				response.header("Access-Control-Allow-Origin", origin.getScheme()+"://"+origin.getHost()+":"+origin.getPort());
 			}
-			result = mapper.writeValueAsString(jparams);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			response.header("Access-Control-Allow-Origin", "*");
+			result = mapper.writeValueAsString(node);
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-	    	response.header("Access-Control-Allow-Credentials", "true");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-//			if (origin != null) {
-//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-//		    	//response.allow("OPTIONS");
-//			}
 			if (response.build().getStatus() < 400) {
 				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
 				em.registerEvent(idrun, event, authuser);
-				em.monitorEvent(event);
+				//em.monitorEvent(event);
 			}
 			return response.build();
 		} catch (ParseException e) {
@@ -639,16 +655,23 @@ public class Experiment {
 	
 //reads cookies so it need to be called with-credits from the browser in case of cross-domain calls
 	@Path("/getparams/{idrun}")
-	@POST
+	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response exposureGetParams(@PathParam("idrun") String idrun, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		String result= "{}";
+		String idunit=null;
 		try {
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JExperiment jexp = em.getExperimentFromConf(idrun, null);
-			
-			String idunit = Utils.getRequestIdentifier(idrun,request);
+			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
+			if (request.getCookies()!=null) {
+				for (Cookie cookie: request.getCookies()) {
+					if (cookie.getName().equals(idrun))
+						idunit = cookie.getName();
+				} 
+			}
+			if (idunit == null)
+				idunit = Utils.getRequestIdentifier(idrun,request);
 
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
@@ -656,32 +679,31 @@ public class Experiment {
 			InputStream is = new ByteArrayInputStream("".getBytes());
 			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-			jparams.set("_idunit", idunit);
+			ObjectNode node = mapper.createObjectNode();
+			
+			node.putPOJO("params", jparams);
+			node.put("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
-			jparams.set("_variant", jtreat.getName());
+			node.put("_variant", jtreat.getName());
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
-				jparams.set("_url", jtreat.getUrl());
+				node.put("_url", jtreat.getUrl());
+				response.header("Access-Control-Allow-Origin", origin.getScheme()+"://"+origin.getHost()+":"+origin.getPort());
+				response = response.cookie(Utils.getCookie(origin, idrun, idunit));
 			}
-			result = mapper.writeValueAsString(jparams);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-
-			NewCookie newcookie = new NewCookie(idrun,idunit); 
-			response.cookie(newcookie);
-			response.header("Access-Control-Allow-Origin", "*");
+			result = mapper.writeValueAsString(node);
+			
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 	    	response.header("Access-Control-Allow-Credentials", "true");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
-//			if (origin != null) {
-//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-//		    	//response.allow("OPTIONS");
-//			}
+	    	
 			if (response.build().getStatus() < 400) {
 				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
 				em.registerEvent(idrun, event, authuser);
-				em.monitorEvent(event);
+				//em.monitorEvent(event);
 			}
 			return response.build();
 		} catch (ParseException e) {
@@ -710,12 +732,15 @@ public class Experiment {
 			
 			JsonNode inputNode = mapper.readTree(inputJson);
 			String idrun = inputNode.get("idconfig").asText();
-			JExperiment jexp = em.getExperimentFromConf(idrun, null);
+			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			String unitExp = jexp.getUnit();
 			String idunit = null;
-			if (inputNode.get("idunit") != null)
-				idunit = inputNode.get("idunit").asText();
-			
+			if (request.getCookies()!=null) {
+				for (Cookie cookie: request.getCookies()) {
+					if (cookie.getName().equals(idrun))
+						idunit = cookie.getName();
+				} 
+			}
 			if (idunit == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
 			
@@ -728,33 +753,30 @@ public class Experiment {
 			InputStream is = new ByteArrayInputStream("".getBytes());
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-			jparams.set("_idunit", idunit);
+			ObjectNode node = mapper.createObjectNode();
+			
+			node.putPOJO("params", jparams);
+			node.put("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
-			jparams.set("_variant", jtreat.getName());
+			node.put("_variant", jtreat.getName());
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
-				jparams.set("_url", jtreat.getUrl());
-			}
-			result = mapper.writeValueAsString(jparams);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			
+				node.put("_url", jtreat.getUrl());
+				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
+				response = response.cookie(Utils.getCookie(origin, idrun, idunit));
+				}
+			result = mapper.writeValueAsString(node);
 
-			NewCookie newcookie = new NewCookie(idrun,idunit); 
-			response.cookie(newcookie);
-			response.header("Access-Control-Allow-Origin", "*");
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 	    	response.header("Access-Control-Allow-Credentials", "true");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
-//			if (origin != null) {
-//				//response.header("Access-Control-Allow-Origin", "https?://"+origin.getHost());
-//		    	//response.allow("OPTIONS");
-//			}
 			if (response.build().getStatus() < 400) {
 				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
 				em.registerEvent(idrun, event, authuser);
-				em.monitorEvent(event);
+				//em.monitorEvent(event);
 			}
 			return response.build();
 		} catch (ParseException e) {

@@ -97,9 +97,10 @@ public class ServerListener implements ServletContextListener {
 			
 			channel.addShutdownListener(new ShutdownListener() {
 		        public void shutdownCompleted (ShutdownSignalException cause) {
-		        	if (cause.isInitiatedByApplication())
-		        		log.log(Level.INFO, "RabbitMQ closed");
-		        	else {
+		        	if (cause.isInitiatedByApplication()) {
+		        		log.log(Level.SEVERE, "RabbitMQ closed by error in the app");
+		        		throw new RuntimeException(cause);
+		        	} else {
 		        		log.log(Level.SEVERE, "Connectivity to RabbitMQ has failed.  Reason received " + cause.getMessage(), cause);
 		        		throw new RuntimeException(cause); //TODO: create new channel and rebind all existing queues?
 		        	}

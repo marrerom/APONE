@@ -52,7 +52,7 @@ public interface Database {
 	
 	public String addEvent(JEvent event, JUser authuser) throws IOException, ParseException;
 	
-	public String addUser(JUser newuser, JUser authuser) throws ParseException, IOException;
+	public JUser addUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException;
 	
 	public void updateUserParticipation(JUser user, String[] newlist, JUser authuser) throws IOException;
 	

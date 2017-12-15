@@ -38,20 +38,15 @@ public class Security {
 		}
 	}
 	
-	
 	public static JUser getAuthenticatedUser(HttpServletRequest request)  {
 		if (request.getSession().getAttribute("authuser") == null)
 			throw new AuthenticationException();
 		return (JUser) request.getSession().getAttribute("authuser");
 	}
 	
-	public static void setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter) throws IOException, ParseException {
-//		JUser me = new JUser("socialdatadelft", UserRol.ADMIN);
-//		me.setIdTwitter(idTwitter.toString());
-//		me.setName(me.getIdname());
-//		em.createUser(me, getMasterUser());
-		JUser authuser = em.getUserByIdtwitter(idTwitter, getMasterUser());
-		request.getSession().setAttribute("authuser", authuser);
+	public static void setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
+		JUser user = em.createUser(idTwitter, screenName, getMasterUser());
+		request.getSession().setAttribute("authuser", user);
 	}
 	
 	public static JUser getMasterUser() {

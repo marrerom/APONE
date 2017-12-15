@@ -13,8 +13,7 @@
 	"idTwitter": {"type": "number"},
 	"name": {"type":"string"},
 	"namesuffix": {"type":"number"},
-	"rol" : {"enum": ["USER", "ADMIN"], "default":"USER"},
-	"participatedexps" : {"type":"array", "items": {"type":"string" } }
+	"rol" : {"enum": ["USER", "ADMIN"], "default":"USER"}
 	}
 
 }

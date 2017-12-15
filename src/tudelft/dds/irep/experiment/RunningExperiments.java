@@ -48,8 +48,16 @@ public class RunningExperiments {
 	
 	public RunningExpInfo getExpInfo(String idconf, JUser authuser){
 		RunningExpInfo runningExp = idconfConfig.get(idconf);
-		Security.checkAuthorized(authuser, runningExp.getExperimenter());
+		if (runningExp != null)
+			Security.checkAuthorized(authuser, runningExp.getExperimenter());
 		return runningExp;
+	}
+	
+	public Status getExpStatus(String idconf) {
+		RunningExpInfo runningExp = idconfConfig.get(idconf);
+		if (runningExp == null)
+			return Status.OFF;
+		return runningExp.getStatus();
 	}
 	
 	public synchronized void setExperiment(JConfiguration conf, NamespaceConfig nsconf, Status targetStatus, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date lastStarted, String expowner, JUser authuser) throws IOException {

@@ -100,8 +100,8 @@ public class Event {
 			em.registerEvent(idconfig, event, authuser);
 			ResponseBuilder response = Response.ok();
 			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-		    response.header("Access-Control-Allow-Credentials", "true");
+		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
+		    //response.header("Access-Control-Allow-Credentials", "true");
 		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
 //			if (jtreat.getUrl() != null) {
@@ -159,8 +159,8 @@ public class Event {
 			em.registerEvent(idconfig, event, authuser);
 			ResponseBuilder response = Response.ok();
 			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-		    response.header("Access-Control-Allow-Credentials", "true");
+		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
+		    //response.header("Access-Control-Allow-Credentials", "true");
 		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
 //			if (jtreat.getUrl() != null) {
@@ -279,6 +279,8 @@ public class Event {
 			    node.put("etype", ev.getEtype());
 			    node.put("evalue", ev.getEvalue());
 			    node.put("experimenter", ev.getExperimenter());
+			    JExperiment exp = em.getExperimentFromConf(ev.getIdconfig(), authuser);
+			    node.put("experiment", exp.getName());
 //			    if (ev.getETypeEnum() != EventType.BINARY && !ev.getEvalue().isEmpty()) {
 //			    	int len = ev.getEvalue().length();
 //			    	if ( len > SNIPPET) len = SNIPPET; 

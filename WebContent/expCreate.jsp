@@ -105,7 +105,7 @@
 												placeholder='Variant.Description' type='text'
 												title='Description of this variant'>
 										</div>
-										<div class='required seven wide field'>
+										<div class='required six wide field'>
 											<label>Client URL</label> <input name='turl'
 												placeholder='Valid URL' type='text'
 												title='URL where the variant is located'>
@@ -150,7 +150,7 @@
 
 									</div>
 									<div class='field'>
-										<label>Max.Units</label> <input name='maxexp'
+										<label>Max.Completed Units</label> <input name='maxexp'
 											placeholder='Max. units' type='text'
 											title='Maximum number of different experimental units to expose to the experiment'>
 									</div>

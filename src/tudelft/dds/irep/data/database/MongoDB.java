@@ -47,6 +47,7 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
@@ -166,22 +167,27 @@ public class MongoDB implements Database {
 		
 	}
 	
-	public String addUser(JUser newuser, JUser authuser) throws ParseException, IOException {
+	public JUser addUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
 		Security.checkAuthorized(authuser,Security.getMasterUser().getIdname());
 		JUser filter = new JUser();
-		filter.setIdTwitter(newuser.getIdTwitter());
+		filter.setIdTwitter(idTwitter);
 		List<JUser> sameidtwitter = this.getUsers(filter, authuser);
 		if (!sameidtwitter.isEmpty()) { //already exists
-			throw new BadRequestException("User with idTwitter "+newuser.getIdTwitter()+" already exists in the database");
+			return sameidtwitter.get(0);
+			//throw new BadRequestException("User with idTwitter "+newuser.getIdTwitter()+" already exists in the database");
 		}
+		JUser newuser = new JUser();
+		newuser.setIdTwitter(idTwitter);
+		newuser.setName(screenName);
+		newuser.setIdname(setIdname(screenName, screenName, authuser, 1));
+		newuser.setRol(UserRol.USER.toString());
+		ObjectId iduser = new ObjectId();
+		newuser.set_id(iduser.toString());
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> docmap = mapper.convertValue(newuser, Map.class);
-		ObjectId iduser = new ObjectId();
-		docmap.put("_id", iduser.toString());
-		docmap.put("idname", setIdname(newuser.getIdname(), newuser.getIdname(), authuser, 1));
 		Document doc = new Document(new JacksonToMongo().convert(docmap, JUser.class));
 		users.insertOne(doc);
-		return iduser.toString();
+		return newuser;
 	}
 	
 //	public void updateUser(JUser toupdate, JUser authuser) throws ParseException, IOException {
@@ -337,11 +343,15 @@ public class MongoDB implements Database {
 			if (etype == null || EventType.valueOf(etype) == EventType.STRING) { 
 				conditions.add(regex("evalue", docmap.get("evalue").toString()));
 			} else if (etype != null && EventType.valueOf(etype) == EventType.JSON) {
-				JsonNode node = mapper.valueToTree(docmap.get("evalue"));
-				for (Iterator<String> iterator = node.fieldNames(); iterator.hasNext();) {
-					String field = iterator.next();
-					conditions.add(eq("evalue."+field, node.get(field).asText()));
+				Map<String, Object> evaluemap =  mapper.convertValue(docmap.get("evalue"), Map.class);
+				for (String key:evaluemap.keySet()) {
+					conditions.add(eq("evalue."+key, evaluemap.get(key)));
 				}
+				//JsonNode node = mapper.valueToTree(docmap.get("evalue")); //TODO: create a docmap and take class of value to convert to with mapper
+//				for (Iterator<String> iterator = node.fieldNames(); iterator.hasNext();) {
+//					String field = iterator.next();
+//					conditions.add(eq("evalue."+field, node.get(field)));
+//				}
 			}
 		}
 		
@@ -360,8 +370,8 @@ public class MongoDB implements Database {
 		if (docmap.get("idTwitter") != null) conditions.add(eq("idTwitter", docmap.get("idTwitter")));	
 		if (docmap.get("idname") != null) conditions.add(eq("idname", docmap.get("idname")));	
 		if (docmap.get("rol") != null) conditions.add(eq("rol", docmap.get("rol")));	
-		ArrayList<String> participated = ((ArrayList<String>)docmap.get("participatedexps"));
-		if (!participated.isEmpty()) conditions.add(in("participatedexps", participated));	
+//		ArrayList<String> participated = ((ArrayList<String>)docmap.get("participatedexps"));
+//		if (!participated.isEmpty()) conditions.add(in("participatedexps", participated));	
 		
 		conditions.add(getUserFilter(authuser));
 		FindIterable<Document> results = users.find(and(conditions));

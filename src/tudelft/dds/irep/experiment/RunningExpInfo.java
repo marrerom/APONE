@@ -13,7 +13,7 @@ public class RunningExpInfo {
 		private EventRegisterConsumer regConsumer;
 		private EventMonitoringConsumer monConsumer;
 		private Date dateToEnd;
-		private Integer maxExposures;
+		private Integer maxExposures; //TODO: change name, it is max completed units instead of exposures
 		private Date lastStarted;
 		private String experimenter;
 		

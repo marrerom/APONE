@@ -84,7 +84,7 @@
 									</div>
 									<div class='field'>
 										<label>Description</label> <input name='description'
-											placeholder='Description' type='text' title='Experiment description'>
+											placeholder='Description' type='text' title='Experiment description (regex)'>
 									</div>
 
 									<h4 class='ui right blue header'>Variant</h4>
@@ -98,17 +98,17 @@
 										</div>
 										<div class='eleven wide field'>
 											<label>Description</label> <input name='tdesc'
-												placeholder='Variant.Description' type='text' title='Description of this variant'>
+												placeholder='Variant.Description' type='text' title='Description of this variant (regex)'>
 										</div>
 									</div>
 									<div class='fields'>
 									<div class='eight wide field'>
 										<label>Definition</label> <input name='tdef'
-											placeholder='Definition (DSL)' type='text' title='PlanOut script contents'>
+											placeholder='Definition (DSL)' type='text' title='PlanOut script contents (regex)'>
 									</div>
 									<div class='eight wide field'>
 										<label>Client URL</label>
-										<input name='turl' placeholder='Valid URL' type='text' title='URL where the variant is located'>
+										<input name='turl' placeholder='Valid URL' type='text' title='URL where the variant is located (regex)'>
 									</div>
 									</div>
 									<!-- </div>-->
@@ -125,7 +125,7 @@
 										</div>
 										<div class='twelve wide field'>
 											<label>Client</label> <input name='controller'
-												placeholder='Client info' type='text' title='Information about the client used: link to the code, version, etc.'>
+												placeholder='Client info' type='text' title='Information about the client used: link to the code, version, etc. (regex)'>
 										</div>
 										<div class='field'>
 											<div class='ui checkbox'>
@@ -314,7 +314,7 @@
 							</div>
 							<div class='inline fields'>
 							<div class='field'>
-								<h4 class="ui blue left floated header">Maximum units:
+								<h4 class="ui blue left floated header">Max. completed units:
 								</h4>
 								<span name='maxexp'>Undefined</span>
 							</div>

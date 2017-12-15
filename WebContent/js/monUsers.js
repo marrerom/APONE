@@ -70,7 +70,7 @@ $(document).ready(function() {
 			  type: 'GET',	
 			  dataType: "text",
 			  url: assignmentURL,
-			  success: function(data){window.location.href = data;},
+			  success: function(data){window.open(data);}, //TODO:check!
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});
 	}

@@ -77,7 +77,7 @@
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Rol</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments created</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Experiments participated</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',5);">Left (running) experiments to participate</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',5);">Remaining (running) experiments to participate</th>
 								</tr>
 							</thead>
 							<tbody>

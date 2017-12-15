@@ -99,8 +99,8 @@
 
 									<div class='fields'>
 										<div class='eight wide field'>
-											<label>Type</label> <input name='ename'
-												placeholder='Event type' type='text' title='Predefined (exposure) or user-defined type of event (eg.click, dwell-time)'>
+											<label>Name</label> <input name='ename'
+												placeholder='Event name' type='text' title='Predefined (exposure) or user-defined name of event (eg.click, dwell-time)'>
 										</div>
 										<div class='eight wide field'>
 											<label>Variant</label> <input name='treatment' placeholder='Variant.Name' type='text' title='Variant name'>
@@ -140,11 +140,11 @@
 
 									<div class='fields'>
 										<div class='eight wide field'>
-											<label>User-agent</label> <input name='agent' placeholder='User-agent' type='text' title='Information about the agent used by the user to register the event'>
+											<label>User-agent</label> <input name='agent' placeholder='User-agent' type='text' title='Information about the agent used by the user to register the event (regex)'>
 										</div>
 									
 										<div class='eight wide field'>
-											<label>Value</label> <input name='evalue' placeholder='Value' type='text' title='Information about the interaction with the user'>
+											<label>Value</label> <input name='evalue' placeholder='Value' type='text' title='Information about the interaction with the user. If the type selected is String, this content works as a regex. If the type selected is JSON, this content works as a JSON document (eg. {"hits":0} will return those events where we have at least that pair property-value in their contents)'>
 										</div>
 										
 									</div>
@@ -209,7 +209,7 @@
 										<div class="ui checkbox list">
 											<div class='content'>
 												<input name="example" type="checkbox"> <label><a
-													class='header'>type@experimenter - Binary/String/JSON</a></label>
+													class='header'>experimenter@experiment:name - Binary/String/JSON</a></label>
 											</div>
 											<div class='description'>Value</div>
 										</div>
@@ -281,7 +281,7 @@
 							</div>
 						
 							<div class='field'>
-								<label>Type</label> <input name='ename' placeholder='Event type'
+								<label>Name</label> <input name='ename' placeholder='Event type'
 									type='text'>
 							</div>
 							<div class='field'>
