@@ -209,7 +209,7 @@
 										<div class="ui checkbox list">
 											<div class='content'>
 												<input name="example" type="checkbox"> <label><a
-													class='header'>experimenter@experiment:name - Binary/String/JSON</a></label>
+													class='header'>experiment:name@experimenter - Binary/String/JSON</a></label>
 											</div>
 											<div class='description'>Value</div>
 										</div>
@@ -251,6 +251,7 @@
 			<div class="content"></div>
 		</div>
 
+<!-- TODO: display event info the same way experiment info is displayed -no input boxes- -->
 		<div class="ui modal _eventinfo">
 			<div class="header">
 				Event <span name='idevent'></span>
@@ -262,35 +263,35 @@
 						<div class='fields'>
 							<div class='six wide field'>
 								<label>Experiment ID</label> <input name='idconfig'
-									placeholder='Experiment ID' type='text'>
+									placeholder='Experiment ID' type='text' readonly >
 							</div>
 							<div class='six wide field'>
 								<label>Unit ID</label> <input name='idunit'
-									placeholder='Unit ID' type='text'>
+									placeholder='Unit ID' type='text' readonly>
 							</div>
 							<div class='six wide field'>
 							<label>Timestamp</label> <input type="text" name='timestamp'
-									placeholder="Date">
+									placeholder="Date" readonly>
 							</div>
 						</div>
 
 						<div class='fields'>
 							<div class='field'>
 								<label>Experimenter</label> <input name='experimenter' placeholder='Owner of the experiment'
-									type='text'>
+									type='text' readonly>
 							</div>
 						
 							<div class='field'>
 								<label>Name</label> <input name='ename' placeholder='Event type'
-									type='text'>
+									type='text' readonly>
 							</div>
 							<div class='field'>
 								<label>Variant</label> <input name='treatment' placeholder='Variant'
-									type='text'>
+									type='text' readonly>
 							</div>
 							<div class='eleven wide field'>
 								<label>User-agent</label> <input name='agent' placeholder='User-agent'
-									type='text'>
+									type='text' readonly>
 							</div>
 
 
@@ -299,17 +300,17 @@
 							<div class='inline fields'>
 							<div class='field'>
 								<div class='ui radio checkbox'>
-									<input id='etype_binary' name='etype' type='radio' value='BINARY'> <label>Binary</label>
+									<input id='etype_binary' name='etype' type='radio' value='BINARY' disabled> <label>Binary</label>
 								</div>
 							</div>
 							<div class='field'>
 								<div class='ui radio checkbox'>
-									<input id='etype_string' name='etype' type='radio' checked value='STRING'> <label>String</label>
+									<input id='etype_string' name='etype' type='radio' checked value='STRING' disabled> <label>String</label>
 								</div>
 							</div>
 							<div class='field'>
 								<div class='ui radio checkbox'>
-									<input id='etype_json' name='etype' type='radio' value='JSON'> <label>JSON</label>
+									<input id='etype_json' name='etype' type='radio' value='JSON' disabled> <label>JSON</label>
 								</div>
 							</div>
 							
@@ -319,14 +320,14 @@
 						
 							<div class='sixteen wide field'>
 								<label>Parameter values</label> 
-								<textarea name='paramvalues'  rows='2'></textarea>
+								<textarea name='paramvalues'  rows='2' readonly></textarea>
 							</div>
 						
 						</div>
 						<div class='fields'>
 							<div class='sixteen wide field'>
 								<label>Value</label>
-								<textarea name='evalue' rows='6'></textarea>
+								<textarea name='evalue' rows='6' readonly></textarea>
 							</div>
 						
 						</div>

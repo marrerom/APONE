@@ -13,7 +13,7 @@ $(document).ready(function() {
 			"<div class='inline fields'>" +
 			"<div class='field'><h4 class='ui blue left floated header'>Variant:</h4><span name='tname'>Variant name</span></div>" +
 			"<div class='field'><h4 class='ui blue left floated header'>Client URL:</h4><span name='turl'>Client URL</span></div>" +
-			"<div class='field'><div class='ui checkbox'><input tabindex='0' name='tcontrol' type='checkbox'><label>Is Control</label></div></div>" +
+			"<div class='field'><div class='ui checkbox'><input tabindex='0' name='tcontrol' type='checkbox' disabled><label>Is Control</label></div></div>" +
 			"</div>" +
 			"<div class='inline fields'><div class='field'>" +
 			"<h4 class='ui blue left floated header'>Description:</h4><span name='tdesc'>Variant description</span></div>" +
@@ -67,17 +67,24 @@ $(document).ready(function() {
 			});
 		});
 		
+		tabexpsearch.find(".ui.button._test").on("click", function(){
+			tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
+				var idrun = $(this).closest(".item").attr("id");
+				test(idrun);
+			});
+		});
+		
 		tabexpsearch.find(".ui.button._remove").on("click", function() {
 			$(".ui.modal._info").find(".content").empty();
-			$(".ui.modal._info").find(".content").append("<p>Remove associated events?</p>");
+			$(".ui.modal._info").find(".content").append("<p>The associated events will be removed. Continue?</p>");
 			$(".ui.modal._info").find(".content").append("<div class='actions'><div class='ui approve button'>Yes</div><div class='ui cancel button'>No</div></div>");
 			$(".ui.modal._info").modal('setting', {
-			    onDeny: function(){
-					tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
-						var idrun = $(this).closest(".item").attr("id");
-						removeExperiment(idrun);
-					});
-			      },
+//			    onDeny: function(){
+//					tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
+//						var idrun = $(this).closest(".item").attr("id");
+//						removeExperiment(idrun);
+//					});
+//			      },
 			      onApprove : function() {
 						tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
 							var idrun = $(this).closest(".item").attr("id");
@@ -229,8 +236,8 @@ $(document).ready(function() {
 				value.description = "No description";
 			tabexpsearch.find(".ui.relaxed.divided.list").append("<div class='item' id='"+value.idrun+"'>" +
 			"<div class='ui checkbox list'><div class='content'><input name='example' type='checkbox'> <label><a class='header'>" +
-			"<spam name='experimenter'>"+value.experimenter+"</spam>@<spam name='name'>"+value.name+":<spam name='cname'>"+value.cname+"</spam> - " +
-			"Status: <spam name='run'>"+value.run+"</spam></a></label></div>" +
+			"<spam name='experimenter'>"+value.name+"</spam>:<spam name='cname'>"+value.cname+"</spam>@<spam name='name'>"+value.experimenter+" - " +
+			"Status: <spam name='run'>"+value.run+"</spam> - <span name='idrun'>"+value.idrun+"</span></a></label></div>" +
 			"<div class='description' name='description'>"+value.description+"</div></div></div>");
 	    });
 		
@@ -307,6 +314,7 @@ $(document).ready(function() {
 			  type: 'POST',
 			  url: removeEventsURL,
 			  data: idrun,
+			  success: removeEventsSuccess,
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});	
 	}
@@ -407,6 +415,21 @@ $(document).ready(function() {
 			  success: displaySuccess,
 			  error: function(xhr, status, error) {consoleError(xhr, errorMessage);}
 			});
+	}
+	
+	
+	function test(idrun){
+		var url = testURL+"/"+idrun;
+		window.open(url);
+		
+//		var errorMessage = "There was an error during the test";
+//		$.ajax({
+//			  type: 'GET',	
+//			  dataType: "text",
+//			  url: testURL+"/"+idrun,
+//			  success: function(data){window.open(data);},
+//			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
+//			});
 	}
 	
 	init();

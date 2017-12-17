@@ -46,6 +46,7 @@ import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
+import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.data.schema.UserRol;
@@ -178,7 +179,7 @@ public class User {
 			}
 			exp_participants.sort((a,b)->a.getRight().compareTo(b.getRight()));
 			String idexp = exp_participants.get(0).getLeft();
-			URI redirection = new URI(uriInfo.getBaseUri()+"experiment/redirect/"+idexp+"/"+authuser.getIdTwitter());
+			URI redirection = new URI(uriInfo.getBaseUri()+"experiment/redirect/"+idexp+"/"+authuser.getName());
 			return redirection.toString();
 		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -265,11 +266,21 @@ public class User {
 		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
 		for (String idconf:running) {
 			RunningExpInfo rei = em.getRunningExp(idconf, authuser);
-			if (validusers.contains(rei.getExperimenter())) {
+			if (validusers.contains(rei.getExperimenter()) && containURL(em, rei.getIdconfig())) {
 				result.add(rei);
 			}
 		}
 		return result;
+	}
+	
+	private boolean containURL(ExperimentManager em, String idconfig) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JUser authuser = Security.getMasterUser();
+		JExperiment exp = em.getExperimentFromConf(idconfig, authuser);
+		for (JTreatment treatment:exp.getTreatment()) {
+			if (treatment.getUrl().isEmpty())
+				return false;
+		}
+		return true;
 	}
 	
 //	private Collection<RunningExpInfo> getLeft(ExperimentManager em, Collection<RunningExpInfo> candidates, JUser user, UserRol restrictToRol) throws IOException, ParseException{

@@ -18,12 +18,13 @@ var expsearchURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/search";
 var startURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/start";
 var stopURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/stop";
 var removeURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/delete";
-var removeEventsURL = IREPLATFORM_URI + "/IREPlatform/service/event/delete";
+var removeEventsURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/deleteEvents";
 var getExperimentURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/get";
 var getUserURL = IREPLATFORM_URI + "/IREPlatform/service/user/authenticatedUser";
 var monitorUsersURL = IREPLATFORM_URI + "/IREPlatform/service/user/monitoring";
 var assignmentURL = IREPLATFORM_URI + "/IREPlatform/service/user/assignexp";
 var completedURL = IREPLATFORM_URI + "/IREPlatform/service/user/completedexp";
+var testURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/redirect"
 
 
 function alertError(xhr, errorMessage){

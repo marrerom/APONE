@@ -241,6 +241,8 @@ public class Event {
 			throw new AuthenticationException();
 		}
 	}	 
+	
+	
 		
 	@Path("/timestampFormat")
 	@GET
@@ -279,8 +281,12 @@ public class Event {
 			    node.put("etype", ev.getEtype());
 			    node.put("evalue", ev.getEvalue());
 			    node.put("experimenter", ev.getExperimenter());
-			    JExperiment exp = em.getExperimentFromConf(ev.getIdconfig(), authuser);
-			    node.put("experiment", exp.getName());
+			    try {
+			    	JExperiment exp = em.getExperimentFromConf(ev.getIdconfig(), authuser);
+			    	node.put("experiment", exp.getName());
+			    } catch (NullPointerException e) {
+			    	node.put("experiment", "[deleted]");
+			    }
 //			    if (ev.getETypeEnum() != EventType.BINARY && !ev.getEvalue().isEmpty()) {
 //			    	int len = ev.getEvalue().length();
 //			    	if ( len > SNIPPET) len = SNIPPET; 

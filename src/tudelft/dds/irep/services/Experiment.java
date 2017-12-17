@@ -240,6 +240,28 @@ public class Experiment {
 		}
 	}
 	
+	@Path("/deleteEvents")
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	public void deleteEvents(String idconfig, @Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getAuthenticatedUser(request);
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JEvent filter = new JEvent();
+			filter.setIdconfig(idconfig);
+			for (JEvent event: em.getEvents(filter, authuser))
+				em.deleteEvent(event.get_id(),authuser);
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		}
+	}	
+	
 	@Path("/get/{idrun}")
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
@@ -480,12 +502,12 @@ public class Experiment {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			
-			if (request.getCookies()!=null) {
-				for (Cookie cookie: request.getCookies()) {
-					if (cookie.getName().equals(idrun))
-						idunit = cookie.getName();
-				}
-			}
+//			if (request.getCookies()!=null) {
+//				for (Cookie cookie: request.getCookies()) {
+//					if (cookie.getName().equals(idrun))
+//						idunit = cookie.getName();
+//				}
+//			}
 			if (idunit == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
 			
@@ -635,11 +657,10 @@ public class Experiment {
 			result = mapper.writeValueAsString(node);
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-				em.registerEvent(idrun, event, authuser);
-				//em.monitorEvent(event);
-			}
+//			if (response.build().getStatus() < 400) {
+//				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+//				em.registerEvent(idrun, event, authuser);
+//			}
 			return response.build();
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -664,12 +685,12 @@ public class Experiment {
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
-			if (request.getCookies()!=null) {
-				for (Cookie cookie: request.getCookies()) {
-					if (cookie.getName().equals(idrun))
-						idunit = cookie.getName();
-				} 
-			}
+//			if (request.getCookies()!=null) {
+//				for (Cookie cookie: request.getCookies()) {
+//					if (cookie.getName().equals(idrun))
+//						idunit = cookie.getName();
+//				} 
+//			}
 			if (idunit == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
 
@@ -698,13 +719,11 @@ public class Experiment {
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
 	    	response.header("Access-Control-Allow-Credentials", "true");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-
 	    	
-			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-				em.registerEvent(idrun, event, authuser);
-				//em.monitorEvent(event);
-			}
+//			if (response.build().getStatus() < 400) {
+//				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+//				em.registerEvent(idrun, event, authuser);
+//			}
 			return response.build();
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);

@@ -211,7 +211,7 @@ $(document).ready(function() {
 				
 			tabexpevent.find(".ui.relaxed.divided.list").append("<div class='item' id='"+value._id+"'>" +
 			"<div class='ui checkbox list'><div class='content'><input name='example' type='checkbox'> <label><a class='header'>" +
-			"<spam>"+value.experimenter+"</spam>@<spam>"+value.experiment+"</spam>:<spam>"+value.ename+"</spam>  - " +
+			"<spam>"+value.experiment+"</spam>:<spam>"+value.ename+"</spam>@<spam>"+value.experimenter+"</spam>  - " +
 			"<spam>"+value.etype+"</spam></a></label></div>" +
 			"<div class='description'>"+evalue+"</div></div></div>");
 	    });

@@ -181,7 +181,7 @@ $(document).ready(function() {
 				    type: 'POST',
 				    url: newexpURL,
 				    data: formjson,
-				    success: function() {success(successMessage);},
+				    success: function() {success(successMessage);tabnewexpadv.find(".ui.button._clear").trigger("click");},
 				    error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 				    });
 			} else {
@@ -195,7 +195,7 @@ $(document).ready(function() {
 				    type: 'POST',
 				    url: newconfURL,
 				    data: inputJson,
-				    success: function() {success(successMessage);},
+				    success: function() {success(successMessage);tabnewexpadv.find(".ui.button._clear").trigger("click");},
 				    error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 				    });
 			}
@@ -284,40 +284,59 @@ $(document).ready(function() {
 		tabnewexpadv.find(".ui.error.message").append("<div class='header'>There are some errors</div>");
 		var list ="";
 		
-		if (!tabnewexpadv.find("[name=name]").val()) {correct = false; list=list+"<li>Experiment name "+emptyprompt+".</li>";}
-		if (!tabnewexpadv.find("[name=unit]").val()) {correct = false; list=list+"<li>Experiment unit "+emptyprompt+".</li>";}
-		if (!tabnewexpadv.find("[name=cname]").val()) {correct = false; list=list+"<li>Configuration name "+emptyprompt+".</li>";}
-		if (!tabnewexpadv.find("[name=controller]").val()) {correct = false; list=list+"<li>Controller "+emptyprompt+".</li>";}
-		if (tabnewexpadv.find("[name=maxexp]").val() && !$.isNumeric(tabnewexpadv.find("[name=maxexp]").val())) {correct = false; list=list+"<li>Number of exposures "+numberprompt+".</li>";}
+		if (!tabnewexpadv.find("[name=name]").val()) {correct = false; list=list+"<li class='item'>Experiment name "+emptyprompt+".</li>";}
+		if (!tabnewexpadv.find("[name=unit]").val()) {correct = false; list=list+"<li class='item'>Experiment unit "+emptyprompt+".</li>";}
+		if (!tabnewexpadv.find("[name=cname]").val()) {correct = false; list=list+"<li class='item'>Configuration name "+emptyprompt+".</li>";}
+		if (!tabnewexpadv.find("[name=controller]").val()) {correct = false; list=list+"<li class='item'>Controller "+emptyprompt+".</li>";}
+		if (tabnewexpadv.find("[name=maxexp]").val() && !$.isNumeric(tabnewexpadv.find("[name=maxexp]").val())) {correct = false; list=list+"<li class='item'>Number of exposures "+numberprompt+".</li>";}
 		
 		var tnames = [];
 		tabnewexpadv.find("[name=tname]").each(function(){
-			if (!$(this).val()){correct = false;list=list+"<li>Variant name "+emptyprompt+".</li>";}
-			else if (tnames.includes($(this).val())) {correct = false; list=list+"<li>Variant name "+uniqueprompt+".</li>";} 
+			if (!$(this).val()){correct = false;list=list+"<li class='item'>Variant name "+emptyprompt+".</li>";}
+			else if (tnames.includes($(this).val())) {correct = false; list=list+"<li class='item'>Variant name "+uniqueprompt+".</li>";} 
 			else {tnames.push($(this).val())}
 		});
 		
 		var checked = false;
 		tabnewexpadv.find("[name='tcontrol']").each(function(){
 			if ($(this).is(":checked")){
-				if (checked){correct = false; list=list+"<li>Treatment control "+uniqueprompt+".</li>";}
+				if (checked){correct = false; list=list+"<li class='item'>Treatment control "+uniqueprompt+".</li>";}
 				checked = true;
 			}
 		})
-		if (!checked){correct = false;list=list+"<li>Treatment control "+emptyprompt+".</li>";}
+		if (!checked){correct = false;list=list+"<li class='item'>Treatment control "+emptyprompt+".</li>";}
 	
  
 //		tabnewexpadv.find("[name=tdef]").each(function(){
-//			if (!$(this).val()){correct = false;list=list+"<li>Treatment definition "+emptyprompt+".</li>"}
+//			if (!$(this).val()){correct = false;list=list+"<li class='item'>Treatment definition "+emptyprompt+".</li>"}
 //		});
 		tabnewexpadv.find("[name=treatdropdown]").each(function(){
-			if (!$(this).val()){correct = false;list=list+"<li>Treatment selection in configuration "+emptyprompt+".</li>"}
+			if (!$(this).val()){correct = false;list=list+"<li class='item'>Treatment selection in configuration "+emptyprompt+".</li>"}
 		});
 		tabnewexpadv.find("[name=percentage]").each(function(){
-			if (!$.isNumeric($(this).val())){correct = false;list=list+"<li>Variant distribution in configuration "+emptyprompt+" and "+numberprompt+".</li>";}
-			else if ($(this).val() < 0 || $(this).val() > 100) {correct = false;list=list+"<li>Variant distribution in configuration "+percentprompt+".</li>";}
+			if (!$.isNumeric($(this).val())){correct = false;list=list+"<li class='item'>Variant distribution in configuration "+emptyprompt+" and "+numberprompt+".</li>";}
+			else if ($(this).val() < 0 || $(this).val() > 100) {correct = false;list=list+"<li class='item'>Variant distribution in configuration "+percentprompt+".</li>";}
 		});
-		tabnewexpadv.find(".ui.error.message").append("<ul class='list'>"+list+"</ul>");
+		
+		
+		total = 0;
+		var treatDist = [];
+		tabnewexp.find(".ui.segment._distributions").find(".fields").each(function(){
+			var element = $(this).find("._treatment.ui.dropdown").find(":selected").text();
+			if (treatDist.indexOf(element) === -1) {
+		        treatDist.push(element);
+			} else {
+				correct = false; list=list+"<li class='item'>Variant in the distribution "+uniqueprompt+"</li>";
+			}
+			
+			total = total + parseInt($(this).find("[name='percentage']").val(),10);
+		});
+		if (total > 100){
+			correct = false; list=list+"<li class='item'>The sum of the distribution percentages exceed 100</li>";
+		}
+		
+		
+		tabnewexpadv.find(".ui.error.message").append("<ul class='ui list'>"+list+"</ul>");
 		if (!correct){tabnewexpadv.find(".ui.error.message").show();} else {tabnewexpadv.find(".ui.error.message").hide();}
 		return correct;
 	}

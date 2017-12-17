@@ -223,7 +223,7 @@
 										<div class="ui checkbox list">
 											<div class='content'>
 												<input name="example" type="checkbox"> <label><a
-													class='header'>Experiment test@experimenter</a></label>
+													class='header'>Experiment:conf@experimenter - Status - Id</a></label>
 											</div>
 											<div class='description'>Description...</div>
 										</div>
@@ -237,6 +237,7 @@
 					<div class='ui grid'>
 						<div class='sixteen wide column'>
 							<div class='ui center aligned basic segment'>
+								<div class='ui button _test' tabindex='0'>Test</div>
 								<div class='ui button _remove' tabindex='0'>Remove</div>
 								<div class='ui button _start' tabindex='0'>Start</div>
 								<div class='ui button _stop' tabindex='0'>Stop</div>
