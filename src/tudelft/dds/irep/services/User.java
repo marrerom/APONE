@@ -117,6 +117,8 @@ public class User {
 		}
 	}
 	
+
+	
 	@Path("/authenticatedUser")
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
@@ -247,7 +249,7 @@ public class User {
 		JUser authuser = Security.getMasterUser();
 		JEvent filterEvent = new JEvent();
 		filterEvent.setEname(JEvent.COMPLETED_ENAME);
-		filterEvent.setIdunit(user.getIdTwitter());
+		filterEvent.setIdunit(user.getIdname());
 		Set<String> completedExps = em.getEvents(filterEvent,authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());
 		return completedExps;
 	}

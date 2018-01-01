@@ -519,9 +519,9 @@ public class Experiment {
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 
-			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-			em.registerEvent(idrun, event, authuser);
-			//em.monitorEvent(event);
+			//JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+			//em.registerEvent(idrun, event, authuser);
+			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
@@ -559,9 +559,9 @@ public class Experiment {
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 
-			JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-			em.registerEvent(idrun, event, authuser);
-			//em.monitorEvent(event);
+			//JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
+			//em.registerEvent(idrun, event, authuser);
+			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {

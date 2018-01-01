@@ -390,23 +390,31 @@ public class MongoDB implements Database {
 		if (docmap.get("unit") != null) conditions.add(eq("unit", docmap.get("unit")));
 		if (docmap.get("description") != null) conditions.add(regex("description", docmap.get("description").toString()));	
 		
+		List<Bson> treatmentscond = new ArrayList<Bson>();
 		for (Map<String,Object> treatitem : ((ArrayList<Map<String,Object>>)docmap.get("treatment"))) {
-			if (treatitem.get("name") != null) conditions.add(eq("treatment.name", treatitem.get("name")));
-			if (treatitem.get("description") != null) conditions.add(regex("treatment.description", treatitem.get("description").toString()));
-			if (treatitem.get("definition") != null) conditions.add(regex("treatment.definition", treatitem.get("definition").toString()));
-			if (treatitem.get("url") != null) conditions.add(regex("treatment.url", treatitem.get("url").toString()));
-			if (treatitem.get("control") != null) conditions.add(eq("treatment.control", treatitem.get("control")));
+			List<Bson> treatcond = new ArrayList<Bson>();
+			if (treatitem.get("name") != null) treatcond.add(eq("treatment.name", treatitem.get("name")));
+			if (treatitem.get("description") != null) treatcond.add(regex("treatment.description", treatitem.get("description").toString()));
+			if (treatitem.get("definition") != null) treatcond.add(regex("treatment.definition", treatitem.get("definition").toString()));
+//			if (treatitem.get("url") != null) treatcond.add(regex("treatment.url", treatitem.get("url").toString()));
+			if (treatitem.get("control") != null) treatcond.add(eq("treatment.control", treatitem.get("control")));
+			treatmentscond.add(and(treatcond));
 		}
+		if (!treatmentscond.isEmpty())
+			conditions.add(or(treatmentscond));
+		
 
 		boolean configsearch = false;
+		List<Bson> configurationcond = new ArrayList<Bson>();
 		for (Map<String,Object> configitem : ((ArrayList<Map<String,Object>>)docmap.get("config"))) {
-			if (configitem.get("_id") != null) {configsearch=true; conditions.add(eq("config._id", configitem.get("_id")));}
-			if (configitem.get("name") != null) {configsearch=true;conditions.add(eq("config.name", configitem.get("name")));}
-			if (configitem.get("description") != null) {configsearch=true;conditions.add(regex("config.description", configitem.get("description").toString()));}
-			if (configitem.get("experimenter") != null) {configsearch=true;conditions.add(eq("config.experimenter", configitem.get("experimenter")));}
-			if (configitem.get("controller_code") != null) {configsearch=true;conditions.add(regex("config.controller_code", configitem.get("controller_code").toString()));}
-			if (configitem.get("run") != null) {configsearch=true;conditions.add(eq("config.run", configitem.get("run")));}
-			if (configitem.get("max_exposures") != null) {configsearch=true;conditions.add(eq("config.max_exposures", configitem.get("max_exposures")));}
+			List<Bson> configcond = new ArrayList<Bson>();
+			if (configitem.get("_id") != null) {configsearch=true; configcond.add(eq("config._id", configitem.get("_id")));}
+			if (configitem.get("name") != null) {configsearch=true;configcond.add(eq("config.name", configitem.get("name")));}
+			if (configitem.get("description") != null) {configsearch=true;configcond.add(regex("config.description", configitem.get("description").toString()));}
+			if (configitem.get("experimenter") != null) {configsearch=true;configcond.add(eq("config.experimenter", configitem.get("experimenter")));}
+			if (configitem.get("controller_code") != null) {configsearch=true;configcond.add(regex("config.controller_code", configitem.get("controller_code").toString()));}
+			if (configitem.get("run") != null) {configsearch=true;configcond.add(eq("config.run", configitem.get("run")));}
+			if (configitem.get("max_exposures") != null) {configsearch=true;configcond.add(eq("config.max_exposures", configitem.get("max_exposures")));}
 			for (Date date: ((ArrayList<Date>)configitem.get("date_started"))) {
 				configsearch=true;
 				BasicDBObject criteria = new BasicDBObject();
@@ -416,7 +424,7 @@ public class MongoDB implements Database {
 				valueMatch.append("$lte", Utils.addDay(date));
 				elemMatch.append("$elemMatch", valueMatch);
 				criteria.append("config.date_started", elemMatch);
-				conditions.add(criteria);
+				configcond.add(criteria);
 				//conditions.add(com.mongodb.client.model.Filters.elemMatch("config.date_started", gte("date", date )));
 				}
 			for (Date date: ((ArrayList<Date>)configitem.get("date_ended"))) {
@@ -428,17 +436,34 @@ public class MongoDB implements Database {
 				valueMatch.append("$lte", Utils.addDay(date));
 				elemMatch.append("$elemMatch", valueMatch);
 				criteria.append("config.date_ended", elemMatch);
-				conditions.add(criteria);
+				configcond.add(criteria);
 				//conditions.add(in("config.date_ended", and(gte("config.date_ended", date ),lte("config.date_ended", Utils.addDay(date)))));
 				}
 			
 			if (configitem.get("date_to_end") != null) {
 				configsearch=true; 
 				Date date = (Date) configitem.get("date_to_end");
+				
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(date);
+				 
+				// Set time fields to zero
+				cal.set(Calendar.HOUR_OF_DAY, 0);
+				cal.set(Calendar.MINUTE, 0);
+				cal.set(Calendar.SECOND, 0);
+				cal.set(Calendar.MILLISECOND, 0);
+				 
+				// Put it back in the Date object
+				date = cal.getTime();
+				
+				
 				conditions.add(gte("config.date_to_end", date ));
 				conditions.add(lte("config.date_to_end", Utils.addDay(date) ));
 			}
+			configurationcond.add(and(configcond));
 		}
+		if (!configurationcond.isEmpty())
+			conditions.add(or(configurationcond));
 
 		conditions.add(getExperimenterFilter(authuser));
 		FindIterable<Document> results = experiments.find(and(conditions));

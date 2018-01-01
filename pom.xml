@@ -105,6 +105,11 @@
   		<artifactId>twitter4j-core</artifactId>
   		<version>4.0.6</version>
   	</dependency>
+  	<dependency>
+  		<groupId>org.apache.httpcomponents</groupId>
+  		<artifactId>httpclient</artifactId>
+  		<version>4.3.4</version>
+  	</dependency>
   </dependencies>
   <version>SNAPSHOT</version>
 </project>

@@ -2,7 +2,7 @@
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
   <display-name>IREPServices</display-name>
   <welcome-file-list>
-  <welcome-file>expExplore.jsp</welcome-file>
+    <welcome-file>expExplore.jsp</welcome-file>
     <welcome-file>index.html</welcome-file>
     <welcome-file>index.htm</welcome-file>
     <welcome-file>index.jsp</welcome-file>
@@ -27,18 +27,4 @@
     <servlet-name>jersey-servlet</servlet-name>
     <url-pattern>/service/*</url-pattern>
   </servlet-mapping>
-<!--   <security-constraint> -->
-<!--     <web-resource-collection> -->
-<!--       <web-resource-name>Whole app</web-resource-name> -->
-<!--       <url-pattern>/*</url-pattern> -->
-<!--     </web-resource-collection> -->
-<!--     <auth-constraint> -->
-<!--       <role-name>irepuser</role-name> -->
-<!--       <role-name>irepadmin</role-name> -->
-<!--     </auth-constraint> -->
-<!--   </security-constraint> -->
-<!--   <login-config> -->
-<!--     <auth-method>BASIC</auth-method> -->
-<!--     <realm-name>IREP Realm</realm-name> -->
-<!--   </login-config> -->
 </web-app>

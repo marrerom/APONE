@@ -154,7 +154,7 @@ $(document).ready(function() {
 	
 	function displayParamSuccess(data){
 		$(".ui.modal._info").find(".header").empty();
-		$(".ui.modal._info").find(".header").append("Treatment Monitoring Experiment id "+data.idrun);
+		$(".ui.modal._info").find(".header").append("Monitoring Experiment id "+data.idrun);
 		$(".ui.modal._info").find(".content").empty();
 		$.each(data.treatments, function (index, treatment){
 			var body ="";
@@ -163,7 +163,7 @@ $(document).ready(function() {
 			});
 			body = body + "<tr> <td>TOTAL</td> <td>"+treatment.value+"</td> </tr>";
 			var header = "<h3 class='ui blue header'>"+treatment.name+"</h3>"
-			var table ="<table class='ui compact blue celled table'><thead><th>Values</th><th>Exposures</th></thead><tbody>"+body+"<tbody></table>";
+			var table ="<table class='ui compact blue celled table'><thead><th>Values</th><th>Exposures/Completed</th></thead><tbody>"+body+"<tbody></table>";
 			$(".ui.modal._info").find(".content").append(header);
 			$(".ui.modal._info").find(".content").append(table);
 		});
