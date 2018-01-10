@@ -44,9 +44,10 @@ public class Security {
 		return (JUser) request.getSession().getAttribute("authuser");
 	}
 	
-	public static void setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
+	public static JUser setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
 		JUser user = em.createUser(idTwitter, screenName, getMasterUser());
 		request.getSession().setAttribute("authuser", user);
+		return user;
 	}
 	
 	public static JUser getMasterUser() {

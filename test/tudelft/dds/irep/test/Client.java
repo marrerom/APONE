@@ -1,6 +1,9 @@
 package tudelft.dds.irep.test;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -8,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -27,7 +31,9 @@ import org.json.JSONObject;
 
 import com.google.common.base.Preconditions;
 
-@Path("/test/client")
+import tudelft.dds.irep.utils.Security;
+
+@Path("/test")
 public class Client extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -36,21 +42,27 @@ public class Client extends HttpServlet {
 	final static String localhost = "http://localhost:8080"; 
 	final static String jerseyServices = "service";
 	
+	@Path("/setidrun/{idrun}")
 	@GET 
-	public Response client(@Context UriInfo uriInfo) {
+	public Response setIdrun(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
+		if (request.getLocalAddr().equals(request.getRemoteAddr())) { //TODO: check if valid
+			request.getSession().setAttribute("idrun", idrun);
+			return Response.ok().build();
+		}
+		return Response.status(Status.UNAUTHORIZED).build();
+	}
+
+	@Path("/client")
+	@GET 
+	public Response client(@Context HttpServletRequest request) {
 		try {
-		
-			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters(); 
-		    String rankingAlg = queryParams.getFirst("rankingAlg");
-		    String linkColor = queryParams.getFirst("linkColor");
-		    String idunit = queryParams.getFirst("_idunit");
-		    
-		    JSONObject params = new JSONObject();
-		    params.put("rankingAlg", rankingAlg);
-		    params.put("linkColor", linkColor);
+			Map<String, String> queryparams = Utils.decodeQueryParams(request.getQueryString());
+		    String idunit = queryparams.get("_idunit");
+		    String idrun= (String) request.getSession().getAttribute("idrun"); 
+		    JSONObject params = new JSONObject(queryparams);
 		    
 		    //send event expose
-		    JSONObject exposure = getEvent(idunit, "STRING", "exposure", "", params.toString() );
+		    JSONObject exposure = getEvent(idrun, idunit, "STRING", "exposure", "", params );
 		    HttpResponse resExposure = registerEvent(exposure);
 		    Preconditions.checkArgument(resExposure.getStatusLine().getStatusCode()==200,"Error: register exposure call");
 		    
@@ -62,18 +74,18 @@ public class Client extends HttpServlet {
 		    JSONArray evalueArray = new JSONArray();
 		    evalueArray.put("Item1");
 		    evalue.put("property4", evalueArray);
-		    JSONObject testEvent = getEvent(idunit, "JSON", "test", evalue.toString(), params.toString());
+		    JSONObject testEvent = getEvent(idrun, idunit, "JSON", "test", evalue.toString(), params);
 		    HttpResponse resTestEvent = registerEvent(testEvent);
 		    Preconditions.checkArgument(resTestEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
 		    
 		    //check complete
-		    HttpResponse resCheck = checkCompleted(idunit);
+		    HttpResponse resCheck = checkCompleted(idrun, idunit);
 		    Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200, "Error: check completed call");
 		    String iscompleted = EntityUtils.toString(resCheck.getEntity()); 
-		    Preconditions.checkArgument(iscompleted.equals("true"), "Error: experiment already completed");
+		    Preconditions.checkArgument(iscompleted.equals("false"), "Error: experiment already completed");
 		    
 		    //send complete
-		    JSONObject completed = getEvent(idunit, "STRING", "completed", "", params.toString() );
+		    JSONObject completed = getEvent(idrun, idunit, "STRING", "completed", "", params );
 		    HttpResponse resCompleted = registerEvent(completed);
 		    Preconditions.checkArgument(resCompleted.getStatusLine().getStatusCode()==200,"Error: register completed call");
 		    
@@ -99,20 +111,23 @@ public class Client extends HttpServlet {
 	    return res;
 	}
 	
-	public JSONObject getEvent(String idunit, String etype, String ename, String evalue, String paramvalues ) {
+	public JSONObject getEvent(String idrun, String idunit, String etype, String ename, String evalue, JSONObject paramvalues ) {
 		JSONObject event = new JSONObject();
 		event.put("idunit",idunit);
-		event.put("idconfig", ClientTest.experiments.get(idunit));
+		event.put("idconfig", idrun);
 		event.put("etype",etype);
 		event.put("ename", ename);
-		event.put("evalue", evalue);
+		if (etype.equals("JSON"))
+			event.put("evalue", new JSONObject(evalue));
+		else 
+			event.put("evalue", evalue);
 		event.put("paramvalues", paramvalues);
 		return event;
 	}
 	
-	public HttpResponse checkCompleted(String idunit) throws ClientProtocolException, IOException {
+	public HttpResponse checkCompleted(String idrun, String idunit) throws ClientProtocolException, IOException {
 		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/user/checkCompletedExp/"+ClientTest.experiments.get(idunit)+"/"+idunit);
+		HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/user/checkCompletedExp/"+idrun+"/"+idunit);
 	    HttpResponse res = httpClient.execute(httpGet);
 	    return res;
 	}

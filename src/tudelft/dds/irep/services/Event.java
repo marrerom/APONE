@@ -276,7 +276,7 @@ public class Event {
 				ObjectNode node = mapper.createObjectNode();
 				node.put("_id", ev.get_id());
 				node.put("ename", ev.getEname());
-			    //node.put("unitid", ev.getIdunit()); In any case it is 'idunit', not 'unitid'
+			    node.put("idunit", ev.getIdunit());
 			    node.put("timestamp", Utils.getTimestamp(ev.getTimestamp()));
 			    node.put("etype", ev.getEtype());
 			    node.put("evalue", ev.getEvalue());

@@ -62,6 +62,8 @@ public interface Database {
 	
 	public void deleteEvent(String idevent, JUser authuser);
 	
+	public void deleteUser(String idname, JUser authuser);
+	
 	public void close();
 
 }

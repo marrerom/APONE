@@ -228,6 +228,7 @@ public class Experiment {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.stop(idconfig, authuser);
+			em.deleteEvents(idconfig, authuser); //always remove the events of an experiment that is going to be deleted
 			em.deleteConfig(idconfig, authuser);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -247,10 +248,7 @@ public class Experiment {
 		try {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			JEvent filter = new JEvent();
-			filter.setIdconfig(idconfig);
-			for (JEvent event: em.getEvents(filter, authuser))
-				em.deleteEvent(event.get_id(),authuser);
+			em.deleteEvents(idconfig, authuser);
 		} catch (ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
@@ -285,84 +283,7 @@ public class Experiment {
 		}
 	}
 	
-//	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
-//	@Path("/getParams")
-//	@POST
-//	@Consumes(MediaType.MULTIPART_FORM_DATA)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public String getParamsMultipart(@FormDataParam("idconfig") String idconfig, @FormDataParam("idunit") String idunit, 
-//			 @FormDataParam("overrides") String overrides) {
-//		try {
-//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-//			ObjectMapper mapper = new ObjectMapper();
-//			JExperiment exp = em.getExperimentFromConf(idconfig);
-//			String unitExp = exp.getUnit();
-//			JsonNode jnode = mapper.readTree(overrides);
-//			Map<String,?> overridesMap = mapper.convertValue(jnode, Map.class);
-//			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
-//			
-//			//JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-//			
-//			//TODO: is it possible to run asynchronously the following?
-////			String treatment = em.getTreatment(unitExp, idconfig, idunit);
-////			InputStream is = new ByteArrayInputStream("".getBytes());
-////			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams);
-////			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
-////			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-////			em.registerEvent(idconfig, event);
-////			em.monitorEvent(event);
-//			
-//			return mapper.writeValueAsString(params);
-//		} catch (IOException | ParseException e) {
-//			e.printStackTrace();
-//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
-//		}
-//	}
-//	
-//	
-//	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
-//	@Path("/getParams")
-//	@POST
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public String getParamsJson(String inputJson) {
-//		try {
-//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-//			ObjectMapper mapper = new ObjectMapper();
-//			
-//			JsonNode inputNode = mapper.readTree(inputJson);
-//			String idconfig = inputNode.get("idconfig").asText();
-//			String idunit = inputNode.get("idunit").asText();
-//			
-//			JExperiment exp = em.getExperimentFromConf(idconfig);
-//			String unitExp = exp.getUnit();
-//			
-//			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
-//			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
-//			
-//			//TODO: is it possible to run asynchronously the following?
-////			String treatment = em.getTreatment(unitExp, idconfig, idunit);
-////			InputStream is = new ByteArrayInputStream("".getBytes());
-////			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams);
-////			ProcessingReport pr = jval.validate(event,mapper.readTree(mapper.writeValueAsString(event)), context);
-////			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-//			//em.registerEvent(idconfig, event);
-//			//em.monitorEvent(event);
-//			
-//			return mapper.writeValueAsString(params);
-//		} catch (IOException | ParseException  e) {
-//			e.printStackTrace();
-//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
-//		}
-//	}
-//	
-	//public String search(@QueryParam("idexp") String idexp, @QueryParam("name") String name, 
-//	@QueryParam("experimenter") String experimenter, @QueryParam("description") String desc, 
-//	@QueryParam("tname") String tname,@QueryParam("tdef") String tdef, @QueryParam("cname") String cname,
-//	@QueryParam("controler") String controller,@QueryParam("dstarted") String dstarted, 
-//	@QueryParam("dended") String dended, @QueryParam("dtoend") String dtoend, @QueryParam("maxexp") String maxexp) {
 
-	
 	@Path("/search")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -410,7 +331,7 @@ public class Experiment {
 	@Path("/monitor/treatments")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String monitorTreatmentsComplete(@PathParam("ename") String ename, @Context HttpServletRequest request) {
+	public String monitorTreatmentsComplete(@Context HttpServletRequest request) {
 		try {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -461,18 +382,20 @@ public class Experiment {
 			node.put("idrun", exp.getIdconfig());
 			node.put("laststarted", exp.getLastStarted().getTime());
 	        ArrayNode treatments = mapper.createArrayNode();
-	        Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, Set<String>>>();
+	        Map<String, Map<Map<String, ?>, List<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, List<String>>>();
 	        if (ename.equals(JEvent.EXPOSURE_ENAME)) //TODO: this service could deal with any event, not only exposure and complete
 	        	subtreatmentCount = exp.getMonConsumer().getExposureEvents().getSubtreatmentCount();
-	        else if (ename.equals(JEvent.COMPLETED_ENAME))
+	        else if (ename.equals(JEvent.COMPLETED_ENAME)) {
 	        	subtreatmentCount = exp.getMonConsumer().getCompleteEvents().getSubtreatmentCount();
+	        	System.out.println("** Experimenter "+exp.getExperimenter()+" Monitor: "+exp.getMonConsumer().getCompleteEvents().getTotalCount());
+	        }
 
 	        for (String treatname: subtreatmentCount.keySet()){
 	        	ObjectNode treatment = mapper.createObjectNode();
 	        	treatment.put("name", treatname);
 	        	treatment.put("value", subtreatmentCount.get(treatname).size());
 	        	ArrayNode subtreatments = mapper.createArrayNode();
-	        	for (Map.Entry<Map<String,?>, Set<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
+	        	for (Map.Entry<Map<String,?>, List<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
 	        		ObjectNode subtreatment = mapper.createObjectNode();
 	        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
 	        		subtreatment.put("value", entry.getValue().size());

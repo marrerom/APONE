@@ -49,6 +49,7 @@ import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.Security;
@@ -168,6 +169,9 @@ public class MongoDB implements Database {
 	}
 	
 	public JUser addUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
+		if (idTwitter == null)
+			throw new BadRequestException("addUser: IdTwitter can not be null");
+		
 		Security.checkAuthorized(authuser,Security.getMasterUser().getIdname());
 		JUser filter = new JUser();
 		filter.setIdTwitter(idTwitter);
@@ -309,7 +313,7 @@ public class MongoDB implements Database {
 		if (docmap.get("_id") != null) conditions.add(eq("_id", docmap.get("_id")));	
 		if (docmap.get("ename") != null) conditions.add(eq("ename", docmap.get("ename")));	
 		if (docmap.get("experimenter") != null) conditions.add(eq("experimenter", docmap.get("experimenter")));	
-		if (docmap.get("unitid") != null) conditions.add(eq("unitid", docmap.get("unitid")));
+		if (docmap.get("idunit") != null) conditions.add(eq("idunit", docmap.get("idunit")));
 		if (docmap.get("idconfig") != null) conditions.add(eq("idconfig", docmap.get("idconfig")));
 		if (docmap.get("treatment") != null) conditions.add(eq("treatment", docmap.get("treatment")));
 		if (docmap.get("useragent") != null) conditions.add(regex("useragent", docmap.get("useragent").toString()));
@@ -571,6 +575,14 @@ public class MongoDB implements Database {
 			BasicDBObject update = new BasicDBObject("config", new BasicDBObject("_id", new ObjectId(idconf)));
 			experiments.updateOne(and(getExperimenterFilter(authuser),eq("config._id", new ObjectId(idconf))), new BasicDBObject("$pull", update));
 		}
+	}
+	
+	//only admins
+	public void deleteUser(String idname, JUser authuser) {
+		if (!authuser.isAdmin()) 
+			throw new AuthenticationException();
+		Document user = checkExistUserByIdname(idname, authuser);
+		users.deleteOne(eq("_id", (ObjectId) user.get("_id")));
 	}
 	
 	public void deleteEvent(String idevent, JUser authuser) {

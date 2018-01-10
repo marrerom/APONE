@@ -128,20 +128,20 @@ public class ExperimentManager {
 		if (re.getExpStatus(idconf) == Status.OFF) {
 			JConfiguration jconf = db.getConfiguration(idconf, authuser);
 			dateToEnd = jconf.getDate_to_end();
-			if (dateToEnd != null && dateToEnd.compareTo(new Date()) < 0) {
+			if (dateToEnd != null && dateToEnd.compareTo(Utils.getDate(Utils.getTimestamp(new Date()))) < 0) {
 				return true;
 			}
-			maxCompleted = jconf.getMax_exposures();
-			if (maxCompleted != null) {
-				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getMonitoringEvents(idconf, authuser)));
-				actualCompleted = emc.getCompleteEvents().getTotalCount();
-				if (actualCompleted >= maxCompleted)
-					return true;
-			}
+//			maxCompleted = jconf.getMax_exposures();
+//			if (maxCompleted != null) {
+//				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getMonitoringEvents(idconf, authuser)));
+//				actualCompleted = emc.getCompleteEvents().getTotalCount();
+//				if (actualCompleted >= maxCompleted)
+//					return true;
+//			}
 		} else {
 			RunningExpInfo running = re.getExpInfo(idconf, authuser);
 			dateToEnd = running.getDateToEnd();
-			if (dateToEnd != null && dateToEnd.compareTo(new Date()) < 0) {
+			if (dateToEnd != null && dateToEnd.compareTo(Utils.getDate(Utils.getTimestamp(new Date()))) < 0) {
 				return true;
 			}
 			maxCompleted = running.getMaxExposures();
@@ -173,6 +173,25 @@ public class ExperimentManager {
 	
 	public void deleteEvent(String idevent, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
 		db.deleteEvent(idevent, authuser);
+	}
+	
+	public void deleteEvents(String idconf, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JEvent filter = new JEvent();
+		filter.setIdconfig(idconf);
+		for (JEvent event: getEvents(filter, authuser))
+			deleteEvent(event.get_id(),authuser);
+	}
+	
+	public void deleteConfigs(String idname, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		JExperiment filter = new JExperiment();
+		filter.setExperimenter(idname);
+		for (JExperiment exp: db.getExperiments(filter, authuser))
+			for (JConfiguration conf: exp.getConfig())
+				deleteConfig(conf.get_id(),authuser);
+	}
+	
+	public void deleteUser(String idname, JUser authuser) {
+		db.deleteUser(idname, authuser);
 	}
 	
 	public String addConfig(String idexp, JConfiguration config, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException {

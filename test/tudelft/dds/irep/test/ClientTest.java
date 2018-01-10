@@ -2,6 +2,9 @@ package tudelft.dds.irep.test;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -13,10 +16,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Form;
@@ -32,6 +37,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -61,108 +67,243 @@ import tudelft.dds.irep.utils.Security;
 
 @Path("/test")
 public class ClientTest {
-		public static Map<String, String> experiments = new HashMap<String, String>();
+		public static Map<String, String> experiments = new HashMap<String, String>(); //username - idrun
+		public static Map<String, String> idmapname = new HashMap<String, String>(); //user id - user idname
 		final static String localhost = "http://localhost:8080"; 
 		final static String jerseyServices = "service";
 		
 		@Context ServletContext context;
 		
 		@Path("/setuser/{userid}/{username}")
+		@Produces(MediaType.TEXT_PLAIN)
 		@GET 
 		public Response setUser(@PathParam("userid") String userid, @PathParam("username") String username, @Context HttpServletRequest request) throws IOException, ParseException {
 			if (request.getLocalAddr().equals(request.getRemoteAddr())) { //TODO: check if valid
 				ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-				Security.setAuthenticatedUser(request, em, userid, username);
+				JUser user = Security.setAuthenticatedUser(request, em, userid, username);
+				return Response.ok(user.getIdname()).build();
+			}
+			return Response.status(Status.UNAUTHORIZED).build();
+		}
+		
+		@Path("/setmasteruser")
+		@GET 
+		public Response setUser(@Context HttpServletRequest request) throws IOException, ParseException {
+			if (request.getLocalAddr().equals(request.getRemoteAddr())) { //TODO: check if valid
+				ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+				JUser master = em.getUserByIdname("socialdatadelft", Security.getMasterUser());
+				Security.setAuthenticatedUser(request, em, master.getIdTwitter(), master.getIdname());
 				return Response.ok().build();
 			}
 			return Response.status(Status.UNAUTHORIZED).build();
 		}
+		
 
 		@GET
-		public Response test(@Context HttpServletRequest request) {
-
+		public Response test(@Context HttpServletRequest request) throws ClientProtocolException, IOException {
+			Response response;
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			final Integer NUSERS = 10; 
 			try {
-				for (int i=1;i<=2;i++) {
-					String userid = Integer.toString(i);
-					String username = "user"+userid;
-					//Security.setAuthenticatedUser(request, em, userid, username);
-					HttpClient httpClient = new DefaultHttpClient();
-					CookieStore cookieStore = new BasicCookieStore();
-					HttpContext httpContext = new BasicHttpContext();
-					httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
-					HttpResponse resUser = setUser( httpContext, userid, username);
-					Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200, "Error: create user call");
-					
-					HttpResponse resCreate = createExperiment(httpContext, userid, username);
-					Preconditions.checkArgument(resCreate.getStatusLine().getStatusCode()==200,"Error: create experiment call");
-					String expid = EntityUtils.toString(resCreate.getEntity());
-
-					HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
-					Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200, "Error: search experiment call");
-					String resultSearch = EntityUtils.toString(resCheck.getEntity()); 
-					JSONArray results = new JSONArray(resultSearch);
-					Preconditions.checkArgument(results.length() == 1, "Error: search experiment result");
-					
-					JSONObject rsearch = new JSONObject(results.get(0).toString());
-					String idrun = rsearch.get("idrun").toString();
-					experiments.put(userid,idrun);
-					
-					//TODO: start experiment
+				for (int i=1;i<=NUSERS;i++) {
+					System.out.println("Creating experiment user "+i);
+					createExperiment(Integer.toString(i));
 				}
 				
-				for (int i=1;i<=2;i++) {
-					String userid = Integer.toString(i);
-					String username = "user"+userid;
-					//Security.setAuthenticatedUser(request, em, userid, username);
-					HttpClient httpClient = new DefaultHttpClient();
-					CookieStore cookieStore = new BasicCookieStore();
-					HttpContext httpContext = new BasicHttpContext();
-					httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+				for (int i=1;i<=NUSERS;i++) {
+					System.out.println("Assigning experiment of user "+i);
+					assignExperiment(Integer.toString(i));
+					Thread.sleep(5000);
+				}
 
-					HttpResponse resUser = setUser( httpContext, userid, username);
-					Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200, "Error: create user call");
-
-					Boolean valid = false;
-					while (!valid) {
-						try {
-							HttpResponse resAssign = assign(httpContext);
-							Preconditions.checkArgument(resAssign.getStatusLine().getStatusCode() == 200, "Error: assign experiment call");
-							String redirectionURI = EntityUtils.toString(resAssign.getEntity());
-							for (String idrun: experiments.values()) {
-								if (redirectionURI.contains(idrun)) {
-									valid = true;
-									HttpResponse resRedirect = redirect(httpContext,redirectionURI);
-									break;
-								}
-							}
-							
-						} catch (BadRequestException e) {
-							System.out.println("No more experiments to assign to "+userid);
-						}
+				
+				long startTime = System.currentTimeMillis();
+				int iteration = 1;
+				boolean stop = true;
+				do {
+					System.out.println("Iteration "+iteration);
+					for (int i=1;i<=NUSERS;i++) {
+						System.out.println("Testing events experiment user "+i);
+						stop = stop & testEvents(Integer.toString(i));
 					}
+					Thread.sleep(1000);
+					iteration++;
+				} while (!stop && (System.currentTimeMillis() - startTime)< (1000 * 60 * 1));
+				Preconditions.checkArgument(stop, "Error: stop condition failed, check monitoring results");
 
-				}
-			   
-			   //check events
 				
-			   //setuser(admin)
-			   //check monitoring
-			   
-			   //remove events, experiment, user
-
-			return Response.ok().build();
-			} catch (IOException e) {
+				response = Response.ok().build();
+			} catch (IOException | InterruptedException e) {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
+				response = Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			} finally {
+				for (int i=1;i<=NUSERS;i++) {
+					System.out.println("Clearing user "+i);
+					clear(Integer.toString(i));
+				}
 			}
-			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+
+			return response; 			
+		}
+		
+		public void createExperiment(String userid) throws ClientProtocolException, IOException {
+			String username = "user"+userid;
+			CookieStore cookieStore = new BasicCookieStore();
+			HttpContext httpContext = new BasicHttpContext();
+			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+			HttpResponse resUser = setUser( httpContext, userid, username);
+			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+			String idname = EntityUtils.toString(resUser.getEntity());
+			idmapname.put(userid, idname);
+			username = idname;
+			
+			HttpResponse resCreate = createExperiment(httpContext, userid, username);
+			Preconditions.checkArgument(resCreate.getStatusLine().getStatusCode()==200 || resCreate.getStatusLine().getStatusCode()==204,"Error: create experiment call");
+			String expid = EntityUtils.toString(resCreate.getEntity());
+
+			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
+			Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200 || resCheck.getStatusLine().getStatusCode() == 204, "Error: search experiment call");
+			String resultSearch = EntityUtils.toString(resCheck.getEntity()); 
+			JSONArray results = new JSONArray(resultSearch);
+			Preconditions.checkArgument(results.length() == 1, "Error: search experiment result");
+			
+			JSONObject rsearch = new JSONObject(results.get(0).toString());
+			String idrun = rsearch.get("idrun").toString();
+			experiments.put(username,idrun);
+			
+			HttpResponse resStart = start(httpContext, idrun);
+			Preconditions.checkArgument(resStart.getStatusLine().getStatusCode() == 200 || resStart.getStatusLine().getStatusCode() == 204, "Error: start experiment result");
+		}
+		
+		public void assignExperiment(String userid) throws ClientProtocolException, IOException {
+			String username = idmapname.get(userid);
+			//Security.setAuthenticatedUser(request, em, userid, username);
+			CookieStore cookieStore = new BasicCookieStore();
+			HttpContext httpContext = new BasicHttpContext();
+			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+
+			HttpResponse resUser = setUser( httpContext, userid, username);
+			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+
+			Boolean valid = false;
+			while (!valid) {
+				try {
+					HttpResponse resAssign = assign(httpContext);
+					Preconditions.checkArgument(resAssign.getStatusLine().getStatusCode() == 200 || resAssign.getStatusLine().getStatusCode() == 204, "Error: assign experiment call");
+					String redirectionURI = EntityUtils.toString(resAssign.getEntity());
+					for (String idrun: experiments.values()) {
+						if (redirectionURI.contains(idrun)) {
+							valid = true;
+							HttpResponse resSetrun = setIdrun(httpContext, idrun);
+							Preconditions.checkArgument(resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204, "Error: set idrun call");
+
+							HttpResponse resRedirect = redirect(httpContext,redirectionURI);
+							Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 200, "Error: redirect to experiment call");
+							break;
+						}
+					}
+					
+				} catch (BadRequestException e) {
+					System.out.println("No more experiments to assign to "+userid);
+				}
+			}
+		}
+		
+		public boolean testEvents(String userid) throws ClientProtocolException, IOException {
+			String username = idmapname.get(userid);
+			CookieStore cookieStore = new BasicCookieStore();
+			HttpContext httpContext = new BasicHttpContext();
+			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
+			HttpResponse resUser = setUser( httpContext, userid, username);
+			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+
+			Boolean stop = true;
+			stop = stop & event ("exposure", httpContext, userid, username);
+			stop = stop & event ("test", httpContext, userid, username);
+			stop = stop & event ("completed", httpContext, userid, username);
+			return stop;
+		}
+		
+		public void clear(String userid) throws ClientProtocolException, IOException {
+			String username = idmapname.get(userid);
+			CookieStore cookieStore = new BasicCookieStore();
+			HttpContext httpContext = new BasicHttpContext();
+			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
+			HttpResponse resUser = setMasterUser( httpContext);
+			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create master user call");
+			HttpResponse resDeleteUser = deleteUser( httpContext, username);
+			Preconditions.checkArgument(resDeleteUser.getStatusLine().getStatusCode() == 200 || resDeleteUser.getStatusLine().getStatusCode() == 204, "Error: delete user call");
+		}
+		
+		public boolean event(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+			HttpResponse resCheckEvents = checkEvents(ename, httpContext, userid, username);
+			Preconditions.checkArgument(resCheckEvents.getStatusLine().getStatusCode() == 200 || resCheckEvents.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events call");
+			String expevents = EntityUtils.toString(resCheckEvents.getEntity());
+			JSONArray arrayevents = new JSONArray(expevents);
+			Long differentExposures = arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("idunit");}).distinct().count();
+			Preconditions.checkArgument(arrayevents.length()==differentExposures, "Error: monitor "+ ename +": "+arrayevents.length()+" events, but only "+differentExposures +" events with different idunit");
+			
+			HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
+			Preconditions.checkArgument(resMonitor.getStatusLine().getStatusCode() == 200 || resMonitor.getStatusLine().getStatusCode() == 204, "Error: monitor "+ ename);
+
+			String exposures = EntityUtils.toString(resMonitor.getEntity()); 
+			JSONObject results = new JSONObject(exposures);
+			JSONArray treatments = results.getJSONArray("treatments");
+			Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
+			
+			
+			//Preconditions.checkArgument(differentExposures == (long)differentExposuresMonitor, "Error: exposures "+arrayevents.length()+" events, monitoring "+differentExposuresMonitor);
+			
+			JSONArray eventids = new JSONArray(arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("_id");}).toArray());
+			HttpResponse resDownloadJSON = getFile(httpContext, eventids, "JSON");
+			Preconditions.checkArgument(resDownloadJSON.getStatusLine().getStatusCode() == 200 || resDownloadJSON.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getJSON call");
+
+			HttpResponse resDownloadCSV = getFile(httpContext, eventids, "CSV");
+			Preconditions.checkArgument(resDownloadCSV.getStatusLine().getStatusCode() == 200 || resDownloadCSV.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getCSV call");
+			
+			if (ename.equals("exposures") || ename.equals("completed")) {
+				if ((long)differentExposuresMonitor != differentExposures || differentExposures == 0) {
+					System.out.println(username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
+					return false;
+				}
+			}
+			return true;
+			
+		}
+		
+		public HttpResponse deleteUser(HttpContext httpContext, String username) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPut httpPut = new HttpPut(localhost+context.getContextPath()+"/"+jerseyServices+"/user/delete/"+username);
+			HttpResponse res = httpClient.execute(httpPut, httpContext);
+			return res;
+		}
+		
+		public HttpResponse getFile(HttpContext httpContext, JSONArray arrayevents, String format) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/event/get"+format);
+			StringEntity entity = new StringEntity(arrayevents.toString());
+		    httpPost.setEntity(entity);
+		    httpPost.setHeader("Accept", "application/octet-stream");
+		    httpPost.setHeader("Content-type", "application/json");
+		    HttpResponse res = httpClient.execute(httpPost, httpContext);
+			return res;		//return experiment id
 		}
 		
 		public HttpResponse redirect(HttpContext httpContext, String uri) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet httpGet = new HttpGet(uri);
 			HttpResponse res = httpClient.execute(httpGet, httpContext);
+			return res;
+		}
+		
+		public HttpResponse start(HttpContext httpContext, String idrun) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPut httpPut = new HttpPut(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/start");
+			httpPut.setEntity(new StringEntity(idrun));
+			HttpResponse res = httpClient.execute(httpPut, httpContext);
 			return res;
 		}
 		
@@ -177,14 +318,21 @@ public class ClientTest {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/test/setuser/"+userid+"/"+username);
 			HttpResponse res = httpClient.execute(httpGet, httpContext);
-//			WebTarget base = client.target(localhost+context.getContextPath()+"/"+jerseyServices);
-//			WebTarget target = base.path("/test/setuser/"+userid+"/"+username);
-//			
-//			Invocation.Builder builder = target.request(); //TODO: different requests each time
-//			
-//			builder.cookie("authuser", "test");
-//			
-//			Response res = builder.get();
+			return res;
+		}
+		
+		public HttpResponse setMasterUser(HttpContext httpContext) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/test/setmasteruser");
+			HttpResponse res = httpClient.execute(httpGet, httpContext);
+			return res;
+		}
+
+		
+		public HttpResponse setIdrun(HttpContext httpContext, String idrun) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/test/setidrun/"+idrun);
+			HttpResponse res = httpClient.execute(httpGet, httpContext);
 			return res;
 		}
 		
@@ -222,6 +370,38 @@ public class ClientTest {
 //			JSONObject filter = getExperimentFilter(userid,username, expid);
 //			Response res = builder.post(Entity.entity(filter.toString(), MediaType.APPLICATION_JSON));
 			return res;		
+		}
+		
+		public HttpResponse checkEvents(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/event/search");
+			JSONObject event = getEventFilter(ename, experiments.get(username));
+			StringEntity entity = new StringEntity(event.toString());
+		    httpPost.setEntity(entity);
+		    httpPost.setHeader("Accept", "application/json");
+		    httpPost.setHeader("Content-type", "application/json");
+		    HttpResponse res = httpClient.execute(httpPost, httpContext);
+			
+//			WebTarget base = client.target(localhost+context.getContextPath()+"/"+jerseyServices);
+//			WebTarget target = base.path("/experiment/search");
+//			Invocation.Builder builder = target.request();
+//			JSONObject filter = getExperimentFilter(userid,username, expid);
+//			Response res = builder.post(Entity.entity(filter.toString(), MediaType.APPLICATION_JSON));
+			return res;		
+		}
+		
+		public HttpResponse monitor(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/monitor/subtreatments/"+ename+"/"+experiments.get(username));
+			HttpResponse res = httpClient.execute(httpGet, httpContext);
+			return res;
+		}
+		
+		public JSONObject getEventFilter(String ename, String expid) {
+			JSONObject filter = new JSONObject();
+			filter.put("idconfig", expid);
+			filter.put("ename", ename);
+			return filter;
 		}
 
 		public JSONObject getExperimentFilter(String userid, String username, String expid) {
@@ -281,9 +461,9 @@ public class ClientTest {
 			if (mod == 1) {
 				Calendar date = Calendar.getInstance();
 				long t= date.getTimeInMillis();
-				Date onemin=new Date(t + (1 * 60000));
+				Date tenmin=new Date(t + (10 * 60000));
 				
-				config.put("date_to_end",tudelft.dds.irep.utils.Utils.getTimestamp(onemin));
+				config.put("date_to_end",tudelft.dds.irep.utils.Utils.getTimestamp(tenmin));
 			} else if (mod == 2) {
 				config.put("max_exposures", 10);
 			}
@@ -318,7 +498,7 @@ public class ClientTest {
 			return experiment;
 		}
 		
-		
+
 		
 //		public static Response testYAMLForm(Client client) throws IOException{
 //			WebTarget base = client.target(context+jerseyServices);

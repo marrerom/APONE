@@ -88,8 +88,8 @@ $(document).ready(function() {
 			      onApprove : function() {
 						tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
 							var idrun = $(this).closest(".item").attr("id");
-							removeEventsExperiment(idrun);
-							//removeExperiment(idrun);
+							//removeEventsExperiment(idrun);
+							removeExperiment(idrun);
 						});
 			      }
 			});
@@ -303,21 +303,21 @@ $(document).ready(function() {
 //		$(".ui.modal._error").modal('show');
 //	}
 	
-	function removeEventsSuccess(){
-		removeExperiment($(this).attr("data"));
-	}
-	
-	function removeEventsExperiment(idrun){
-		var errorMessage = "<p>Events associated to experiment "+$(this).attr("data")+" could not be deleted</p>";
-		$.ajax({
-			  contentType: 'text/plain',
-			  type: 'POST',
-			  url: removeEventsURL,
-			  data: idrun,
-			  success: removeEventsSuccess,
-			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
-			});	
-	}
+//	function removeEventsSuccess(){
+//		removeExperiment($(this).attr("data"));
+//	}
+//	
+//	function removeEventsExperiment(idrun){
+//		var errorMessage = "<p>Events associated to experiment "+$(this).attr("data")+" could not be deleted</p>";
+//		$.ajax({
+//			  contentType: 'text/plain',
+//			  type: 'POST',
+//			  url: removeEventsURL,
+//			  data: idrun,
+//			  success: removeEventsSuccess,
+//			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
+//			});	
+//	}
 	
 	function removeExperiment(idrun){
 		var errorMessage = "<p>Experiment "+$(this).attr("data")+" could not be deleted</p>";

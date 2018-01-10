@@ -68,7 +68,10 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 				if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
 					exposureEvents.loadEvent(event);
 				} else if (event.getEname().equals(JEvent.COMPLETED_ENAME)) {
+					System.out.println("Experimenter "+event.getExperimenter()+" Completed: "+getCompleteEvents().getTotalCount() +" 1");
 					completeEvents.loadEvent(event);
+					System.out.println("Experimenter "+event.getExperimenter()+"** Completed: "+getCompleteEvents().getTotalCount());
+					
 				}
 					
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);

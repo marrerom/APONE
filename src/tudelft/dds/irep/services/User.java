@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,6 +23,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -179,8 +181,15 @@ public class User {
 				Pair<String,Integer> newpair = Pair.of(left.getIdconfig(), participants);
 				exp_participants.add(newpair);
 			}
-			exp_participants.sort((a,b)->a.getRight().compareTo(b.getRight()));
-			String idexp = exp_participants.get(0).getLeft();
+			Random rand = new Random();
+			exp_participants.sort((a,b)-> a.getRight().compareTo(b.getRight()));
+			Integer minexposures = exp_participants.get(0).getRight();
+			Integer lastindex = 0;
+			for (Pair<String, Integer> p: exp_participants) {
+				if (p.getRight() == minexposures)
+					lastindex = exp_participants.indexOf(p);
+			}
+			String idexp = exp_participants.get(rand.nextInt(lastindex+1)).getLeft();
 			URI redirection = new URI(uriInfo.getBaseUri()+"experiment/redirect/"+idexp+"/"+authuser.getName());
 			return redirection.toString();
 		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
@@ -283,6 +292,36 @@ public class User {
 				return false;
 		}
 		return true;
+	}
+	
+	@Path("/delete/{idname}")
+	@PUT
+	@Consumes(MediaType.TEXT_PLAIN)
+	public void delete(@PathParam("idname") String idname, @Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getAuthenticatedUser(request);
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			if (!authuser.isAdmin())
+				throw new AuthenticationException();
+			
+			JExperiment filter = new JExperiment();
+			filter.setExperimenter(idname);
+			for (JExperiment exp: em.getExperiments(filter, authuser))
+				for (JConfiguration conf: exp.getConfig()) {
+					em.stop(conf.get_id(), authuser);
+					em.deleteConfig(conf.get_id(),authuser);
+					em.deleteEvents(conf.get_id(), authuser); //always remove the events of an experiment that is going to be deleted
+				}
+			em.deleteUser(idname, authuser);
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		}
 	}
 	
 //	private Collection<RunningExpInfo> getLeft(ExperimentManager em, Collection<RunningExpInfo> candidates, JUser user, UserRol restrictToRol) throws IOException, ParseException{
