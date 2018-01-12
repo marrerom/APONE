@@ -17,31 +17,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.services.Experiment;
 
-abstract class EventMonitoring {
-	protected Map<String, List<String>> treatcount = new HashMap<String, List<String>>();
-	protected Map<String, Map<Map<String, ?>, List<String>>> subtreatmentcount = new HashMap<String, Map<Map<String,?>, List<String>>>();; //treatment - set<unitid>
+public class EventMonitor {
+	protected Map<String, Set<String>> treatcount;
+	protected Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentcount; //treatment - set<unitid>
 	ObjectMapper mapper = new ObjectMapper();
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
-	public EventMonitoring() { 
-		System.out.println("NEW EVENT MONITORING");	
-		}
-	
-	public EventMonitoring(Collection<JEvent> events) {
-		System.out.println("NEW EVENT MONITORING -EVENTS");
-		for (JEvent exp:events)
-			try {
-				loadEvent(exp);
-			} catch (IOException e) {
-				log.log(Level.SEVERE, "IO ERROR in EventMonitoringConsumer while loading events",e);
-			}
+	public EventMonitor() {
+		treatcount = new HashMap<String, Set<String>>();
+		subtreatmentcount = new HashMap<String, Map<Map<String,?>, Set<String>>>();; //treatment - set<unitid>
 	}
 	
-	public Map<String, Map<Map<String, ?>, List<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
+//	public EventMonitor(Collection<JEvent> events) {
+//		this();
+//		for (JEvent exp:events)
+//			try {
+//				loadEvent(exp);
+//			} catch (IOException e) {
+//				log.log(Level.SEVERE, "IO ERROR in EventMonitoringConsumer while loading events",e);
+//			}
+//	}
+	
+	public Map<String, Map<Map<String, ?>, Set<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
 		return subtreatmentcount;
 	}
 
-	public Map<String, List<String>> getTreatmentCount() {
+	public Map<String, Set<String>> getTreatmentCount() {
 		return treatcount;
 	}
 	
@@ -52,16 +53,16 @@ abstract class EventMonitoring {
 	
 	public Integer getTotalCount() {
 		int count = 0;
-		for (List<String> value:treatcount.values())
+		for (Set<String> value:treatcount.values())
 			count += value.size();
 		return count;
 	}
 	
 	private void updateTreatmentCount(JEvent jevent) {
 		String treatment = jevent.getTreatment(); 
-		List<String> unitids = treatcount.get(treatment);
+		Set<String> unitids = treatcount.get(treatment);
 		if (unitids == null) {
-			unitids = new ArrayList<String>();
+			unitids = new HashSet<String>();
 			treatcount.put(treatment, unitids);
 		}
 		unitids.add(jevent.getIdunit());
@@ -70,11 +71,11 @@ abstract class EventMonitoring {
 	private void updateSubtreatmentCount(JEvent jevent) {
 		String treatment = jevent.getTreatment();
 		Map<String,?> params =mapper.convertValue(jevent.getParamvalues(), Map.class);
-		Map<Map<String, ?>, List<String>> maptreatment = subtreatmentcount.get(treatment);
-		List<String> unitids=null;
+		Map<Map<String, ?>, Set<String>> maptreatment = subtreatmentcount.get(treatment);
+		Set<String> unitids=null;
 		if (maptreatment == null) {
-			maptreatment = new HashMap<Map<String,?>, List<String>>();
-			unitids = new ArrayList<String>();
+			maptreatment = new HashMap<Map<String,?>, Set<String>>();
+			unitids = new HashSet<String>();
 			maptreatment.put(params, unitids);
 			subtreatmentcount.put(treatment, maptreatment);
 		} else {
@@ -85,7 +86,7 @@ abstract class EventMonitoring {
 				}
 			}
 			if (unitids == null) {
-				unitids = new ArrayList<String>();
+				unitids = new HashSet<String>();
 				maptreatment.put(params, unitids);
 			}
 		}

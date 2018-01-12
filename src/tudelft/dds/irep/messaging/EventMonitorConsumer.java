@@ -27,35 +27,37 @@ import tudelft.dds.irep.utils.Utils;
 
 
 
-public class EventMonitoringConsumer extends DefaultConsumer {
+public class EventMonitorConsumer extends DefaultConsumer {
 	static public final int MAXATTEMPTS = 3;
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 
-	ExposureEventMonitoring exposureEvents;
-	CompleteEventMonitoring completeEvents;
+	Map<String, EventMonitor> mapMonitor = new HashMap<String, EventMonitor>();
 
-	public EventMonitoringConsumer(Channel channel) {
+	public EventMonitorConsumer(Channel channel) {
 		super(channel);
-		exposureEvents = new ExposureEventMonitoring();
-		completeEvents = new CompleteEventMonitoring();
 	}
 	
-	public EventMonitoringConsumer(Channel channel, Collection<JEvent> monitoringEvents) {
+	public EventMonitorConsumer(Channel channel, Collection<JEvent> events) {
 		super(channel);
-		Collection<JEvent> exposures = monitoringEvents.stream().filter(p->p.getEname().equals(JEvent.EXPOSURE_ENAME)).collect(Collectors.toList());
-		exposureEvents = new ExposureEventMonitoring(exposures);
-	
-		Collection<JEvent> complete = monitoringEvents.stream().filter(p->p.getEname().equals(JEvent.COMPLETED_ENAME)).collect(Collectors.toList());
-		completeEvents = new CompleteEventMonitoring(complete);
-		
+		events.stream().forEach(p -> {
+			EventMonitor em = getEventMonitor(p.getEname()); 
+			try {
+				em.loadEvent(p);
+			} catch (JsonProcessingException e) {
+				log.log(Level.WARNING, "JSONProcessingExceptoin at saving event "+p.get_id(), e);
+			} catch (IOException e) {
+				log.log(Level.WARNING, "IO ERROR  at saving event "+p.get_id(), e);
+			}
+		});
 	}
 	
-	public ExposureEventMonitoring getExposureEvents() {
-		return exposureEvents;
-	}
-
-	public CompleteEventMonitoring getCompleteEvents() {
-		return completeEvents;
+	
+	public EventMonitor getEventMonitor(String ename) {
+		if (mapMonitor.containsKey(ename))
+			return mapMonitor.get(ename);
+		EventMonitor emonitor = new EventMonitor();
+		mapMonitor.put(ename, emonitor);
+		return emonitor;
 	}
 	
 	@Override
@@ -65,15 +67,7 @@ public class EventMonitoringConsumer extends DefaultConsumer {
 		while (attempts > 0) {
 			try {
 				event = (JEvent) Utils.deserialize(body);
-				if (event.getEname().equals(JEvent.EXPOSURE_ENAME)) {
-					exposureEvents.loadEvent(event);
-				} else if (event.getEname().equals(JEvent.COMPLETED_ENAME)) {
-					System.out.println("Experimenter "+event.getExperimenter()+" Completed: "+getCompleteEvents().getTotalCount() +" 1");
-					completeEvents.loadEvent(event);
-					System.out.println("Experimenter "+event.getExperimenter()+"** Completed: "+getCompleteEvents().getTotalCount());
-					
-				}
-					
+				getEventMonitor(event.getEname()).loadEvent(event);
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 				attempts = 0;
 			} catch (ClassNotFoundException e) {

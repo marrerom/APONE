@@ -343,18 +343,18 @@ public class Experiment {
 				node.put("idrun", exp.getIdconfig());
 				node.put("laststarted", exp.getLastStarted().getTime());
 		        ArrayNode exposures = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getExposureEvents().getTreatmentCount().keySet()){
+		        for (String treatname: exp.getMonConsumer().getEventMonitor(JEvent.EXPOSURE_ENAME).getTreatmentCount().keySet()){
 		        	ObjectNode treatment = mapper.createObjectNode();
 		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getExposureEvents().getTreatmentCount().get(treatname).size());
+		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.EXPOSURE_ENAME).getTreatmentCount().get(treatname).size());
 		        	exposures.add(treatment);
 		        }
 		        node.set("exposures", exposures);
 		        ArrayNode completed = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getCompleteEvents().getTreatmentCount().keySet()){
+		        for (String treatname: exp.getMonConsumer().getEventMonitor(JEvent.COMPLETED_ENAME).getTreatmentCount().keySet()){
 		        	ObjectNode treatment = mapper.createObjectNode();
 		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getCompleteEvents().getTreatmentCount().get(treatname).size());
+		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.COMPLETED_ENAME).getTreatmentCount().get(treatname).size());
 		        	completed.add(treatment);
 		        }
 		        node.set("completed", completed);
@@ -382,20 +382,15 @@ public class Experiment {
 			node.put("idrun", exp.getIdconfig());
 			node.put("laststarted", exp.getLastStarted().getTime());
 	        ArrayNode treatments = mapper.createArrayNode();
-	        Map<String, Map<Map<String, ?>, List<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, List<String>>>();
-	        if (ename.equals(JEvent.EXPOSURE_ENAME)) //TODO: this service could deal with any event, not only exposure and complete
-	        	subtreatmentCount = exp.getMonConsumer().getExposureEvents().getSubtreatmentCount();
-	        else if (ename.equals(JEvent.COMPLETED_ENAME)) {
-	        	subtreatmentCount = exp.getMonConsumer().getCompleteEvents().getSubtreatmentCount();
-	        	System.out.println("** Experimenter "+exp.getExperimenter()+" Monitor: "+exp.getMonConsumer().getCompleteEvents().getTotalCount());
-	        }
+	        Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, Set<String>>>();
+	        subtreatmentCount = exp.getMonConsumer().getEventMonitor(ename).getSubtreatmentCount();
 
 	        for (String treatname: subtreatmentCount.keySet()){
 	        	ObjectNode treatment = mapper.createObjectNode();
 	        	treatment.put("name", treatname);
 	        	treatment.put("value", subtreatmentCount.get(treatname).size());
 	        	ArrayNode subtreatments = mapper.createArrayNode();
-	        	for (Map.Entry<Map<String,?>, List<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
+	        	for (Map.Entry<Map<String,?>, Set<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
 	        		ObjectNode subtreatment = mapper.createObjectNode();
 	        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
 	        		subtreatment.put("value", entry.getValue().size());
@@ -500,6 +495,8 @@ public class Experiment {
 			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
+		} catch (Exception e) {
+			System.out.println(e.getStackTrace());
 		}
 
 	    

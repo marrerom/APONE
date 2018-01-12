@@ -3,7 +3,7 @@ package tudelft.dds.irep.experiment;
 import java.util.Date;
 import com.glassdoor.planout4j.NamespaceConfig;
 import tudelft.dds.irep.data.schema.Status;
-import tudelft.dds.irep.messaging.EventMonitoringConsumer;
+import tudelft.dds.irep.messaging.EventMonitorConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
 
 public class RunningExpInfo {
@@ -11,14 +11,14 @@ public class RunningExpInfo {
 		private NamespaceConfig conf;
 		private Status status;
 		private EventRegisterConsumer regConsumer;
-		private EventMonitoringConsumer monConsumer;
+		private EventMonitorConsumer monConsumer;
 		private Date dateToEnd;
 		private Integer maxExposures; //TODO: change name, it is max completed units instead of exposures
 		private Date lastStarted;
 		private String experimenter;
 		
 
-		public RunningExpInfo(String idconfig, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitoringConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted, String experimenter) {
+		public RunningExpInfo(String idconfig, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitorConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted, String experimenter) {
 			this.idconfig = idconfig;
 			this.conf = conf;
 			this.status = status;
@@ -46,7 +46,7 @@ public class RunningExpInfo {
 			return regConsumer;
 		}
 
-		public EventMonitoringConsumer getMonConsumer() {
+		public EventMonitorConsumer getMonConsumer() {
 			return monConsumer;
 		}
 

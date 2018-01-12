@@ -45,7 +45,7 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
-import tudelft.dds.irep.messaging.EventMonitoringConsumer;
+import tudelft.dds.irep.messaging.EventMonitorConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
@@ -124,7 +124,7 @@ public class ExperimentManager {
 		Date dateToEnd;
 		Integer maxCompleted;
 		Integer actualCompleted;
-		EventMonitoringConsumer emc;
+		EventMonitorConsumer emc;
 		if (re.getExpStatus(idconf) == Status.OFF) {
 			JConfiguration jconf = db.getConfiguration(idconf, authuser);
 			dateToEnd = jconf.getDate_to_end();
@@ -147,7 +147,7 @@ public class ExperimentManager {
 			maxCompleted = running.getMaxExposures();
 			if (maxCompleted != null) {
 				emc = running.getMonConsumer();
-				actualCompleted = emc.getCompleteEvents().getTotalCount();
+				actualCompleted = emc.getEventMonitor(JEvent.COMPLETED_ENAME).getTotalCount();
 				if (actualCompleted >= maxCompleted)
 					return true;
 			}
@@ -280,7 +280,7 @@ public class ExperimentManager {
 		Date last_started = conf.getDate_started()[conf.getDate_started().length-1]; //There is at least one value
 		NamespaceConfig ns  = createNamespace(exp,conf);
 		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
-		EventMonitoringConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getMonitoringEvents(conf.get_id(), authuser)));
+		EventMonitorConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getMonitoringEvents(conf.get_id(), authuser)));
 		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started, exp.getExperimenter(), authuser);
 	}
 	
@@ -322,7 +322,7 @@ public class ExperimentManager {
 		Date last_started = null;
 		NamespaceConfig ns;
 		EventRegisterConsumer erc;
-		EventMonitoringConsumer emc;
+		EventMonitorConsumer emc;
 		if (st == Status.OFF) {
 			if (matchStopConditions(conf.get_id(),authuser))
 				return false;
@@ -358,7 +358,7 @@ public class ExperimentManager {
 		Date last_started = null;
 		NamespaceConfig ns;
 		EventRegisterConsumer erc;
-		EventMonitoringConsumer emc;
+		EventMonitorConsumer emc;
 	
 		if (re.getExpStatus(conf.get_id()) == Status.OFF) {
 			last_started = new Date();
@@ -494,12 +494,12 @@ public class ExperimentManager {
 		return regConsumer;
 	}
 	
-	private EventMonitoringConsumer createMonitoringConsumer(String queue, Optional<Collection<JEvent>> exposureEvents) throws IOException {
-		EventMonitoringConsumer monConsumer;
+	private EventMonitorConsumer createMonitoringConsumer(String queue, Optional<Collection<JEvent>> exposureEvents) throws IOException {
+		EventMonitorConsumer monConsumer;
 		if (exposureEvents.isPresent())
-			monConsumer = new EventMonitoringConsumer(channel, exposureEvents.get());
+			monConsumer = new EventMonitorConsumer(channel, exposureEvents.get());
 		else
-			monConsumer = new EventMonitoringConsumer(channel);
+			monConsumer = new EventMonitorConsumer(channel);
 		channel.basicConsume(queue, monConsumer);
 		return monConsumer;
 	}

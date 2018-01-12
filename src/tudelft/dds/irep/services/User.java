@@ -171,27 +171,35 @@ public class User {
 		try {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			UserRol restrictedTo = null; //assignment of experiments to participate restricted to this rol. Null means no restriction
-			List<Pair<String, Integer>> exp_participants = new ArrayList<Pair<String, Integer>>();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			Collection<RunningExpInfo> leftlist = getCandidateExperiments(getCompletedExperiments(em, authuser), em, authuser, restrictedTo);
 			if (leftlist.isEmpty())
 				throw new BadRequestException("No more running experiments left to participate");
-			for (RunningExpInfo left: leftlist) {
-				Integer participants = left.getMonConsumer().getExposureEvents().getTotalCount();
-				Pair<String,Integer> newpair = Pair.of(left.getIdconfig(), participants);
-				exp_participants.add(newpair);
-			}
+			//Select that one with less exposures -tricky: 
+			//what if the client does not send the event exposure properly? we would be stuck on it
+//			List<Pair<String, Integer>> exp_participants = new ArrayList<Pair<String, Integer>>();
+//			for (RunningExpInfo left: leftlist) {
+//				Integer participants = left.getMonConsumer().getExposureEvents().getTotalCount();
+//				Pair<String,Integer> newpair = Pair.of(left.getIdconfig(), participants);
+//				exp_participants.add(newpair);
+//			}
+//			Random rand = new Random();
+//			exp_participants.sort((a,b)-> a.getRight().compareTo(b.getRight()));
+//			Integer minexposures = exp_participants.get(0).getRight();
+//			Integer lastindex = 0;
+//			for (Pair<String, Integer> p: exp_participants) {
+//				if (p.getRight() == minexposures)
+//					lastindex = exp_participants.indexOf(p);
+//			}
+//			String idexp = exp_participants.get(rand.nextInt(lastindex+1)).getLeft();
+			
+			//Select experiment randomly
 			Random rand = new Random();
-			exp_participants.sort((a,b)-> a.getRight().compareTo(b.getRight()));
-			Integer minexposures = exp_participants.get(0).getRight();
-			Integer lastindex = 0;
-			for (Pair<String, Integer> p: exp_participants) {
-				if (p.getRight() == minexposures)
-					lastindex = exp_participants.indexOf(p);
-			}
-			String idexp = exp_participants.get(rand.nextInt(lastindex+1)).getLeft();
+			String idexp = new ArrayList<RunningExpInfo>(leftlist).get(rand.nextInt(leftlist.size())).getIdconfig();
+			
 			URI redirection = new URI(uriInfo.getBaseUri()+"experiment/redirect/"+idexp+"/"+authuser.getName());
-			return redirection.toString();
+			String redirectionStr = redirection.toString(); 
+			return redirectionStr;
 		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
@@ -266,21 +274,29 @@ public class User {
 	
 	//get running experiments not created by the user, on and not done previously by the user (event ename=COMPLETED_ENAME)
 	private Collection<RunningExpInfo> getCandidateExperiments(Collection<String> completedExperiments, ExperimentManager em, JUser user, UserRol restrictToRol) throws JsonParseException, JsonMappingException, IOException, ParseException {
+		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
 		JUser authuser = Security.getMasterUser();
-		Set<String> running = em.getRunningExp(authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());;
+		Set<String> running = em.getRunningExp(authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());
+
 		JUser filterUser = new JUser();
 		if (restrictToRol != null)
 			filterUser.setRol(restrictToRol.toString());;
 		Set<String> validusers = em.getUsers(filterUser, authuser).stream().map(p->p.getIdname()).collect(Collectors.toSet());;
 		running.removeAll(completedExperiments);
 		validusers.remove(user.getIdname());
-		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
+		
 		for (String idconf:running) {
-			RunningExpInfo rei = em.getRunningExp(idconf, authuser);
-			if (validusers.contains(rei.getExperimenter()) && containURL(em, rei.getIdconfig())) {
-				result.add(rei);
+			try {
+				RunningExpInfo rei = em.getRunningExp(idconf, authuser);
+				if (validusers.contains(rei.getExperimenter()) && containURL(em, rei.getIdconfig())) {
+					result.add(rei);
+				}
+			}catch(BadRequestException e) {
+				System.out.println("Experiment "+idconf +" not valid anymore");
 			}
+
 		}
+
 		return result;
 	}
 	

@@ -93,7 +93,7 @@ public class MongoDB implements Database {
 		} catch (NullPointerException e) {
 			String msg = "Experiment "+idexp+" does not exist or you don't have authorization to access it";
 			log.log(Level.WARNING, msg, e);
-			throw new NullPointerException(msg);
+			throw new BadRequestException(msg);
 		}
 	}
 
@@ -106,7 +106,7 @@ public class MongoDB implements Database {
 		} catch (NullPointerException e) {
 			String msg = "Experiment configuration "+idconf+" does not exist or you don't have authorization to access it";
 			log.log(Level.WARNING, msg, e);
-			throw new NullPointerException(msg);
+			throw new BadRequestException(msg);
 		}
 	}
 	
@@ -116,7 +116,7 @@ public class MongoDB implements Database {
 		} catch (NullPointerException e) {
 			String msg = "Event "+idevent+" does not exist or you don't have authorization to access it";
 			log.log(Level.WARNING, msg, e);
-			throw new NullPointerException(msg);
+			throw new BadRequestException(msg);
 		}
 	}
 	
@@ -126,7 +126,7 @@ public class MongoDB implements Database {
 		} catch (NullPointerException e) {
 			String msg = "User "+idTwitter+" does not exist or you don't have authorization to access it";
 			log.log(Level.WARNING, msg, e);
-			throw new NullPointerException(msg);
+			throw new BadRequestException(msg);
 		}
 	}
 	
@@ -136,7 +136,7 @@ public class MongoDB implements Database {
 		} catch (NullPointerException e) {
 			String msg = "User "+idname+" does not exist or you don't have authorization to access it";
 			log.log(Level.WARNING, msg, e);
-			throw new NullPointerException(msg);
+			throw new BadRequestException(msg);
 		}
 	}
 	

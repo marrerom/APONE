@@ -103,19 +103,21 @@ public class ClientTest {
 		public Response test(@Context HttpServletRequest request) throws ClientProtocolException, IOException {
 			Response response;
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			final Integer NUSERS = 10; 
+			final Integer NUSERS = 120;
+			final Integer NEXPS = 10;
 			try {
 				for (int i=1;i<=NUSERS;i++) {
 					System.out.println("Creating experiment user "+i);
 					createExperiment(Integer.toString(i));
 				}
+				for (int nexp=1;nexp<=NEXPS;nexp++) {
+					for (int i=1;i<=NUSERS;i++) {
+						System.out.println("Assigning experiment of user "+i);
+						assignExperiment(Integer.toString(i));
+						//Thread.sleep(3000);
+					}
 				
-				for (int i=1;i<=NUSERS;i++) {
-					System.out.println("Assigning experiment of user "+i);
-					assignExperiment(Integer.toString(i));
-					Thread.sleep(5000);
 				}
-
 				
 				long startTime = System.currentTimeMillis();
 				int iteration = 1;
@@ -126,14 +128,14 @@ public class ClientTest {
 						System.out.println("Testing events experiment user "+i);
 						stop = stop & testEvents(Integer.toString(i));
 					}
-					Thread.sleep(1000);
-					iteration++;
-				} while (!stop && (System.currentTimeMillis() - startTime)< (1000 * 60 * 1));
+					//Thread.sleep(10000);
+ 				iteration++;
+				} while (!stop && (System.currentTimeMillis() - startTime)< (1000 * 60 * 10));
 				Preconditions.checkArgument(stop, "Error: stop condition failed, check monitoring results");
 
 				
 				response = Response.ok().build();
-			} catch (IOException | InterruptedException e) {
+			} catch (Exception e) {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).build();
@@ -190,6 +192,9 @@ public class ClientTest {
 			while (!valid) {
 				try {
 					HttpResponse resAssign = assign(httpContext);
+					if (resAssign.getStatusLine().getStatusCode() != 200 && resAssign.getStatusLine().getStatusCode() != 204)
+						valid = false;
+						
 					Preconditions.checkArgument(resAssign.getStatusLine().getStatusCode() == 200 || resAssign.getStatusLine().getStatusCode() == 204, "Error: assign experiment call");
 					String redirectionURI = EntityUtils.toString(resAssign.getEntity());
 					for (String idrun: experiments.values()) {
@@ -199,7 +204,7 @@ public class ClientTest {
 							Preconditions.checkArgument(resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204, "Error: set idrun call");
 
 							HttpResponse resRedirect = redirect(httpContext,redirectionURI);
-							Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 200, "Error: redirect to experiment call");
+							Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204, "Error: redirect to experiment call");
 							break;
 						}
 					}
@@ -245,18 +250,7 @@ public class ClientTest {
 			JSONArray arrayevents = new JSONArray(expevents);
 			Long differentExposures = arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("idunit");}).distinct().count();
 			Preconditions.checkArgument(arrayevents.length()==differentExposures, "Error: monitor "+ ename +": "+arrayevents.length()+" events, but only "+differentExposures +" events with different idunit");
-			
-			HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
-			Preconditions.checkArgument(resMonitor.getStatusLine().getStatusCode() == 200 || resMonitor.getStatusLine().getStatusCode() == 204, "Error: monitor "+ ename);
 
-			String exposures = EntityUtils.toString(resMonitor.getEntity()); 
-			JSONObject results = new JSONObject(exposures);
-			JSONArray treatments = results.getJSONArray("treatments");
-			Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
-			
-			
-			//Preconditions.checkArgument(differentExposures == (long)differentExposuresMonitor, "Error: exposures "+arrayevents.length()+" events, monitoring "+differentExposuresMonitor);
-			
 			JSONArray eventids = new JSONArray(arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("_id");}).toArray());
 			HttpResponse resDownloadJSON = getFile(httpContext, eventids, "JSON");
 			Preconditions.checkArgument(resDownloadJSON.getStatusLine().getStatusCode() == 200 || resDownloadJSON.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getJSON call");
@@ -264,10 +258,28 @@ public class ClientTest {
 			HttpResponse resDownloadCSV = getFile(httpContext, eventids, "CSV");
 			Preconditions.checkArgument(resDownloadCSV.getStatusLine().getStatusCode() == 200 || resDownloadCSV.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getCSV call");
 			
-			if (ename.equals("exposures") || ename.equals("completed")) {
-				if ((long)differentExposuresMonitor != differentExposures || differentExposures == 0) {
-					System.out.println(username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
-					return false;
+
+			
+			HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
+			Preconditions.checkArgument(resMonitor.getStatusLine().getStatusCode() == 200 || resMonitor.getStatusLine().getStatusCode() == 204 || resMonitor.getStatusLine().getStatusCode() == 400, "Error: monitor "+ ename);
+			if (resMonitor.getStatusLine().getStatusCode() == 400) {
+				System.out.println("***Monitoring experiment of user "+username+" failed because its is already off");
+			} else {
+				String exposures = EntityUtils.toString(resMonitor.getEntity()); 
+				JSONObject results = new JSONObject(exposures);
+				JSONArray treatments = results.getJSONArray("treatments");
+				Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
+			
+			
+				//Preconditions.checkArgument(differentExposures == (long)differentExposuresMonitor, "Error: exposures "+arrayevents.length()+" events, monitoring "+differentExposuresMonitor);
+				System.out.println(username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
+			
+			
+				if (ename.equals("exposures") || ename.equals("completed")) {
+					if ((long)differentExposuresMonitor != differentExposures) {
+						System.out.println("***"+username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
+						return false;
+					}
 				}
 			}
 			return true;
@@ -461,9 +473,9 @@ public class ClientTest {
 			if (mod == 1) {
 				Calendar date = Calendar.getInstance();
 				long t= date.getTimeInMillis();
-				Date tenmin=new Date(t + (10 * 60000));
+				Date onemin=new Date(t + (1 * 60000));
 				
-				config.put("date_to_end",tudelft.dds.irep.utils.Utils.getTimestamp(tenmin));
+				config.put("date_to_end",tudelft.dds.irep.utils.Utils.getTimestamp(onemin));
 			} else if (mod == 2) {
 				config.put("max_exposures", 10);
 			}
