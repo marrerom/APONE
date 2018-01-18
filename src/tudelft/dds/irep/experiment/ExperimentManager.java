@@ -123,7 +123,7 @@ public class ExperimentManager {
 			throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Date dateToEnd;
 		Integer maxCompleted;
-		Integer actualCompleted;
+		Long actualCompleted;
 		EventMonitorConsumer emc;
 		if (re.getExpStatus(idconf) == Status.OFF) {
 			JConfiguration jconf = db.getConfiguration(idconf, authuser);
@@ -147,7 +147,7 @@ public class ExperimentManager {
 			maxCompleted = running.getMaxExposures();
 			if (maxCompleted != null) {
 				emc = running.getMonConsumer();
-				actualCompleted = emc.getEventMonitor(JEvent.COMPLETED_ENAME).getTotalCount();
+				actualCompleted = emc.getEventMonitor(JEvent.COMPLETED_ENAME).getTotalCount(true);
 				if (actualCompleted >= maxCompleted)
 					return true;
 			}

@@ -12,6 +12,7 @@
 <script src='js/general.js'></script>
 <script src='js/calendar.min.js'></script>
 <script src='js/monExperiments.js'></script>
+<script src='js/Chart.min.js'></script>
 </head>
 <body>
 
@@ -75,6 +76,7 @@
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',3);">Max. Units</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',4);">Date to End</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',5);">Units</th>
+									<th>Data</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -94,6 +96,7 @@
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',3);">Max. Units</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',4);">Date to End</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',5);">Units</th>
+									<th>Data</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -120,6 +123,11 @@
 		<div class="ui modal _info">
 			<div class="header"></div>
 			<div class="content"></div>
+		</div>
+		
+		<div class="ui modal _chart">
+			<div class="header">Experiment events</div>
+			<div class="content"><canvas id="chart" width="400" height="400"></canvas></div>
 		</div>
 
 

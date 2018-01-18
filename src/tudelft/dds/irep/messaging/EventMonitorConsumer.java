@@ -25,8 +25,6 @@ import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.Utils;
 
 
-
-
 public class EventMonitorConsumer extends DefaultConsumer {
 	static public final int MAXATTEMPTS = 3;
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
@@ -58,6 +56,10 @@ public class EventMonitorConsumer extends DefaultConsumer {
 		EventMonitor emonitor = new EventMonitor();
 		mapMonitor.put(ename, emonitor);
 		return emonitor;
+	}
+	
+	public Set<String> getEventNamesProcessed(){
+		return mapMonitor.keySet();
 	}
 	
 	@Override

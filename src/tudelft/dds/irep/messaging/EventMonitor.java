@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,14 +19,14 @@ import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.services.Experiment;
 
 public class EventMonitor {
-	protected Map<String, Set<String>> treatcount;
-	protected Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentcount; //treatment - set<unitid>
+	Map<String, List<String>> treatcount;
+	Map<String, Map<Map<String, ?>, List<String>>> subtreatmentcount; //treatment - set<unitid>
 	ObjectMapper mapper = new ObjectMapper();
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	public EventMonitor() {
-		treatcount = new HashMap<String, Set<String>>();
-		subtreatmentcount = new HashMap<String, Map<Map<String,?>, Set<String>>>();; //treatment - set<unitid>
+		treatcount = new HashMap<String, List<String>>();
+		subtreatmentcount = new HashMap<String, Map<Map<String,?>, List<String>>>(); //treatment - set<unitid>
 	}
 	
 //	public EventMonitor(Collection<JEvent> events) {
@@ -38,31 +39,67 @@ public class EventMonitor {
 //			}
 //	}
 	
-	public Map<String, Map<Map<String, ?>, Set<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
-		return subtreatmentcount;
-	}
-
-	public Map<String, Set<String>> getTreatmentCount() {
-		return treatcount;
-	}
+//	public Map<String, Map<Map<String, ?>, List<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
+//		return subtreatmentcount;
+//	}
+//
+//	public Map<String, List<String>> getTreatmentCount() {
+//		return treatcount;
+//	}
+	
 	
 	protected synchronized void loadEvent(JEvent exp) throws JsonProcessingException, IOException {
 		updateTreatmentCount(exp);
 		updateSubtreatmentCount(exp);
 	}
 	
-	public Integer getTotalCount() {
-		int count = 0;
-		for (Set<String> value:treatcount.values())
-			count += value.size();
-		return count;
+	public Long getTotalCount(boolean differentuser) {
+		if (treatcount.values().isEmpty()) 
+			return (long)0;
+		if (!differentuser)
+			return treatcount.values().stream().mapToLong(p -> p.size()).sum();
+		else
+			return	treatcount.values().stream().mapToLong(p -> p.stream().distinct().count()).sum();
+//		int count = 0;
+//		for (Set<String> value:treatcount.values())
+//			count += value.size();
+//		return count;
+	}
+	
+	public Set<String> getTreatments(){
+		return treatcount.keySet();
+	}
+	
+	public Set<Map<String, ?>> getSubtreatments(String treatment){
+		if (subtreatmentcount.get(treatment) == null)
+			return new HashSet<Map<String, ?>>();
+		return subtreatmentcount.get(treatment).keySet();
+	}
+	
+	public Long getTreatmentCount(String treatment, boolean differentuser) {
+		if (treatcount.get(treatment) == null)
+			return (long) 0;
+		if (!differentuser)
+			return treatcount.get(treatment).stream().count();
+		else
+			return	treatcount.get(treatment).stream().distinct().count();
+	}
+	
+	public Long getSubTreatmentCount(String treatment, Map<String,?> params, boolean differentuser) {
+		Map<Map<String,?>, List<String>> subt = subtreatmentcount.get(treatment);
+		if (subt == null || subt.get(params) == null)
+			return (long) 0;
+		if (!differentuser)
+			return subtreatmentcount.get(treatment).get(params).stream().count();
+		else
+			return	subtreatmentcount.get(treatment).get(params).stream().distinct().count();
 	}
 	
 	private void updateTreatmentCount(JEvent jevent) {
 		String treatment = jevent.getTreatment(); 
-		Set<String> unitids = treatcount.get(treatment);
+		List<String> unitids = treatcount.get(treatment);
 		if (unitids == null) {
-			unitids = new HashSet<String>();
+			unitids = new ArrayList<String>();
 			treatcount.put(treatment, unitids);
 		}
 		unitids.add(jevent.getIdunit());
@@ -71,11 +108,11 @@ public class EventMonitor {
 	private void updateSubtreatmentCount(JEvent jevent) {
 		String treatment = jevent.getTreatment();
 		Map<String,?> params =mapper.convertValue(jevent.getParamvalues(), Map.class);
-		Map<Map<String, ?>, Set<String>> maptreatment = subtreatmentcount.get(treatment);
-		Set<String> unitids=null;
+		Map<Map<String, ?>, List<String>> maptreatment = subtreatmentcount.get(treatment);
+		List<String> unitids=null;
 		if (maptreatment == null) {
-			maptreatment = new HashMap<Map<String,?>, Set<String>>();
-			unitids = new HashSet<String>();
+			maptreatment = new HashMap<Map<String,?>, List<String>>();
+			unitids = new ArrayList<String>();
 			maptreatment.put(params, unitids);
 			subtreatmentcount.put(treatment, maptreatment);
 		} else {
@@ -86,7 +123,7 @@ public class EventMonitor {
 				}
 			}
 			if (unitids == null) {
-				unitids = new HashSet<String>();
+				unitids = new ArrayList<String>();
 				maptreatment.put(params, unitids);
 			}
 		}

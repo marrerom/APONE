@@ -327,7 +327,7 @@ public class Experiment {
 		}
 	}
 	
-	
+	//TODO: change to accept any type of event
 	@Path("/monitor/treatments")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -343,18 +343,18 @@ public class Experiment {
 				node.put("idrun", exp.getIdconfig());
 				node.put("laststarted", exp.getLastStarted().getTime());
 		        ArrayNode exposures = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getEventMonitor(JEvent.EXPOSURE_ENAME).getTreatmentCount().keySet()){
+		        for (String treatname: exp.getConf().getActiveExperimentNames()){
 		        	ObjectNode treatment = mapper.createObjectNode();
 		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.EXPOSURE_ENAME).getTreatmentCount().get(treatname).size());
+		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.EXPOSURE_ENAME).getTotalCount(true));
 		        	exposures.add(treatment);
 		        }
 		        node.set("exposures", exposures);
 		        ArrayNode completed = mapper.createArrayNode();
-		        for (String treatname: exp.getMonConsumer().getEventMonitor(JEvent.COMPLETED_ENAME).getTreatmentCount().keySet()){
+		        for (String treatname: exp.getConf().getActiveExperimentNames()){
 		        	ObjectNode treatment = mapper.createObjectNode();
 		        	treatment.put("name", treatname);
-		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.COMPLETED_ENAME).getTreatmentCount().get(treatname).size());
+		        	treatment.put("value", exp.getMonConsumer().getEventMonitor(JEvent.COMPLETED_ENAME).getTotalCount(true));
 		        	completed.add(treatment);
 		        }
 		        node.set("completed", completed);
@@ -368,8 +368,41 @@ public class Experiment {
 			throw new AuthenticationException();
 		}
 	}
+	
+	
+	//TODO: the treatments are taken from RunningExp.Conf, but, what happens with the subtreatments? if there are no events, we will have no subtreatments displayed 
+	@Path("/monitor/subtreatments/{idrun}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public String monitorAllSubtreatments(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getAuthenticatedUser(request);
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			RunningExpInfo exp = em.getRunningExp(idrun, authuser);
+	
+			Set<String> eventNames = exp.getMonConsumer().getEventNamesProcessed();
+			ObjectMapper mapper = new ObjectMapper();
+			ArrayNode node = mapper.createArrayNode();
+			
+			for (String ename:eventNames) {
+				String edata = monitorSubtreatments(ename, idrun, request);
+				JsonNode edataNode = mapper.readTree(edata);
+				node.add(edataNode);
+			}
+			return mapper.writeValueAsString(node);
+		} catch (JsonProcessingException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		}
 
-	@Path("/monitor/subtreatments/{ename}/{idrun}")
+	}
+
+	@Path("/monitor/subtreatments/{idrun}/{ename}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public String monitorSubtreatments(@PathParam("ename") String ename, @PathParam("idrun") String idrun, @Context HttpServletRequest request) {
@@ -381,19 +414,22 @@ public class Experiment {
 			ObjectNode node = mapper.createObjectNode();
 			node.put("idrun", exp.getIdconfig());
 			node.put("laststarted", exp.getLastStarted().getTime());
+			node.put("ename", ename);
 	        ArrayNode treatments = mapper.createArrayNode();
-	        Map<String, Map<Map<String, ?>, Set<String>>> subtreatmentCount = new HashMap<String, Map<Map<String, ?>, Set<String>>>();
-	        subtreatmentCount = exp.getMonConsumer().getEventMonitor(ename).getSubtreatmentCount();
-
-	        for (String treatname: subtreatmentCount.keySet()){
+	        
+	        Boolean differentusers = false; //TODO: if the count is with distinct() or not, should be dependent on the specific event
+	        if (ename.equals(JEvent.EXPOSURE_ENAME.toString()) || ename.equals(JEvent.COMPLETED_ENAME.toString()))
+	        	differentusers = true;
+	        
+	        for (String treatname: exp.getConf().getActiveExperimentNames()){
 	        	ObjectNode treatment = mapper.createObjectNode();
 	        	treatment.put("name", treatname);
-	        	treatment.put("value", subtreatmentCount.get(treatname).size());
+	        	treatment.put("value", exp.getMonConsumer().getEventMonitor(ename).getTreatmentCount(treatname, differentusers));
 	        	ArrayNode subtreatments = mapper.createArrayNode();
-	        	for (Map.Entry<Map<String,?>, Set<String>> entry:subtreatmentCount.get(treatname).entrySet()) {
+	        	for (Map<String, ?> entry:exp.getMonConsumer().getEventMonitor(ename).getSubtreatments(treatname)) {
 	        		ObjectNode subtreatment = mapper.createObjectNode();
-	        		subtreatment.put("params", mapper.writeValueAsString(entry.getKey()));
-	        		subtreatment.put("value", entry.getValue().size());
+	        		subtreatment.put("params", mapper.writeValueAsString(entry));
+	        		subtreatment.put("value", exp.getMonConsumer().getEventMonitor(ename).getSubTreatmentCount(treatname, entry, differentusers));
 	        		subtreatments.add(subtreatment);
 	        	}
 	        	treatment.set("subtreatments", subtreatments);

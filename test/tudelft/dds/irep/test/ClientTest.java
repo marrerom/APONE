@@ -204,7 +204,9 @@ public class ClientTest {
 							Preconditions.checkArgument(resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204, "Error: set idrun call");
 
 							HttpResponse resRedirect = redirect(httpContext,redirectionURI);
-							Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204, "Error: redirect to experiment call");
+							//Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204, "Error: redirect to experiment call");
+							if (resRedirect.getStatusLine().getStatusCode() != 200 && resRedirect.getStatusLine().getStatusCode() != 204)
+								valid = false;
 							break;
 						}
 					}
