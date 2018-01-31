@@ -91,19 +91,20 @@ public class ExperimentManager {
 	return result;
 }
 	
+	
 	public ExperimentManager(Database db, RunningExperiments re, Channel channel) throws JsonParseException, JsonMappingException, IOException, ValidationException, ParseException {
 		this.db = db;
 		this.re = re;
 		this.channel = channel;
 		JUser authuser = Security.getMasterUser();
 		dbSynchronize(authuser); //save in re running/paused experiments in db
-		int delay = 10000; //milliseconds
+		int delay = 5000; //milliseconds
 		ActionListener taskPerformer = new ActionListener() {
 		      public void actionPerformed(ActionEvent evt) {
 		    	  for (String idconf:getExperiments(Arrays.asList(Status.ON, Status.PAUSED), authuser)) {
 		    		  try {
 		    			  if (matchStopConditions(idconf, authuser)) 
-							stop(idconf, authuser); //TODO: what if I stop and there is a service currently running related to the experiment?
+							stop(idconf, authuser); 
 		    		  } catch (IOException | ParseException e) {
 						e.printStackTrace();
 						Thread.currentThread().interrupt();
@@ -119,6 +120,7 @@ public class ExperimentManager {
 	}
 	
 	//even if the experiment if OFF (in order to decide if we can start it again or not)
+	//TODO: control this with timers and event monitoring, instead of having a timer checking the conditions 
 	private boolean matchStopConditions(String idconf, JUser authuser)
 			throws JsonParseException, JsonMappingException, IOException, ParseException {
 		Date dateToEnd;
@@ -390,9 +392,10 @@ public class ExperimentManager {
 
 	}
 	
-	public void registerEvent(String idconf, JEvent event, JUser authuser) throws IOException {
+	public void registerEvent(String idconf, JEvent event, JUser authuser) throws IOException, ParseException {
 		Status st = re.getExpStatus(idconf);
-		if (st != Status.ON && st != Status.PAUSED) {
+		//if (st != Status.ON || matchStopConditions(idconf, authuser)) { Let the automatic method control this, and stop the experiment when appropiate (this may means a delay in the stopping)
+		if (st != Status.ON) {
 			throw new javax.ws.rs.BadRequestException("The experiment is not running");
 		}
 		String queue = createRegisterQueue(event.getIdconfig());

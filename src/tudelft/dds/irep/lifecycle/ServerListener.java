@@ -86,6 +86,7 @@ public class ServerListener implements ServletContextListener {
     		//RABBITMQ
 			ConnectionFactory rabbitFactory = new ConnectionFactory();
 			rabbitFactory.setHost(prop.getProperty("RABBITHOST"));
+			rabbitFactory.setPort(Integer.parseInt(prop.getProperty("RABBITPORT")));
 			Connection rabbitConnection = rabbitFactory.newConnection();
 			log.log(Level.INFO, "RabbitMQ Connection Created");
 			Channel channel = rabbitConnection.createChannel();
@@ -108,7 +109,7 @@ public class ServerListener implements ServletContextListener {
 		      });
 			
     		//MONGODB
-    		MongoDB db = new MongoDB(prop.getProperty("DBHOST"),Integer.parseInt(prop.getProperty("DBPORT")), prop.getProperty("DB"), prop.getProperty("DBUSER"), prop.getProperty("DBPWD").toCharArray());
+    		MongoDB db = new MongoDB(prop.getProperty("MONGOHOST"),Integer.parseInt(prop.getProperty("MONGOPORT")), prop.getProperty("MONGODB"), prop.getProperty("MONGOUSER"), prop.getProperty("MONGOUSERPWD").toCharArray());
     		sce.getServletContext().setAttribute("DBManager", db);
 			
     		//EXPERIMENT MANAGER & JSON VALIDATOR

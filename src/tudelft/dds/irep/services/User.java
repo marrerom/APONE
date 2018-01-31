@@ -33,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -211,10 +212,10 @@ public class User {
 		}
 	}
 	
-	@Path("/checkCompletedExp/{idrun}/{idunit}")
+	@Path("/checkcompleted/{idrun}/{idunit}")
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
-	public String userCompletedExp(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @Context HttpServletRequest request) {
+	public Response userCompletedExp(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @Context HttpServletRequest request) {
 		try {
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
@@ -225,7 +226,11 @@ public class User {
 			Boolean result = false;
 			if (!em.getEvents(filter, authuser).isEmpty())
 				result = true;
-			return result.toString();
+			ResponseBuilder response = Response.ok(result.toString(),MediaType.TEXT_PLAIN);
+			response.header("Access-Control-Allow-Origin", "*");
+		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
+		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			return response.build();
 		} catch (JsonProcessingException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
@@ -337,6 +342,9 @@ public class User {
 			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 	

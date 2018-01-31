@@ -102,6 +102,7 @@ $(document).ready(function() {
 		//item.find(".treatments").off(); //removes click event
 		item.find(".ui.mini.statistic.exposure").off();
 		item.find(".ui.mini.statistic.completed").off();
+		item.find(".chart.icon").off();
 		item.css( 'cursor', 'default' );
 		monfinished.prepend(item);
 		getExperimentFinished(id.substr(0,id.indexOf("-")));
@@ -162,8 +163,10 @@ $(document).ready(function() {
 	
 	function displayChart(id){
 		$(".ui.modal._chart").find(".header").empty();
-		$(".ui.modal._chart").find("#chart").empty();
-		var errorMessage = "<p>There was an error loading data from experiment +"+$(this).attr("data")+"</p>";
+		//$(".ui.modal._chart").find("#chart").empty();
+		$(".ui.modal._chart").find(".content").empty();
+		$(".ui.modal._chart").find(".content").append("<canvas id='chart' width='400' height='300'>");
+		var errorMessage = "<p>There was an error loading data from experiment +"+id+"</p>";
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
@@ -174,27 +177,60 @@ $(document).ready(function() {
 	}
 	
 	function displayChartSuccess(data){
-
+		
 		var ctx = document.getElementById("chart").getContext('2d');
+		var exposures = new Object();
+		var completed = new Object();
+		$.each(data, function (index, event){
+			if (event.ename == "exposure"){
+				$.each(event.treatments, function (index2, treatexp){
+					exposures[treatexp.name] = treatexp.value;
+				});
+			} else if (event.ename == "completed"){
+				$.each(event.treatments, function (index2, treatexp){
+					completed[treatexp.name] = treatexp.value;
+				});
+			}
+				
+		});
+
+		colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00'];
 		var datasets = new Array();
 		var enames = new Array();
 		var treatments = new Object();
 		$.each(data, function (index, event){
-			enames.push(event.ename);
-			$.each(event.treatments, function (index, treatment){
-				var dtreatment = treatments[treatment.name];
-				if (dtreatment == null){
-					dtreatment = new Object();
-					dtreatment.label = treatment.name;
-					dtreatment.backgroundColor = 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';;
-					dtreatment.data = new Array();
-					datasets.push(dtreatment); //TODO: CHECK
-					treatments[treatment.name] = dtreatment;
-				} 
-				dtreatment.data.push(treatment.value); 
-			});
-			
+			if (event.ename != "exposure" && event.ename != "completed"){
+				enames.push(event.ename);
+				color = 0;
+				$.each(event.treatments, function (index, treatment){
+					var dtreatment = treatments[treatment.name];
+					var nexposures = exposures[treatment.name];
+					var ncompleted = completed[treatment.name];
+					var txt; 
+					if (ncompleted == null)
+						ncompleted = 0;
+					if (nexposures == null){
+						nexposures = 1;
+						txt = "no exposures registered!";
+					} else
+						txt =  nexposures + " exp.";
+					txt = txt + "/"+ncompleted+" comp.";
+					if (dtreatment == null){
+						dtreatment = new Object();
+						dtreatment.label = treatment.name+" ("+txt+")";
+						//dtreatment.backgroundColor = 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';;
+						dtreatment.backgroundColor = colors[color%7];
+						color++;
+						dtreatment.data = new Array();
+						datasets.push(dtreatment);
+						treatments[treatment.name] = dtreatment;
+					} 
+					dtreatment.data.push(treatment.value/nexposures); 
+				});
+			}
 		});
+		
+		$(".ui.modal._chart").modal('show');
 		
 		var myBubbleChart = new Chart(ctx,{
 		    type: 'bar',
@@ -204,87 +240,36 @@ $(document).ready(function() {
 		    },
 		    options: {
 		        barValueSpacing: 20,
-		        scales: {
-		            yAxes: [{
-		                ticks: {
-		                    min: 0,
-		                }
-		            }]
-		        }
-		    }
+  //              legend: {
+   //                 position: "top",
+    //            },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'User events'
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Average count per exposures"
+                        },
+                        ticks: {
+                        	min: 0
+                        }
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Event count'
+                }
+            }
 		});
 
-		
-		
-//		var myBubbleChart = new Chart(ctx,{
-//		    type: 'bubble',
-//		    data: {
-//		      labels: "Africa",
-//		      datasets: [
-//		        {
-//		          label: ["China"],
-//		          backgroundColor: "rgba(255,221,50,0.2)",
-//		          borderColor: "rgba(255,221,50,1)",
-//		          data: [{
-//		            x: 21269017,
-//		            y: 5.245,
-//		            r: 15
-//		          }, {
-//			            x: 212690,
-//			            y: 6.245,
-//			            r: 15
-//			          }]
-//		        }, {
-//		          label: ["Denmark"],
-//		          backgroundColor: "rgba(60,186,159,0.2)",
-//		          borderColor: "rgba(60,186,159,1)",
-//		          data: [{
-//		            x: 258702,
-//		            y: 7.526,
-//		            r: 10
-//		          }]
-//		        }, {
-//		          label: ["Germany"],
-//		          backgroundColor: "rgba(0,0,0,0.2)",
-//		          borderColor: "#000",
-//		          data: [{
-//		            x: 3979083,
-//		            y: 6.994,
-//		            r: 15
-//		          }]
-//		        }, {
-//		          label: ["Japan"],
-//		          backgroundColor: "rgba(193,46,12,0.2)",
-//		          borderColor: "rgba(193,46,12,1)",
-//		          data: [{
-//		            x: 4931877,
-//		            y: 5.921,
-//		            r: 15
-//		          }]
-//		        }
-//		      ]
-//		    },
-//		    options: {
-//		      title: {
-//		        display: true,
-//		        text: 'Predicted world population (millions) in 2050'
-//		      }, scales: {
-//		        yAxes: [{ 
-//		          scaleLabel: {
-//		            display: true,
-//		            labelString: "Happiness"
-//		          }
-//		        }],
-//		        xAxes: [{ 
-//		          scaleLabel: {
-//		            display: true,
-//		            labelString: "GDP (PPP)"
-//		          }
-//		        }]
-//		      }
-//		    }
-//		});
-		$(".ui.modal._chart").modal('show');
+		$(".ui.modal._chart").modal('refresh');
 	}
 
 	

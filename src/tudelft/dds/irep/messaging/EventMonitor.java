@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -108,6 +109,8 @@ public class EventMonitor {
 	private void updateSubtreatmentCount(JEvent jevent) {
 		String treatment = jevent.getTreatment();
 		Map<String,?> params =mapper.convertValue(jevent.getParamvalues(), Map.class);
+		Set<String> toremove = params.keySet().stream().filter(p->p.startsWith("_")).collect(Collectors.toSet());
+		toremove.stream().forEach(p->params.remove(p));
 		Map<Map<String, ?>, List<String>> maptreatment = subtreatmentcount.get(treatment);
 		List<String> unitids=null;
 		if (maptreatment == null) {

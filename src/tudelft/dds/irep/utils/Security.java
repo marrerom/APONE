@@ -38,13 +38,13 @@ public class Security {
 		}
 	}
 	
-	public static JUser getAuthenticatedUser(HttpServletRequest request)  {
+	public synchronized static JUser getAuthenticatedUser(HttpServletRequest request)  {
 		if (request.getSession().getAttribute("authuser") == null)
 			throw new AuthenticationException();
 		return (JUser) request.getSession().getAttribute("authuser");
 	}
 	
-	public static JUser setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
+	public synchronized static JUser setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
 		JUser user = em.createUser(idTwitter, screenName, getMasterUser());
 		request.getSession().setAttribute("authuser", user);
 		return user;

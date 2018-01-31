@@ -73,7 +73,7 @@
 								    <th>Status</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',1);">Experiment</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',2);">Started</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',3);">Max. Units</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',3);">Max. Completed</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',4);">Date to End</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',5);">Units</th>
 									<th>Data</th>
@@ -93,7 +93,7 @@
 									<th>Status</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',1);">Experiment</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',2);">Last Execution</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',3);">Max. Units</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',3);">Max. Completed</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',4);">Date to End</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact grey celled table _finished',5);">Units</th>
 									<th>Data</th>
@@ -127,7 +127,7 @@
 		
 		<div class="ui modal _chart">
 			<div class="header">Experiment events</div>
-			<div class="content"><canvas id="chart" width="400" height="400"></canvas></div>
+			<div class="content"><canvas id="chart" width="400" height="300"></canvas></div>
 		</div>
 
 

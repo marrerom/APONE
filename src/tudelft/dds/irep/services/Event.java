@@ -123,6 +123,16 @@ public class Event {
 
 	@Path("/register")
 	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	public Response registerTxt(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+		return registerJson(inputJson, useragent, request);
+	}
+
+	
+	
+	
+	@Path("/register")
+	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
@@ -176,6 +186,9 @@ public class Event {
 			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
 		}
 	}
 

@@ -5,6 +5,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServlet;
@@ -66,7 +67,8 @@ public class Client extends HttpServlet {
 		    HttpResponse resExposure = registerEvent(exposure);
 		    Preconditions.checkArgument(resExposure.getStatusLine().getStatusCode()==200,"Error: register exposure call");
 		    
-		    //send test event
+		    Random rand = new Random();
+		    //send tests (click and search) event
 		    JSONObject evalue = new JSONObject();
 		    evalue.put("property1", "value1");
 		    evalue.put("property2", true);
@@ -74,24 +76,38 @@ public class Client extends HttpServlet {
 		    JSONArray evalueArray = new JSONArray();
 		    evalueArray.put("Item1");
 		    evalue.put("property4", evalueArray);
-		    JSONObject testEvent = getEvent(idrun, idunit, "JSON", "test", evalue.toString(), params);
-		    HttpResponse resTestEvent = registerEvent(testEvent);
-		    Preconditions.checkArgument(resTestEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
+
+		    int iter = rand.nextInt(11);
+		    do {
+			    JSONObject clickEvent = getEvent(idrun, idunit, "JSON", "click", evalue.toString(), params);
+			    HttpResponse resClickEvent = registerEvent(clickEvent);
+			    Preconditions.checkArgument(resClickEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
+		    } while (--iter > 0);
+			
+		    iter = rand.nextInt(4);
+		    do {
+			    JSONObject searchEvent = getEvent(idrun, idunit, "JSON", "search", evalue.toString(), params);
+			    HttpResponse resSearchEvent = registerEvent(searchEvent);
+			    Preconditions.checkArgument(resSearchEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
+		    } while (--iter > 0);
 		    
 		    //check complete
-		    HttpResponse resCheck = checkCompleted(idrun, idunit);
-		    Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200, "Error: check completed call");
-		    String iscompleted = EntityUtils.toString(resCheck.getEntity()); 
-		    Preconditions.checkArgument(iscompleted.equals("false"), "Error: experiment already completed");
+	    	HttpResponse resCheck = checkCompleted(idrun, idunit);
+	    	Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200, "Error: check completed call");
+	    	String iscompleted = EntityUtils.toString(resCheck.getEntity()); 
+	    	Preconditions.checkArgument(iscompleted.equals("false"), "Error: experiment already completed");
+		    
 		    
 		    //send complete
-		    JSONObject completed = getEvent(idrun, idunit, "STRING", "completed", "", params );
-		    HttpResponse resCompleted = registerEvent(completed);
-		    Preconditions.checkArgument(resCompleted.getStatusLine().getStatusCode()==200,"Error: register completed call");
-		    
+	    	boolean sendcompleted = rand.nextBoolean();
+	    	if (sendcompleted) {
+	    		JSONObject completed = getEvent(idrun, idunit, "STRING", "completed", "", params );
+	    		HttpResponse resCompleted = registerEvent(completed);
+	    		Preconditions.checkArgument(resCompleted.getStatusLine().getStatusCode()==200,"Error: register completed call");
+	    	}
 		    return Response.ok().build();
 	    
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
@@ -127,7 +143,7 @@ public class Client extends HttpServlet {
 	
 	public HttpResponse checkCompleted(String idrun, String idunit) throws ClientProtocolException, IOException {
 		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/user/checkCompletedExp/"+idrun+"/"+idunit);
+		HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/user/checkcompleted/"+idrun+"/"+idunit);
 	    HttpResponse res = httpClient.execute(httpGet);
 	    return res;
 	}

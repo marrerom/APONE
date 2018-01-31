@@ -62,6 +62,7 @@ public class RunningExperiments {
 			RunningExpInfo runningExp = idconfConfig.get(idconf);
 			if (runningExp == null)
 				return Status.OFF;
+			
 			return runningExp.getStatus();
 		}
 	}
