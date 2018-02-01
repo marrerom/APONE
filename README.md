@@ -3,7 +3,7 @@
 
 The Academic Platform for ONline Experiments (APONE) aims at the evaluation of new approaches in interfaces and algorithms, by means of the interaction of users in online real environments. These new approaches (treatments) could affect the user interfaces as well as the back-end algorithms or a combination of both, and the user interactions could be compared with those obtained from existing approaches (control).
 
-The objective  of the platform is to speed up the setup of **controlled A/B experiments on the Web**, as well as to keep a shared resource of methods and data that can help in research. APONE builds upon [PlanOut](https://facebook.github.io/planout/) to define experiments, and offers a web GUI to easily create, manage and monitor them.
+The objective of the platform is to speed up the setup of **controlled A/B experiments on the Web**, as well as to keep a shared resource of methods and data that can help in research. APONE builds upon [PlanOut](https://facebook.github.io/planout/) to define experiments, and offers a web GUI to easily create, manage and monitor them.
 
 A second component is the client, accessed by the users (directly or via redirection through the experimental platform) and developed by the experimenter, which will interact with the RESTful web services of the platform directly to i) get the variant and parameters corresponding to the experimental unit identifier (usually the user identifier), and ii) register the events that occur during the user interaction. This information can be monitored and downloaded. Its analysis will allow the experimenter decide which treatment is best.
 
