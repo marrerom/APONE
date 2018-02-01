@@ -1,45 +1,14 @@
-# IREPlatform
-Experimental Platform for Information Retrieval
 
-## Introduction
+# Academic Platform for ONline Experiments (APONE)
 
-A/B experiments
-PlanOut language
-Services and GUI over planout4j
+The Academic Platform for ONline Experiments (APONE) aims at the evaluation of new approaches in interfaces and algorithms, by means of the interaction of users in online real environments. These new approaches (treatments) could affect the user interfaces as well as the back-end algorithms or a combination of both, and the user interactions could be compared with those obtained from existing approaches (control).
 
-## Installation
+The objective of the platform is to speed up the setup of *controlled A/B experiments on the Web*, as well as to keep a shared resource of methods and data that can help in research. APONE builds upon [PlanOut](https://facebook.github.io/planout/) to define experiments, and offers a web GUI to easily create, manage and monitor them.
 
-Tomcat
-RabbitMQ
-MongoDB
+A second component is the client, accessed by the users (directly or via redirection through the experimental platform) and developed by the experimenter, which will interact with the RESTful web services of the platform directly to i) get the variant and parameters corresponding to the experimental unit identifier (usually the user identifier), and ii) register the events that occur during the user interaction. This information can be monitored and downloaded. Its analysis will allow the experimenter decide which treatment is best.
 
-## User guide
+In order to show the capabilities of the platform as well as to ease the development of such a client, an example is also provided ([Client Example, or ClientE](https://github.com/marrerom/ClientE)).
 
-1. Define Experiment
+APONE is not restricted to any specific domain of research. The domain of the experiments defined and run is actually given by the client linked to it, which determines the experience of the user. Nonetheless, the provided ClientE and most examples in this user guide are limited to the Information Retrieval domain.
 
-	* New Experiment
-	* New configuration from an existing experiment (distribution of treatments, date to end, 	max exposures). It creates a new experiment
-
-2. Start Experiment
-
-3. From client
-
-	* Get parameters
-	[host]/IREPlatform/service/experiment/getParams  
-	@Consumes:  
-		@FormDataParam("idconfig") id experiment  
-		@FormDataParam("idunit") keyword used in planout that identifies unique users/sessions/etc.   
-		@FormDataParam("timestamp"): timestamp of the request  
-	@Produces: {param:value, ...} 
-	
-	Automatically register an event called "exposure"
-	
-	* Register an event   
-	[host]/IREPlatform/service/event/register  
-	@Consumes:  
-		@FormDataParam("idconfig"): Id experiment  
-		@FormDataParam("timestamp"): timestamp of the request  
-		@FormDataParam("unitid"): id of the  user/session/etc. used in the definition in planout language  
-		@FormDataParam("binary") : if the value to register is binary  
-		@FormDataParam("ename"): type of event  
-		@FormDataParam("evalue"): value to register (Stream)  
+A [user guide](https://github.com/marrerom/APONE/userguide.pdf) explains how to easily define, run and control an experiment. We assume that the experimenter has [online access to APONE](http://ireplatform.ewi.tudelft.nl:8080/APONE). It is also possible to download and install the platform following the [installation instructions](https://github.com/marrerom/APONE/install.pdf).

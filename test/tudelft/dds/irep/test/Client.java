@@ -29,6 +29,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.Assert;
 
 import com.google.common.base.Preconditions;
 
@@ -65,7 +66,7 @@ public class Client extends HttpServlet {
 		    //send event expose
 		    JSONObject exposure = getEvent(idrun, idunit, "STRING", "exposure", "", params );
 		    HttpResponse resExposure = registerEvent(exposure);
-		    Preconditions.checkArgument(resExposure.getStatusLine().getStatusCode()==200,"Error: register exposure call");
+		    Assert.assertTrue("Client Error: register exposure call", resExposure.getStatusLine().getStatusCode()==200);
 		    
 		    Random rand = new Random();
 		    //send tests (click and search) event
@@ -81,21 +82,21 @@ public class Client extends HttpServlet {
 		    do {
 			    JSONObject clickEvent = getEvent(idrun, idunit, "JSON", "click", evalue.toString(), params);
 			    HttpResponse resClickEvent = registerEvent(clickEvent);
-			    Preconditions.checkArgument(resClickEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
+			    Assert.assertTrue("Client Error: register test event call", resClickEvent.getStatusLine().getStatusCode()==200);
 		    } while (--iter > 0);
 			
 		    iter = rand.nextInt(4);
 		    do {
 			    JSONObject searchEvent = getEvent(idrun, idunit, "JSON", "search", evalue.toString(), params);
 			    HttpResponse resSearchEvent = registerEvent(searchEvent);
-			    Preconditions.checkArgument(resSearchEvent.getStatusLine().getStatusCode()==200,"Error: register test event call");
+			    Assert.assertTrue("Client Error: register test event call", resSearchEvent.getStatusLine().getStatusCode()==200);
 		    } while (--iter > 0);
 		    
 		    //check complete
 	    	HttpResponse resCheck = checkCompleted(idrun, idunit);
-	    	Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200, "Error: check completed call");
+	    	Assert.assertTrue("Client Error: check completed call", resCheck.getStatusLine().getStatusCode() == 200);
 	    	String iscompleted = EntityUtils.toString(resCheck.getEntity()); 
-	    	Preconditions.checkArgument(iscompleted.equals("false"), "Error: experiment already completed");
+	    	Assert.assertTrue("Client Error: experiment already completed", iscompleted.equals("false"));
 		    
 		    
 		    //send complete
@@ -103,7 +104,7 @@ public class Client extends HttpServlet {
 	    	if (sendcompleted) {
 	    		JSONObject completed = getEvent(idrun, idunit, "STRING", "completed", "", params );
 	    		HttpResponse resCompleted = registerEvent(completed);
-	    		Preconditions.checkArgument(resCompleted.getStatusLine().getStatusCode()==200,"Error: register completed call");
+	    		Assert.assertTrue("Client Error: register completed call", resCompleted.getStatusLine().getStatusCode()==200);
 	    	}
 		    return Response.ok().build();
 	    

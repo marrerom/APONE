@@ -51,7 +51,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import org.junit.Assert;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,7 +67,7 @@ import tudelft.dds.irep.utils.Security;
 
 
 @Path("/test")
-public class ClientTest {
+public class RunTest {
 		public static Map<String, String> experiments = new HashMap<String, String>(); //username - idrun
 		public static Map<String, String> idmapname = new HashMap<String, String>(); //user id - user idname
 		final static String localhost = "http://localhost:8080"; 
@@ -133,7 +133,7 @@ public class ClientTest {
 					//Thread.sleep(10000);
  				iteration++;
 				} while (!stop && (System.currentTimeMillis() - startTime)< (1000 * 60 * 10));
-				Preconditions.checkArgument(stop, "Error: stop condition failed, check monitoring results");
+				Assert.assertTrue("Error: stop condition failed, check monitoring results", stop);
 
 				
 				response = Response.ok().build();
@@ -157,27 +157,27 @@ public class ClientTest {
 			HttpContext httpContext = new BasicHttpContext();
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+			Assert.assertTrue("Experiment set-up Error: create user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
 			String idname = EntityUtils.toString(resUser.getEntity());
 			idmapname.put(userid, idname);
 			username = idname;
 			
 			HttpResponse resCreate = createExperiment(httpContext, userid, username);
-			Preconditions.checkArgument(resCreate.getStatusLine().getStatusCode()==200 || resCreate.getStatusLine().getStatusCode()==204,"Error: create experiment call");
+			Assert.assertTrue("Experiment set-up Error: create experiment call", resCreate.getStatusLine().getStatusCode()==200 || resCreate.getStatusLine().getStatusCode()==204);
 			String expid = EntityUtils.toString(resCreate.getEntity());
 
 			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
 			Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200 || resCheck.getStatusLine().getStatusCode() == 204, "Error: search experiment call");
 			String resultSearch = EntityUtils.toString(resCheck.getEntity()); 
 			JSONArray results = new JSONArray(resultSearch);
-			Preconditions.checkArgument(results.length() == 1, "Error: search experiment result");
+			Assert.assertTrue("Experiment set-up Error: search experiment", results.length() == 1);
 			
 			JSONObject rsearch = new JSONObject(results.get(0).toString());
 			String idrun = rsearch.get("idrun").toString();
 			experiments.put(username,idrun);
 			
 			HttpResponse resStart = start(httpContext, idrun);
-			Preconditions.checkArgument(resStart.getStatusLine().getStatusCode() == 200 || resStart.getStatusLine().getStatusCode() == 204, "Error: start experiment result");
+			Assert.assertTrue("Experiment set-up Error: start experiment", resStart.getStatusLine().getStatusCode() == 200 || resStart.getStatusLine().getStatusCode() == 204);
 		}
 		
 		public void assignExperiment(String userid) throws ClientProtocolException, IOException {
@@ -188,7 +188,7 @@ public class ClientTest {
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+			Assert.assertTrue("Assignment Error: create user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
 
 			Boolean valid = false;
 			while (!valid) {
@@ -197,13 +197,13 @@ public class ClientTest {
 					if (resAssign.getStatusLine().getStatusCode() != 200 && resAssign.getStatusLine().getStatusCode() != 204)
 						valid = false;
 						
-					Preconditions.checkArgument(resAssign.getStatusLine().getStatusCode() == 200 || resAssign.getStatusLine().getStatusCode() == 204, "Error: assign experiment call");
+					Assert.assertTrue("Assignment Error: assign experiment call", resAssign.getStatusLine().getStatusCode() == 200 || resAssign.getStatusLine().getStatusCode() == 204);
 					String redirectionURI = EntityUtils.toString(resAssign.getEntity());
 					for (String idrun: experiments.values()) {
 						if (redirectionURI.contains(idrun)) {
 							valid = true;
 							HttpResponse resSetrun = setIdrun(httpContext, idrun);
-							Preconditions.checkArgument(resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204, "Error: set idrun call");
+							Assert.assertTrue("Assignment Error: set idrun call", resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204);
 
 							HttpResponse resRedirect = redirect(httpContext,redirectionURI);
 							//Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204, "Error: redirect to experiment call");
@@ -228,7 +228,7 @@ public class ClientTest {
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create user call");
+			Assert.assertTrue("Monitoring Error: create user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
 
 			Boolean stop = true;
 			stop = stop & event ("exposure", httpContext, userid, username);
@@ -244,9 +244,9 @@ public class ClientTest {
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
 			HttpResponse resUser = setMasterUser( httpContext);
-			Preconditions.checkArgument(resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204, "Error: create master user call");
+			Assert.assertTrue("Clear Error: create master user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
 			HttpResponse resDeleteUser = deleteUser( httpContext, username);
-			Preconditions.checkArgument(resDeleteUser.getStatusLine().getStatusCode() == 200 || resDeleteUser.getStatusLine().getStatusCode() == 204, "Error: delete user call");
+			Assert.assertTrue("Clear Error: delete user call", resDeleteUser.getStatusLine().getStatusCode() == 200 || resDeleteUser.getStatusLine().getStatusCode() == 204);
 		}
 		
 		public boolean event(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
