@@ -192,9 +192,9 @@
 					<div class='ui grid'>
 						<div class='sixteen wide column'>
 							<div class='ui center aligned basic segment'>
-								<div class='ui button _clear' tabindex='0'>Clear</div>
-								<div class='ui button _filter' tabindex='0'>Filter</div>
-								<div class='ui button _all' tabindex='0'>Show All</div>
+								<div class='blue ui button _clear' tabindex='0'>Clear</div>
+								<div class='blue ui button _filter' tabindex='0'>Filter</div>
+								<div class='blue ui button _all' tabindex='0'>Show All</div>
 							</div>
 						</div>
 
@@ -237,13 +237,13 @@
 					<div class='ui grid'>
 						<div class='sixteen wide column'>
 							<div class='ui center aligned basic segment'>
-								<div class='ui button _test' tabindex='0'>Test</div>
-								<div class='ui button _remove' tabindex='0'>Remove</div>
-								<div class='ui button _start' tabindex='0'>Start</div>
-								<div class='ui button _stop' tabindex='0'>Stop</div>
-								<div class='ui button _events' tabindex='0'>Show events</div>
-								<div class='ui button _new' tabindex='0'>New conf.</div>
-								<div class='ui button _newadv' tabindex='0'>New conf.(Adv.)</div>
+								<div class='blue ui button _test' tabindex='0'>Test</div>
+								<div class='blue ui button _remove' tabindex='0'>Remove</div>
+								<div class='blue ui button _start' tabindex='0'>Start</div>
+								<div class='blue ui button _stop' tabindex='0'>Stop</div>
+								<div class='blue ui button _events' tabindex='0'>Show events</div>
+								<div class='blue ui button _new' tabindex='0'>New conf.</div>
+								<div class='blue ui button _newadv' tabindex='0'>New conf.(Adv.)</div>
 							</div>
 						</div>
 					</div>

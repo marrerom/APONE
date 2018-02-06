@@ -188,8 +188,8 @@
 				<div class='ui grid'>
 					<div class='sixteen wide column'>
 						<div class='ui center aligned basic segment'>
-							<div class='ui button _clear' tabindex='0'>Clear</div>
-							<div class='ui button _add' tabindex='0'>Add</div>
+							<div class='blue ui button _clear' tabindex='0'>Clear</div>
+							<div class='blue ui button _add' tabindex='0'>Add</div>
 						</div>
 					</div>
 

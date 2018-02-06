@@ -63,10 +63,10 @@
 			<!-- <div id='contents_mon' class='ui grid' style='height: 100%;'>  -->
 
 				<div class='sixteen wide stretched column' style="height: 100%;">
-					<h3 class='ui red header'>Running Experiments</h3>
+					<h3 class='ui blue header'>Running Experiments</h3>
 					<div class="ui grid" style="height: 45%; overflow-y: auto;">
-
-						<table class="ui compact red celled table _running" style="padding-left:0;padding-right:0;">
+					
+						<table class="ui compact blue celled table _running" style="padding-left:0;padding-right:0;">
 
 							<thead>
 								<tr>
@@ -86,7 +86,7 @@
 					</div>
 					<h3 class='ui grey header'>Finished Experiments</h3>
 					<div class="ui grid" style='height: 45%; overflow-y: auto;'>
-
+					
 						<table class="ui compact grey celled table _finished" style="padding-left:0;padding-right:0;">
 							<thead>
 								<tr>

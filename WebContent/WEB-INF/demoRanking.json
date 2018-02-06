@@ -1,0 +1,39 @@
+{ 
+    "name" : "Ranking", 
+    "experimenter" : "ANONYMOUS", 
+    "description" : "Experiment to test the change in the color of the links resulting from a search. Search engine used: ElasticSearch, ranking algorithm: default, collection: cran (http://ir.dcs.gla.ac.uk/resources/test_collections/cran/). We will register the SERP pages viewed, the queries issued and the clicks on the resulting documents.", 
+    "unit" : "defaultunit", 
+    "treatment" : [
+        {
+            "name" : "Default", 
+            "description" : "Default ranking algorithm in ElasticSearch", 
+            "control" : true, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE2/index.html?rankingAlg=default&linkColor=blue"
+        }, 
+        {
+            "name" : "BM25", 
+            "description" : "BM25 ranking algorithm implemented in ElasticSearch", 
+            "control" : false, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE2/index.html?rankingAlg=bm25&linkColor=blue"
+        }
+    ], 
+    "config" : [
+        {
+            "name" : "test", 
+            "experimenter" : "ANONYMOUS", 
+            "distribution" : [
+                {
+                    "segments" : 50, 
+                    "treatment" : "Default", 
+                    "action" : "ADD"
+                }, 
+                {
+                    "segments" : 50, 
+                    "treatment" : "BM25", 
+                    "action" : "ADD"
+                }
+            ]
+        }
+    ]
+}
+

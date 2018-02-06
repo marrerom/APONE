@@ -466,12 +466,12 @@ public class RunTest {
 			//exp simple or advanced
 			Integer mod = Integer.parseInt(userid) % 2;
 			if (mod == 0) {
-				control.put("url", "http://localhost:8080/IREPlatform/service/test/client?rankingAlg=default&linkColor=blue");
-				treatment.put("url", "http://localhost:8080/IREPlatform/service/test/client?rankingAlg=default&linkColor=green");
+				control.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=blue");
+				treatment.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=green");
 			} else {
-				control.put("url", "http://localhost:8080/IREPlatform/service/test/client");
+				control.put("url", "http://localhost:8080/APONE/service/test/client");
 				control.put("definition", "rankingAlg=\"default\";linkColor=\"blue\";");
-				treatment.put("url", "http://localhost:8080/IREPlatform/service/test/client");
+				treatment.put("url", "http://localhost:8080/APONE/service/test/client");
 				treatment.put("definition", "rankingAlg=\"default\";linkColor=\"green\";");
 			}
 			

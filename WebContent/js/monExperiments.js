@@ -21,8 +21,8 @@ $(document).ready(function() {
 	
 	function init(){
 		tabmonexp = $("#contents_monexp");
-		monrunning = tabmonexp.find(".ui.compact.red.celled.table._running > tbody");
-		monfinished = tabmonexp.find(".ui.compact.grey.celled.table._finished > tbody");
+		monrunning = tabmonexp.find(".celled.table._running > tbody");
+		monfinished = tabmonexp.find(".celled.table._finished > tbody");
 		refresh();
 		setInterval(function(){ refresh(); }, REFRESH); 
 	}
@@ -68,6 +68,8 @@ $(document).ready(function() {
 			var id = value.idrun+"-"+value.laststarted;
 			var item = monrunning.find("#"+id);
 			if (item.length > 0){ //if match, update, else take to finish
+				item.find("[name=toggle]").prop("checked", true);
+				
 				item.find(".treatments").html(getTreatmentsHTML(value.exposures, value.completed));
 				
 				item.find(".ui.mini.statistic.exposures").on("click", function(){
@@ -380,7 +382,7 @@ $(document).ready(function() {
 	
 	
 	function startExperiment(idrun){
-		var errorMessage = "<p>Experiment +"+$(this).attr("data")+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>";
+		var errorMessage = "<p>Experiment +"+idrun+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>";
 		$.ajax({
 			  contentType: 'text/plain',
 			  type: 'PUT',
@@ -398,7 +400,7 @@ $(document).ready(function() {
 //	}
 	
 	function stopExperiment(idrun){
-		var errorMessage = "<p>Experiment "+$(this).attr("data")+" did not start</p>";
+		var errorMessage = "<p>Experiment "+idrun+" did not start</p>";
 		$.ajax({
 			  contentType: 'text/plain',
 			  type: 'PUT',

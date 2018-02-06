@@ -164,7 +164,7 @@ $(document).ready(function() {
 	}
 	
 	function newConfig(idrun){
-		var errorMessage = "<p>There was an error loading the experiment</p>";
+		var errorMessage = "<p>There was an error loading the experiment "+idrun+"</p>";
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
@@ -175,7 +175,7 @@ $(document).ready(function() {
 	}
 	
 	function newConfigAdv(idrun){
-		var errorMessage = "<p>There was an error loading the experiment</p>";
+		var errorMessage = "<p>There was an error loading the experiment "+idrun+"</p>";
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
@@ -274,7 +274,7 @@ $(document).ready(function() {
 
 	
 	function startExperiment(idrun){
-		var errorMessage = "<p>Experiment +"+$(this).attr("data")+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>"; 
+		var errorMessage = "<p>Experiment "+idrun+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>"; 
 		$.ajax({
 			  contentType: 'text/plain',
 			  type: 'PUT',
@@ -320,7 +320,7 @@ $(document).ready(function() {
 //	}
 	
 	function removeExperiment(idrun){
-		var errorMessage = "<p>Experiment "+$(this).attr("data")+" could not be deleted</p>";
+		var errorMessage = "<p>Experiment "+idrun+" could not be deleted</p>";
 		$.ajax({
 		  contentType: 'text/plain',
 		  type: 'POST',
@@ -345,7 +345,7 @@ $(document).ready(function() {
 
 	
 	function stopExperiment(idrun){
-		var errorMessage = "<p>Experiment "+$(this).attr("data")+" did not stop</p>";
+		var errorMessage = "<p>Experiment "+idrun+" did not stop</p>";
 		$.ajax({
 			  contentType: 'text/plain',
 			  type: 'PUT',
@@ -359,7 +359,7 @@ $(document).ready(function() {
 	function displaySuccess(data){
 		var config = data.config[0];
 		$(".ui.modal._experimentinfo").find ("[name=idexp]").text(config._id);
-		$(".ui.modal._experimentinfo").find("[name=experimenter]").text(data.experimenter);
+		$(".ui.modal._experimentinfo").find("[name=experimenter]").text(config.experimenter);
 		$(".ui.modal._experimentinfo").find("[name=name]").text(data.name);
 		$(".ui.modal._experimentinfo").find("[name=unit]").text(data.unit);
 		$(".ui.modal._experimentinfo").find("[name=description]").text(data.description);

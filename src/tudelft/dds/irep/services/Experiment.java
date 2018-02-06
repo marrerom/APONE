@@ -3,9 +3,13 @@ package tudelft.dds.irep.services;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,7 +48,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.glassdoor.planout4j.config.ValidationException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
 
 import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
@@ -68,6 +75,34 @@ public class Experiment {
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	@Context ServletContext context;
+	
+	@Path("/demos")
+	@GET
+	public Response createDemos(@Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getAuthenticatedUser(request);
+			JUser anonymous = Security.getAnonymousUser();
+			Security.checkAuthorized(authuser, anonymous.getIdname(), Security.Useraction.WRITE); //if requested by admin, or by anonymous user itself (anonymous as idname)
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Security.setAuthenticatedUser(request, em, anonymous.getIdTwitter(), anonymous.getIdname());
+			String color = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoColor.json")));
+		    uploadExperiment(color, request);
+		    String ranking = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoRanking.json")));
+		    uploadExperiment(ranking, request);
+		    String factorial = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoFactorial.json")));
+		    uploadExperiment(factorial, request);
+		    Security.setAuthenticatedUser(request, em, authuser.getIdTwitter(), authuser.getIdname());
+		} catch (ParseException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (IOException e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		}
+		return Response.ok("Demos created!", MediaType.TEXT_PLAIN).build();
+	}
 
 	@Path("/new/experiment")
 	@POST
@@ -269,6 +304,15 @@ public class Experiment {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
+			JConfiguration jconf = null;
+			for (JConfiguration conf: jexp.getConfig()) {
+				if (conf.get_id().equals(idrun)) {
+					jconf = conf;
+					break;
+				}
+			}
+			JConfiguration[] newconf = {jconf}; 
+			jexp.setConfig(newconf);
 			ObjectMapper mapper = new ObjectMapper();
 			String expstr = mapper.writeValueAsString(jexp); 
 			return expstr;
@@ -308,7 +352,7 @@ public class Experiment {
 					ObjectNode node = mapper.createObjectNode();
 					node.put("idrun", conf.get_id());
 			        node.put("name", exp.getName());
-			        node.put("experimenter", exp.getExperimenter());
+			        node.put("experimenter", conf.getExperimenter());
 			        node.put("description", exp.getDescription());
 			        node.put("run", conf.getRun());
 			        node.put("cname", conf.getName());

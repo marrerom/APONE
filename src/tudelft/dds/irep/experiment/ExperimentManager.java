@@ -283,7 +283,7 @@ public class ExperimentManager {
 		NamespaceConfig ns  = createNamespace(exp,conf);
 		EventRegisterConsumer erc = createRegisterConsumer(createRegisterQueue(conf.get_id()));
 		EventMonitorConsumer emc = createMonitoringConsumer(createMonitoringQueue(conf.get_id()), Optional.of(getMonitoringEvents(conf.get_id(), authuser)));
-		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started, exp.getExperimenter(), authuser);
+		re.setExperiment(conf, ns, dbstatus, erc, emc, last_started, conf.getExperimenter(), authuser);
 	}
 	
 	private List<JEvent> getMonitoringEvents(String idconf, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
@@ -340,7 +340,7 @@ public class ExperimentManager {
 			emc = running.getMonConsumer();
 			last_started = running.getLastStarted();
 		}
-		re.setExperiment(conf, ns, Status.ON, erc, emc, last_started, exp.getExperimenter(), authuser);
+		re.setExperiment(conf, ns, Status.ON, erc, emc, last_started, conf.getExperimenter(), authuser);
 		db.setExpConfigRunStatus(conf.get_id(), Status.ON, authuser);
 		return true;
 	}
@@ -375,7 +375,7 @@ public class ExperimentManager {
 			emc = running.getMonConsumer();
 			last_started = running.getLastStarted();
 		}
-		re.setExperiment(conf, ns, Status.PAUSED, erc, emc, last_started, exp.getExperimenter(), authuser);
+		re.setExperiment(conf, ns, Status.PAUSED, erc, emc, last_started, conf.getExperimenter(), authuser);
 		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED, authuser);
 	}
 	
@@ -455,7 +455,7 @@ public class ExperimentManager {
 //	}
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
-		String nsName = exp.getName()+"@"+exp.getExperimenter()+"."+config.getName();
+		String nsName = exp.getName()+"@"+config.getExperimenter()+"."+config.getName();
 		//String salt = nsName; //TODO: check conf. names are different for same experiment
 		String salt = config.get_id();
 		NamespaceConfig ns = new NamespaceConfig(nsName,TOTALSEGMENTS, exp.getUnit(), salt);

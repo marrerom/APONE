@@ -43,6 +43,8 @@ public class JUser extends JCommon implements Serializable {
 	public JUser(String idname, UserRol rol) {
 		this.idname = idname;
 		this.rol = rol.toString();
+		this.name = idname;
+		this.idTwitter = idname;
 	}
 	
 	public String get_id() {
@@ -103,6 +105,7 @@ public class JUser extends JCommon implements Serializable {
 	public UserRol getRolEnum() { //at the moment of development, mongo driver does not support enum types
 		return UserRol.valueOf(getRol());
 	}
+	
 
 
 	

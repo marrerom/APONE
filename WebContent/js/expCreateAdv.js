@@ -321,7 +321,7 @@ $(document).ready(function() {
 		
 		total = 0;
 		var treatDist = [];
-		tabnewexp.find(".ui.segment._distributions").find(".fields").each(function(){
+		tabnewexpadv.find(".ui.segment._distributions").find(".fields").each(function(){
 			var element = $(this).find("._treatment.ui.dropdown").find(":selected").text();
 			if (treatDist.indexOf(element) === -1) {
 		        treatDist.push(element);

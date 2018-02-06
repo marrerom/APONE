@@ -12,7 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,11 +91,20 @@ public class Event {
 			
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode jnode = mapper.readTree(paramvalues);
-			JParamValues params = mapper.convertValue(jnode, JParamValues.class);
+			//JParamValues params = mapper.convertValue(jnode, JParamValues.class);
 			JExperiment jexp = em.getExperimentFromConf(idconfig,authuser);
 			String unitExp = jexp.getUnit();
 			String treatment = em.getTreatment(unitExp, idconfig, idunit, authuser); //could be obtained from nsconfig if the experiment is running
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
+			
+			JParamValues params;
+			if (paramvalues == null || paramvalues.isEmpty()) {
+				params =  mapper.convertValue(em.getParams(jexp.getUnit(), idconfig, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
+				
+			} else {
+				params = mapper.convertValue(paramvalues, JParamValues.class);
+			}
+			
 			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalue, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
@@ -157,11 +168,21 @@ public class Event {
 			else 
 				timestamp = Utils.getTimestamp(new Date());
 			
-			JParamValues params = mapper.convertValue(inputNode.get("paramvalues"), JParamValues.class);
 			JExperiment jexp = em.getExperimentFromConf(idconfig, authuser);
 			String unitExp = jexp.getUnit();
 			String treatment = em.getTreatment(unitExp, idconfig, idunit, authuser); //could be obtained from nsconfig if the experiment is running
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
+			
+			JParamValues params;
+			JsonNode paramnode = inputNode.get("paramvalues");
+			if (paramnode == null) {
+				params =  mapper.convertValue(em.getParams(jexp.getUnit(), idconfig, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
+				
+			} else {
+				params = mapper.convertValue(paramnode, JParamValues.class);
+			}
+
+			
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
 			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);

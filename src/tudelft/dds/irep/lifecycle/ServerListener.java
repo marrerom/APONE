@@ -30,10 +30,12 @@ import com.rabbitmq.client.ShutdownSignalException;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
+import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExperiments;
 import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.JsonValidator;
+import tudelft.dds.irep.utils.Security;
 
 /**
  * Application Lifecycle Listener implementation class ServerListener
@@ -113,9 +115,24 @@ public class ServerListener implements ServletContextListener {
     		sce.getServletContext().setAttribute("DBManager", db);
 			
     		//EXPERIMENT MANAGER & JSON VALIDATOR
-    		sce.getServletContext().setAttribute("ExperimentManager", new ExperimentManager(db,new RunningExperiments(), channel));
+    		ExperimentManager em = new ExperimentManager(db,new RunningExperiments(), channel);
+    		sce.getServletContext().setAttribute("ExperimentManager", em);
     		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
-			
+    		
+    		//CREATE PREDEFINED USERS IN DATABASE
+    		JUser master = Security.getMasterUser();
+    		JUser anonymous = Security.getAnonymousUser();
+    		JUser client = Security.getClientUser();
+    		if (em.getUsers(master, master).isEmpty()) {
+    				em.createUser(master.getIdTwitter(), master.getName(), master);
+    			}
+    		if (em.getUsers(client, master).isEmpty()) {
+				em.createUser(client.getIdTwitter(), client.getName(), master);
+			}
+    		if (em.getUsers(anonymous, master).isEmpty()) {
+				em.createUser(anonymous.getIdTwitter(), anonymous.getName(), master);
+			}
+
     	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
     		log.log(Level.SEVERE, e.getMessage(), e);
     		throw new RuntimeException(e);

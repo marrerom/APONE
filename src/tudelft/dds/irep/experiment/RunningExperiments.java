@@ -52,7 +52,7 @@ public class RunningExperiments {
 		synchronized(this) {
 			RunningExpInfo runningExp = idconfConfig.get(idconf);
 			if (runningExp != null)
-				Security.checkAuthorized(authuser, runningExp.getExperimenter());
+				Security.checkAuthorized(authuser, runningExp.getExperimenter(), Security.Useraction.READ);
 			return runningExp;
 		}
 	}
@@ -94,7 +94,7 @@ public class RunningExperiments {
 	private Collection<RunningExpInfo> filterByOwnership(JUser authuser, Collection<RunningExpInfo> runningExp) {
 		Collection<RunningExpInfo> results = new HashSet<RunningExpInfo>();
 		for (RunningExpInfo exp:runningExp) {
-			if (Security.isAuthorized(authuser, exp.getExperimenter())) {
+			if (Security.isAuthorized(authuser, exp.getExperimenter(), Security.Useraction.READ)) {
 				results.add(exp);
 			}
 		}
@@ -115,14 +115,14 @@ public class RunningExperiments {
 	
 	private RunningExpInfo put(String idconf, NamespaceConfig conf, Status status, EventRegisterConsumer regConsumer, EventMonitorConsumer monConsumer, Date dateToEnd, Integer maxExposures, Date lastStarted, String expowner, JUser authuser){
 		RunningExpInfo newExp = new RunningExpInfo(idconf,conf,status, regConsumer, monConsumer, dateToEnd, maxExposures, lastStarted, expowner);
-		Security.checkAuthorized(authuser, newExp.getExperimenter());
+		Security.checkAuthorized(authuser, newExp.getExperimenter(), Security.Useraction.WRITE);
 		return idconfConfig.put(idconf,newExp);
 	}
 	
 	private RunningExpInfo remove(String idconf, JUser authuser) throws IOException {
 		RunningExpInfo toremove = idconfConfig.get(idconf);
 		if (toremove != null) {
-			Security.checkAuthorized(authuser, toremove.getExperimenter());
+			Security.checkAuthorized(authuser, toremove.getExperimenter(), Security.Useraction.WRITE);
 			return idconfConfig.remove(toremove.getIdconfig());
 		}
 		return null;

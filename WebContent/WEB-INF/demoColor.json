@@ -1,0 +1,38 @@
+{
+    "name" : "Color", 
+    "experimenter" : "ANONYMOUS", 
+    "description" : "Experiment to test the change in the color of the links in a SERP. Search engine used: ElasticSearch, ranking algorithm: default, collection: cran (http://ir.dcs.gla.ac.uk/resources/test_collections/cran/). We will register the SERP pages viewed, the queries issued and the clicks on the resulting documents.", 
+    "unit" : "defaultunit", 
+    "treatment" : [
+        {
+            "name" : "Blue", 
+            "description" : "Link color blue", 
+            "control" : true, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE1/index.html?rankingAlg=default&linkColor=blue"
+        }, 
+        {
+            "name" : "Green", 
+            "description" : "Link color green", 
+            "control" : false, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE1/index.html?rankingAlg=default&linkColor=green"
+        }
+    ], 
+    "config" : [
+        {
+            "name" : "test", 
+            "experimenter" : "ANONYMOUS", 
+            "distribution" : [
+                {
+                    "segments" : 50, 
+                    "treatment" : "Blue", 
+                    "action" : "ADD"
+                }, 
+                {
+                    "segments" : 50, 
+                    "treatment" : "Green", 
+                    "action" : "ADD"
+                }
+            ]
+        }
+    ]
+}

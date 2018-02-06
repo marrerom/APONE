@@ -69,6 +69,7 @@
 					<div class='sixteen wide column'>
 						<div class='ui blue segment'
 							style='height: 85%; overflow-y: auto'>
+								<h3 class='ui blue header'>Leaderboard</h3>
 						<table class="ui compact blue celled table _users" style="padding-left:0;padding-right:0;">
 
 							<thead>
@@ -76,7 +77,7 @@
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">User name</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Rol</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments created</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Experiments participated</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Experiments completed</th>
 									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',5);">Remaining (running) experiments to participate</th>
 								</tr>
 							</thead>
@@ -89,7 +90,7 @@
 				<div class='ui grid'>
 					<div class='sixteen wide column'>
 						<div class='ui center aligned basic segment'>
-							<div class='ui button _assign' tabindex='0'>Participate in random experiment</div>
+							<div class='big blue ui button _assign' tabindex='0'>Participate in an experiment</div>
 						</div>
 					</div>
 

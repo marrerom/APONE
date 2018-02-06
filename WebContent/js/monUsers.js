@@ -11,7 +11,7 @@ $(document).ready(function() {
 			"<td><span class='name'>User name</span></td>" +
 			"<td><span class='rol'>Rol</span></td>" +
 			"<td><span class='created'>Exp. Created</span></td>" +
-			"<td><span class='participated'>Exp. Participated</span></td>" +
+			"<td><span class='participated'>Exp. Completed</span></td>" +
 			"<td><span class='left'>Left (running) experiments </span></td>" +
 			"</tr>";
 	

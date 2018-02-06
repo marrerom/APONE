@@ -177,9 +177,9 @@
 					<div class='ui grid'>
 						<div class='sixteen wide column'>
 							<div class='ui center aligned basic segment'>
-								<div class='ui button _clear' tabindex='0'>Clear</div>
-								<div class='ui button _filter' tabindex='0'>Filter</div>
-								<div class='ui button _all' tabindex='0'>Show All</div>
+								<div class='blue ui button _clear' tabindex='0'>Clear</div>
+								<div class='blue ui button _filter' tabindex='0'>Filter</div>
+								<div class='blue ui button _all' tabindex='0'>Show All</div>
 							</div>
 						</div>
 
@@ -223,9 +223,9 @@
 					<div class='ui grid'>
 						<div class='sixteen wide column'>
 							<div class='ui center aligned basic segment'>
-								<div class='ui button _remove' tabindex='0'>Remove</div>
-								<div class='ui button _downloadcsv' tabindex='0'>Download CSV</div>
-								<div class='ui button _downloadjson' tabindex='0'>Download JSON</div>
+								<div class='blue ui button _remove' tabindex='0'>Remove</div>
+								<div class='blue ui button _downloadcsv' tabindex='0'>Download CSV</div>
+								<div class='blue ui button _downloadjson' tabindex='0'>Download JSON</div>
 							</div>
 						</div>
 					</div>

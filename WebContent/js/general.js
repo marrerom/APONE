@@ -2,28 +2,27 @@
  * General js methods 
  */
 
-const IREPLATFORM_URI = "";
  
-var newexpURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/new/experiment";
-var newconfURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/new/configuration";
-var eventSearchURL = IREPLATFORM_URI + "/IREPlatform/service/event/search";
-var getEventURL = IREPLATFORM_URI + "/IREPlatform/service/event/get";
-var removeEventURL = IREPLATFORM_URI + "/IREPlatform/service/event/delete";
-var getCSVURL = IREPLATFORM_URI + "/IREPlatform/service/event/getCSV";
-var getJSONURL = IREPLATFORM_URI + "/IREPlatform/service/event/getJSON";
-var monitorTreatmentsURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/treatments";
-var monitorSubtreatURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/monitor/subtreatments";
-var expsearchURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/search";
-var startURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/start";
-var stopURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/stop";
-var removeURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/delete";
-var removeEventsURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/deleteEvents";
-var getExperimentURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/get";
-var getUserURL = IREPLATFORM_URI + "/IREPlatform/service/user/authenticatedUser";
-var monitorUsersURL = IREPLATFORM_URI + "/IREPlatform/service/user/monitoring";
-var assignmentURL = IREPLATFORM_URI + "/IREPlatform/service/user/assignexp";
-var completedURL = IREPLATFORM_URI + "/IREPlatform/service/user/completedexp";
-var testURL = IREPLATFORM_URI + "/IREPlatform/service/experiment/redirect"
+var newexpURL =  "service/experiment/new/experiment";
+var newconfURL =  "service/experiment/new/configuration";
+var eventSearchURL =  "service/event/search";
+var getEventURL =  "service/event/get";
+var removeEventURL =  "service/event/delete";
+var getCSVURL =  "service/event/getCSV";
+var getJSONURL =  "service/event/getJSON";
+var monitorTreatmentsURL =  "service/experiment/monitor/treatments";
+var monitorSubtreatURL =  "service/experiment/monitor/subtreatments";
+var expsearchURL =  "service/experiment/search";
+var startURL =  "service/experiment/start";
+var stopURL =  "service/experiment/stop";
+var removeURL =  "service/experiment/delete";
+var removeEventsURL =  "service/experiment/deleteEvents";
+var getExperimentURL =  "service/experiment/get";
+var getUserURL =  "service/user/authenticatedUser";
+var monitorUsersURL =  "service/user/monitoring";
+var assignmentURL =  "service/user/assignexp";
+var completedURL =  "service/user/completedexp";
+var testURL =  "service/experiment/redirect"
 
 
 function alertError(xhr, errorMessage){

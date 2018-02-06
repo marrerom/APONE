@@ -132,7 +132,7 @@ $(document).ready(function() {
 //	}
 	
 	function removeEvent(idevent){
-		var errorMessage = "<p>Event "+$(this).attr("data")+" could not be deleted</p>";
+		var errorMessage = "<p>Event "+idevent+" could not be deleted</p>";
 		$.ajax({
 		  contentType: 'text/plain',
 		  type: 'POST',
