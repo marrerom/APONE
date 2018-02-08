@@ -73,7 +73,6 @@ public class RunTest {
 		final Integer MINDATETOEND = 2; //experiments with userid % 3 = 1, will be running for those minutes
 	
 		public static Map<String, String> experiments = new HashMap<String, String>(); //username - idrun
-		public static Map<String, String> inverseexp = new HashMap<String, String>(); //idrun - userid
 		public static Map<String, String> idmapname = new HashMap<String, String>(); //user id - user idname
 		final static String localhost = "http://localhost:8080"; 
 		final static String jerseyServices = "service";
@@ -166,8 +165,7 @@ public class RunTest {
 			JSONObject rsearch = new JSONObject(results.get(0).toString());
 			String idrun = rsearch.get("idrun").toString();
 			experiments.put(username,idrun);
-			inverseexp.put(idrun, userid);
-			
+				
 			HttpResponse resStart = start(httpContext, idrun);
 			Assert.assertTrue("Experiment set-up Error: start experiment", resStart.getStatusLine().getStatusCode() == 200 || resStart.getStatusLine().getStatusCode() == 204);
 		}

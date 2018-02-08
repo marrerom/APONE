@@ -18,7 +18,6 @@ import org.junit.Test;
 
 public class FunctionalTest {
 	
-	
 	@Test
 	public void startTest() throws ClientProtocolException, IOException {
 		Properties p = new Properties();
