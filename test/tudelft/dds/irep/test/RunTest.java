@@ -63,12 +63,17 @@ import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.utils.BadRequestException;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.Security;
 
 
 @Path("/test")
 public class RunTest {
+	
+		final Integer MINDATETOEND = 2; //experiments with userid % 3 = 1, will be running for those minutes
+	
 		public static Map<String, String> experiments = new HashMap<String, String>(); //username - idrun
+		public static Map<String, String> inverseexp = new HashMap<String, String>(); //idrun - userid
 		public static Map<String, String> idmapname = new HashMap<String, String>(); //user id - user idname
 		final static String localhost = "http://localhost:8080"; 
 		final static String jerseyServices = "service";
@@ -116,38 +121,24 @@ public class RunTest {
 					for (int i=1;i<=NUSERS;i++) {
 						System.out.println("Assigning experiment of user "+i);
 						assignExperiment(Integer.toString(i));
-						//Thread.sleep(3000);
 					}
-				
 				}
-				
-				long startTime = System.currentTimeMillis();
-				int iteration = 1;
-				boolean stop = true;
-				do {
-					System.out.println("Iteration "+iteration);
-					for (int i=1;i<=NUSERS;i++) {
+				Thread.sleep(5000); //to prevent events not registered by rabbit during the following check of monitoring events
+				for (int i=1;i<=NUSERS;i++) {
 						System.out.println("Testing events experiment user "+i);
-						stop = stop & testEvents(Integer.toString(i));
+						testEvents(Integer.toString(i));
 					}
-					//Thread.sleep(10000);
- 				iteration++;
-				} while (!stop && (System.currentTimeMillis() - startTime)< (1000 * 60 * 10));
-				Assert.assertTrue("Error: stop condition failed, check monitoring results", stop);
-
-				
 				response = Response.ok().build();
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
-				response = Response.status(Status.INTERNAL_SERVER_ERROR).build();
+				throw new InternalServerException(e.getMessage());
 			} finally {
 				for (int i=1;i<=NUSERS;i++) {
 					System.out.println("Clearing user "+i);
 					clear(Integer.toString(i));
 				}
 			}
-
 			return response; 			
 		}
 		
@@ -167,7 +158,7 @@ public class RunTest {
 			String expid = EntityUtils.toString(resCreate.getEntity());
 
 			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
-			Preconditions.checkArgument(resCheck.getStatusLine().getStatusCode() == 200 || resCheck.getStatusLine().getStatusCode() == 204, "Error: search experiment call");
+			Assert.assertTrue("Experiment set-up Error: search experiment call",resCheck.getStatusLine().getStatusCode() == 200 || resCheck.getStatusLine().getStatusCode() == 204);
 			String resultSearch = EntityUtils.toString(resCheck.getEntity()); 
 			JSONArray results = new JSONArray(resultSearch);
 			Assert.assertTrue("Experiment set-up Error: search experiment", results.length() == 1);
@@ -175,6 +166,7 @@ public class RunTest {
 			JSONObject rsearch = new JSONObject(results.get(0).toString());
 			String idrun = rsearch.get("idrun").toString();
 			experiments.put(username,idrun);
+			inverseexp.put(idrun, userid);
 			
 			HttpResponse resStart = start(httpContext, idrun);
 			Assert.assertTrue("Experiment set-up Error: start experiment", resStart.getStatusLine().getStatusCode() == 200 || resStart.getStatusLine().getStatusCode() == 204);
@@ -189,39 +181,34 @@ public class RunTest {
 
 			HttpResponse resUser = setUser( httpContext, userid, username);
 			Assert.assertTrue("Assignment Error: create user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
-
-			Boolean valid = false;
-			while (!valid) {
-				try {
+			
+			try {
+				Boolean assigned = false;
+				do {
 					HttpResponse resAssign = assign(httpContext);
-					if (resAssign.getStatusLine().getStatusCode() != 200 && resAssign.getStatusLine().getStatusCode() != 204)
-						valid = false;
-						
 					Assert.assertTrue("Assignment Error: assign experiment call", resAssign.getStatusLine().getStatusCode() == 200 || resAssign.getStatusLine().getStatusCode() == 204);
 					String redirectionURI = EntityUtils.toString(resAssign.getEntity());
 					for (String idrun: experiments.values()) {
 						if (redirectionURI.contains(idrun)) {
-							valid = true;
 							HttpResponse resSetrun = setIdrun(httpContext, idrun);
 							Assert.assertTrue("Assignment Error: set idrun call", resSetrun.getStatusLine().getStatusCode() == 200 || resSetrun.getStatusLine().getStatusCode() == 204);
-
-							HttpResponse resRedirect = redirect(httpContext,redirectionURI);
-							//Preconditions.checkArgument(resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204, "Error: redirect to experiment call");
-							if (resRedirect.getStatusLine().getStatusCode() != 200 && resRedirect.getStatusLine().getStatusCode() != 204)
-								valid = false;
-							break;
+							try {
+								HttpResponse resRedirect = redirect(httpContext,redirectionURI);
+								Assert.assertTrue("Assignment Error: redirect", resRedirect.getStatusLine().getStatusCode() == 200 || resRedirect.getStatusLine().getStatusCode() == 204);
+								assigned = true;
+								break;
+							} catch (BadRequestException e) {
+								System.out.println("Trying to redirect to a non running experiment "+userid);
+							}
 						}
-					}
-					
-				} catch (BadRequestException e) {
-					System.out.println("No more experiments to assign to "+userid);
-				} catch (Exception e) {
-					System.out.println(e.getStackTrace());
-				}
+					} 
+				} while (!assigned);
+			} catch (BadRequestException e) {
+				System.out.println("No more experiments to assign to "+userid);
 			}
 		}
 		
-		public boolean testEvents(String userid) throws ClientProtocolException, IOException {
+		public void testEvents(String userid) throws ClientProtocolException, IOException {
 			String username = idmapname.get(userid);
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
@@ -229,12 +216,9 @@ public class RunTest {
 			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
 			HttpResponse resUser = setUser( httpContext, userid, username);
 			Assert.assertTrue("Monitoring Error: create user call", resUser.getStatusLine().getStatusCode() == 200 || resUser.getStatusLine().getStatusCode() == 204);
-
-			Boolean stop = true;
-			stop = stop & event ("exposure", httpContext, userid, username);
-			stop = stop & event ("test", httpContext, userid, username);
-			stop = stop & event ("completed", httpContext, userid, username);
-			return stop;
+			event ("exposure", httpContext, userid, username);
+			event ("test", httpContext, userid, username);
+			event ("completed", httpContext, userid, username);
 		}
 		
 		public void clear(String userid) throws ClientProtocolException, IOException {
@@ -249,46 +233,36 @@ public class RunTest {
 			Assert.assertTrue("Clear Error: delete user call", resDeleteUser.getStatusLine().getStatusCode() == 200 || resDeleteUser.getStatusLine().getStatusCode() == 204);
 		}
 		
-		public boolean event(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+		public void event(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
 			HttpResponse resCheckEvents = checkEvents(ename, httpContext, userid, username);
-			Preconditions.checkArgument(resCheckEvents.getStatusLine().getStatusCode() == 200 || resCheckEvents.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events call");
+			Assert.assertTrue("Events "+ename+": get directly from db",resCheckEvents.getStatusLine().getStatusCode() == 200 || resCheckEvents.getStatusLine().getStatusCode() == 204);
 			String expevents = EntityUtils.toString(resCheckEvents.getEntity());
 			JSONArray arrayevents = new JSONArray(expevents);
-			Long differentExposures = arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("idunit");}).distinct().count();
-			Preconditions.checkArgument(arrayevents.length()==differentExposures, "Error: monitor "+ ename +": "+arrayevents.length()+" events, but only "+differentExposures +" events with different idunit");
+			Long distinct = arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("idunit");}).distinct().count();
+			//Preconditions.checkArgument(arrayevents.length()==differentExposures, "Error: monitor "+ ename +": "+arrayevents.length()+" events, but only "+differentExposures +" events with different idunit");
 
 			JSONArray eventids = new JSONArray(arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("_id");}).toArray());
 			HttpResponse resDownloadJSON = getFile(httpContext, eventids, "JSON");
-			Preconditions.checkArgument(resDownloadJSON.getStatusLine().getStatusCode() == 200 || resDownloadJSON.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getJSON call");
+			Assert.assertTrue("Events "+ename+": download JSON",resDownloadJSON.getStatusLine().getStatusCode() == 200 || resDownloadJSON.getStatusLine().getStatusCode() == 204);
 
 			HttpResponse resDownloadCSV = getFile(httpContext, eventids, "CSV");
-			Preconditions.checkArgument(resDownloadCSV.getStatusLine().getStatusCode() == 200 || resDownloadCSV.getStatusLine().getStatusCode() == 204, "Error: check "+ ename +" events getCSV call");
-			
-
-			
-			HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
-			Preconditions.checkArgument(resMonitor.getStatusLine().getStatusCode() == 200 || resMonitor.getStatusLine().getStatusCode() == 204 || resMonitor.getStatusLine().getStatusCode() == 400, "Error: monitor "+ ename);
-			if (resMonitor.getStatusLine().getStatusCode() == 400) {
-				System.out.println("***Monitoring experiment of user "+username+" failed because its is already off");
-			} else {
+			Assert.assertTrue("Events "+ename+": download CSV", resDownloadCSV.getStatusLine().getStatusCode() == 200 || resDownloadCSV.getStatusLine().getStatusCode() == 204);
+						
+			try {
+				HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
+				Assert.assertTrue("Events "+ename+": monitor", resMonitor.getStatusLine().getStatusCode() == 200 || resMonitor.getStatusLine().getStatusCode() == 204);
 				String exposures = EntityUtils.toString(resMonitor.getEntity()); 
 				JSONObject results = new JSONObject(exposures);
 				JSONArray treatments = results.getJSONArray("treatments");
 				Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
-			
-			
-				//Preconditions.checkArgument(differentExposures == (long)differentExposuresMonitor, "Error: exposures "+arrayevents.length()+" events, monitoring "+differentExposuresMonitor);
-				System.out.println(username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
-			
-			
 				if (ename.equals("exposures") || ename.equals("completed")) {
-					if ((long)differentExposuresMonitor != differentExposures) {
-						System.out.println("***"+username + " " +ename+" "+arrayevents.length()+" "+differentExposuresMonitor);
-						return false;
-					}
+					Assert.assertTrue("Events "+ename+": number of monitored events does not match with number of DISTINCT actual events", distinct == (long)differentExposuresMonitor);
+				} else {
+					Assert.assertTrue("Events "+ename+": number of monitored events does not match with the actual events", arrayevents.length() == differentExposuresMonitor);
 				}
+			} catch (BadRequestException e) {
+				System.out.println("***Monitoring events "+ename+" from experiment of user "+username+" failed because its is already off");
 			}
-			return true;
 			
 		}
 		
@@ -439,7 +413,7 @@ public class RunTest {
 		} 
 		
 		public JSONObject getExperiment(String userid, String username) {
-			final Integer MINDATETOEND = 10;
+			
 			JSONObject experiment = new JSONObject();
 			experiment.put("name", "experiment"+userid);
 			experiment.put("experimenter", username);

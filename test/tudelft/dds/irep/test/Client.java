@@ -33,6 +33,8 @@ import org.junit.Assert;
 
 import com.google.common.base.Preconditions;
 
+import tudelft.dds.irep.utils.BadRequestException;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.Security;
 
 @Path("/test")
@@ -108,13 +110,14 @@ public class Client extends HttpServlet {
 	    	}
 		    return Response.ok().build();
 	    
+		} catch (BadRequestException e) {
+			System.out.println(e.getMessage());
+			return Response.status(Status.BAD_REQUEST).build();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new InternalServerException(e.getMessage());
 		}
-		
-		return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-	    
 	}
 	
 	public HttpResponse registerEvent(JSONObject event) throws ClientProtocolException, IOException {
