@@ -523,10 +523,7 @@ public class Experiment {
 			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-
-			//JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-			//em.registerEvent(idrun, event, authuser);
-			
+	
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
 			if (target != null) {
@@ -588,48 +585,6 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 	    
 		return Response.status(Status.BAD_REQUEST).build();
 	}
-//	
-//	
-//	@Path("/redirect")
-//	@POST
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	public Response exposureRedirect(String inputJson) {
-//		try {
-//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-//			ObjectMapper mapper = new ObjectMapper();
-//			JsonNode inputNode;
-//			inputNode = mapper.readTree(inputJson);
-//			String idconfig = inputNode.get("idconfig").asText();
-//			String idunit = inputNode.get("idunit").asText(); //TODO: if idunit is null,assign
-//			String timestamp = Utils.getTimestamp(new Date());
-//			JExperiment exp = em.getExperimentFromConf(idconfig);
-//			String unitExp = exp.getUnit();
-//			String treatment = em.getTreatment(unitExp, idconfig, idunit);
-//			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
-//			Map<String, ?> params = em.getParams(unitExp, idconfig, idunit, overridesMap);
-//			
-//			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-//			InputStream is = new ByteArrayInputStream("".getBytes());
-//			JEvent event = em.createEvent(idconfig, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams);
-//			em.registerEvent(idconfig, event);
-//			em.monitorEvent(event);
-//			
-//			for (JTreatment treat: exp.getTreatment()) {
-//				if (treat.getName().equals(treatment)) {
-//					String target = treat.getUrl();
-//					if (target != null) {
-//						URI uri = new URI(target+"?user="+idunit);
-//						return Response.seeOther(uri).cookie(new NewCookie("user",idunit)).build();
-//					}
-//				}
-//			}
-//		} catch (IOException | URISyntaxException | ParseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//
-//		return Response.accepted().build();
-//	}
 	
 	@Path("/getparams/{idrun}/{idunit}")
 	@GET
