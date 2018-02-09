@@ -1,9 +1,8 @@
 # Academic Platform for ONline Experiments (APONE)
 ## USER GUIDE
-### TU Delft, February 2018
 
 ***
-#### INDEX
+### INDEX
 ***
 
 1. INFORMATION RETRIEVAL AND A/B EXPERIMENTS
