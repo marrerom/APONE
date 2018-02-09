@@ -84,7 +84,7 @@ The purpose of this guide is to explain how to define, run and control an experi
 ### TECHNICAL DETAILS
 
 
-![Figure 1. IREPlatform. Main Components and Technologies](./images/image2.jpg | width=300)
+![Figure 1. IREPlatform. Main Components and Technologies](files/images/image2.jpg | width=300)
 
 #### APONE
 
