@@ -1,2 +1,3 @@
 /bin/
 /target/
+/WebContent/WEB-INF/config.properties

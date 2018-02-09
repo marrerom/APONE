@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.junit.Assert;
 import org.junit.Test;
 
 
@@ -31,9 +32,12 @@ public class FunctionalTest {
 		
 		HttpGet httpGet = new HttpGet("http://"+host+":"+port+"/"+context+"/service/test/setmasteruser");
 		HttpResponse res = httpClient1.execute(httpGet, httpContext);
+		Assert.assertTrue("Test init",res.getStatusLine().getStatusCode() == 200 || res.getStatusLine().getStatusCode() == 204);
+		
 		
 		httpGet = new HttpGet("http://"+host+":"+port+"/"+context+"/service/test");
 		HttpClient httpClient2 = new DefaultHttpClient();
 		httpClient2.execute(httpGet, httpContext);
+		Assert.assertTrue("Test result",res.getStatusLine().getStatusCode() == 200 || res.getStatusLine().getStatusCode() == 204);
 	}
 }

@@ -10,8 +10,20 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+
+import javax.ws.rs.WebApplicationException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
+import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
+
+import tudelft.dds.irep.utils.BadRequestException;
 
 public class Utils {
 	
@@ -62,5 +74,19 @@ public class Utils {
 		    Path path = Paths.get(aFileName);
 		    Files.write(path, aBytes); //creates, overwrites
 		  }
+	 
+	 static public String checkWebResponse(Collection<WebApplicationException> validExceptions , HttpResponse response, String message) throws ParseException, IOException {
+		 HttpEntity entity = response.getEntity();
+		 String contents = null;
+		 if (entity != null)
+			 contents = EntityUtils.toString(response.getEntity());
+		 for (WebApplicationException e: validExceptions) {
+			 if (response.getStatusLine().getStatusCode() == e.getResponse().getStatusInfo().getStatusCode()) {
+				 throw e;
+			}
+		 }
+		Assert.assertTrue(message, response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 204);
+		return contents;
+	 }
 
 }

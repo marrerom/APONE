@@ -120,15 +120,15 @@ public class Event {
 //			    //response.allow("OPTIONS");
 //			}
 		    return response.build();
-		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+		} catch (BadRequestException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 
@@ -199,12 +199,9 @@ public class Event {
 //			    //response.allow("OPTIONS");
 //			}
 			return response.build();
-		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+		} catch (BadRequestException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
 		} catch (Exception e) {
@@ -226,15 +223,15 @@ public class Event {
 			ObjectMapper mapper = new ObjectMapper();
 			String eventstr = mapper.writeValueAsString(jevent); 
 			return eventstr;
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 //	@Path("/monitor/{idconf}")
@@ -265,15 +262,15 @@ public class Event {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.deleteEvent(idevent,authuser);
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}	 
 	
 	
@@ -330,15 +327,15 @@ public class Event {
 			}
 			return mapper.writeValueAsString(arrayNode);
 			
-		} catch (ParseException | ProcessingException | IllegalArgumentException e) {
+		} catch (BadRequestException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 		
 	}
 
@@ -383,15 +380,15 @@ public class Event {
 					.header("Content-Disposition", "attachment; filename=\"" + "events.csv" + "\"") // optional
 					.build();
 		
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 
 	}
 
@@ -439,15 +436,15 @@ public class Event {
 			return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
 					.header("Content-Disposition", "attachment; filename=\"" + "events.json" + "\"") // optional
 					.build();
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 
 	}
 

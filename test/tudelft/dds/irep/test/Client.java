@@ -3,6 +3,8 @@ package tudelft.dds.irep.test;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -68,7 +70,7 @@ public class Client extends HttpServlet {
 		    //send event expose
 		    JSONObject exposure = getEvent(idrun, idunit, "STRING", "exposure", "", params );
 		    HttpResponse resExposure = registerEvent(exposure);
-		    Assert.assertTrue("Client Error: register exposure call", resExposure.getStatusLine().getStatusCode()==200);
+		    Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: register exposure")), resExposure, "Client: register exposure");
 		    
 		    Random rand = new Random();
 		    //send tests (click and search) event
@@ -84,20 +86,19 @@ public class Client extends HttpServlet {
 		    do {
 			    JSONObject clickEvent = getEvent(idrun, idunit, "JSON", "click", evalue.toString(), params);
 			    HttpResponse resClickEvent = registerEvent(clickEvent);
-			    Assert.assertTrue("Client Error: register test event call", resClickEvent.getStatusLine().getStatusCode()==200);
+			    Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: register click")), resClickEvent, "Client: register click");
 		    } while (--iter > 0);
 			
 		    iter = rand.nextInt(4);
 		    do {
 			    JSONObject searchEvent = getEvent(idrun, idunit, "JSON", "search", evalue.toString(), params);
 			    HttpResponse resSearchEvent = registerEvent(searchEvent);
-			    Assert.assertTrue("Client Error: register test event call", resSearchEvent.getStatusLine().getStatusCode()==200);
+			    Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: register search")), resSearchEvent, "Client: register search");
 		    } while (--iter > 0);
 		    
 		    //check complete
 	    	HttpResponse resCheck = checkCompleted(idrun, idunit);
-	    	Assert.assertTrue("Client Error: check completed call", resCheck.getStatusLine().getStatusCode() == 200);
-	    	String iscompleted = EntityUtils.toString(resCheck.getEntity()); 
+	    	String iscompleted = Utils.checkWebResponse(Collections.emptySet(), resCheck, "Client: check completed");
 	    	Assert.assertTrue("Client Error: experiment already completed", iscompleted.equals("false"));
 		    
 		    
@@ -106,13 +107,13 @@ public class Client extends HttpServlet {
 	    	if (sendcompleted) {
 	    		JSONObject completed = getEvent(idrun, idunit, "STRING", "completed", "", params );
 	    		HttpResponse resCompleted = registerEvent(completed);
-	    		Assert.assertTrue("Client Error: register completed call", resCompleted.getStatusLine().getStatusCode()==200);
+	    		Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: register completed")), resCompleted, "Client: register completed");
 	    	}
 		    return Response.ok().build();
 	    
 		} catch (BadRequestException e) {
 			System.out.println(e.getMessage());
-			return Response.status(Status.BAD_REQUEST).build();
+			throw new BadRequestException(e.getMessage());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();

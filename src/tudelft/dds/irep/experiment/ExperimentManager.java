@@ -233,10 +233,10 @@ public class ExperimentManager {
 		return PlanoutDSLCompiler.dsl_to_json(dsl); 
 	}
 	
-	public Map<String, ?> getParams(String unitExp, String idconf, String idunit, Map<String,?> overrides, JUser authuser) throws javax.ws.rs.BadRequestException {
+	public Map<String, ?> getParams(String unitExp, String idconf, String idunit, Map<String,?> overrides, JUser authuser) throws BadRequestException {
 		Status st = re.getExpStatus(idconf);
 		if (st == Status.OFF) {
-			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+			throw new BadRequestException("The experiment is not running");
 		}
 		NamespaceConfig nsConfig = re.getExpInfo(idconf, authuser).getConf();
 		Map<String, ?> result = new HashMap<>();
@@ -250,10 +250,10 @@ public class ExperimentManager {
 		return result;
 	}
 	
-	public String getTreatment(String unitExp, String idconf, String idunit, JUser authuser) throws javax.ws.rs.BadRequestException {
+	public String getTreatment(String unitExp, String idconf, String idunit, JUser authuser) throws BadRequestException {
 		Status st = re.getExpStatus(idconf);
 		if (st == Status.OFF) {
-			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+			throw new BadRequestException("The experiment is not running");
 		}
 		NamespaceConfig nsConfig = re.getExpInfo(idconf, authuser).getConf();
 		String result = null;
@@ -379,14 +379,14 @@ public class ExperimentManager {
 		db.setExpConfigRunStatus(conf.get_id(), Status.PAUSED, authuser);
 	}
 	
-	public String saveEvent(JEvent event, JUser authuser) throws javax.ws.rs.BadRequestException, ParseException, JsonProcessingException, IOException {
+	public String saveEvent(JEvent event, JUser authuser) throws BadRequestException, ParseException, JsonProcessingException, IOException {
 		String idconf = event.getIdconfig();
 		Status st = re.getExpStatus(idconf);
 		String result = null;
 		if (st == Status.ON) {
 			result = db.addEvent(event, authuser);
 		} else if (st == Status.PAUSED || st == Status.OFF) {
-			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+			throw new BadRequestException("The experiment is not running");
 		}
 		return result;
 
@@ -396,7 +396,7 @@ public class ExperimentManager {
 		Status st = re.getExpStatus(idconf);
 		//if (st != Status.ON || matchStopConditions(idconf, authuser)) { Let the automatic method control this, and stop the experiment when appropiate (this may means a delay in the stopping)
 		if (st != Status.ON) {
-			throw new javax.ws.rs.BadRequestException("The experiment is not running");
+			throw new BadRequestException("The experiment is not running");
 		}
 		String queue = createRegisterQueue(event.getIdconfig());
 		byte[] body = Utils.serialize(event);

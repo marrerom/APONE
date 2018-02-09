@@ -92,7 +92,7 @@ public class Experiment {
 		    String factorial = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoFactorial.json")));
 		    uploadExperiment(factorial, request);
 		    Security.setAuthenticatedUser(request, em, authuser.getIdTwitter(), authuser.getIdname());
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (IOException e) {
@@ -144,16 +144,16 @@ public class Experiment {
 			}
 			
 			return em.addExperiment(exp, authuser);
-		} catch (JsonProcessingException | ProcessingException | ValidationException | ParseException | IllegalArgumentException e) {
+		} catch (BadRequestException | JsonProcessingException | ProcessingException | ValidationException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			//throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 	@Path("/new/configuration")
@@ -175,15 +175,15 @@ public class Experiment {
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			conf.setRun("OFF");
 			return em.addConfig(idexp, conf, authuser);
-		} catch (IllegalArgumentException | ProcessingException | ParseException e) {
+		} catch (BadRequestException | IllegalArgumentException | ProcessingException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 //	@Path("/start")
@@ -227,15 +227,15 @@ public class Experiment {
 			if (!started)
 				return Response.status(Response.Status.NOT_ACCEPTABLE).build();
 			return Response.ok().build();
-		} catch (JsonProcessingException | ValidationException | ParseException e) {
+		} catch (BadRequestException | JsonProcessingException | ValidationException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 
 	
@@ -247,12 +247,15 @@ public class Experiment {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.stop(idconfig, authuser);
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
+		} catch (BadRequestException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 	@Path("/delete")
@@ -265,15 +268,15 @@ public class Experiment {
 			em.stop(idconfig, authuser);
 			em.deleteEvents(idconfig, authuser); //always remove the events of an experiment that is going to be deleted
 			em.deleteConfig(idconfig, authuser);
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 	@Path("/deleteEvents")
@@ -284,15 +287,15 @@ public class Experiment {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			em.deleteEvents(idconfig, authuser);
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}	
 	
 	@Path("/get/{idrun}")
@@ -316,15 +319,15 @@ public class Experiment {
 			ObjectMapper mapper = new ObjectMapper();
 			String expstr = mapper.writeValueAsString(jexp); 
 			return expstr;
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 
@@ -360,15 +363,15 @@ public class Experiment {
 				}
 			}
 			return Response.ok(mapper.writeValueAsString(arrayNode), MediaType.APPLICATION_JSON).build();
-		} catch (JsonProcessingException | ParseException | ProcessingException | IllegalArgumentException e) {
+		} catch (BadRequestException | JsonProcessingException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 	}
 	
 	//TODO: change to accept any type of event
@@ -405,7 +408,7 @@ public class Experiment {
 		        arrayNode.add(node);
 			}
 			return mapper.writeValueAsString(arrayNode);
-		} catch (JsonProcessingException e) {
+		} catch (BadRequestException | JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());		
 		} catch (AuthenticationException e) {
@@ -434,12 +437,12 @@ public class Experiment {
 				node.add(edataNode);
 			}
 			return mapper.writeValueAsString(node);
-		} catch (JsonProcessingException e) {
+		} catch (BadRequestException | JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
 		}
@@ -482,12 +485,16 @@ public class Experiment {
 	        
 	        node.set("treatments", treatments);
 			return mapper.writeValueAsString(node);
-		} catch (JsonProcessingException e) {
+		} catch (BadRequestException | JsonProcessingException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
 		}
+
 	}
 	
 	//Generate idunit by using UUID version 1 with the library JUG V.3.1.3 (https://github.com/cowtowncoder/java-uuid-generator)
@@ -527,15 +534,15 @@ public class Experiment {
 				Response response = Response.seeOther(uri).cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
 				return response;
 			}
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (URISyntaxException | IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 
 		return Response.status(Status.BAD_REQUEST).build();
 	}
@@ -568,16 +575,14 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 				Response response = Response.seeOther(uri).build();
 				return response;
 			}
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (URISyntaxException | IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
 		} catch (Exception e) {
-			System.out.println(e.getStackTrace());
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
 		}
 
 	    
@@ -665,14 +670,14 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 //				em.registerEvent(idrun, event, authuser);
 //			}
 			return response.build();
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (URISyntaxException | IOException e) {
+		}  catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		} catch (Exception e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
-		} catch (AuthenticationException e) {
-			throw new AuthenticationException();
 		}
 		
 	}
@@ -754,15 +759,15 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 				//em.monitorEvent(event);
 			}
 			return response.build();
-		} catch (ParseException e) {
+		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
-		} catch (URISyntaxException | IOException e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new InternalServerException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
-		}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
 			
 	}
 	
