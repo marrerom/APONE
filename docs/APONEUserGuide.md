@@ -94,24 +94,7 @@ It is also recommended to take into consideration possible external elements tha
   Figure 1. APONE's main components.
 </p>
 
-<<<<<<< HEAD
 <br>
-=======
-A second component is the client, accessed by the users (directly or via redirection through the experimental platform) and developed by the experimenter, which will interact with the RESTful web services of the platform directly to i) get the variant (treatment or control) and parameters (optionally) corresponding to the user, and ii) register the events that occur during the user interaction. The analysis of this information will allow the experimenter decide which treatment is best.
-
-In order to show the capabilities of the platform as well as to ease the development of such a client, an example is also provided (*Client Example*, *ClientE*).
-
-APONE is not restricted to any specific domain of research. The domain of the experiments defined and run is actually given by the client linked to it, which determines the experience of the user. Nonetheless, the provided ClientE and most examples in this user guide are limited to the Information Retrieval domain.
-
-The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the installation instructions in github.
-
-
-### TECHNICAL DETAILS
-
-
-![Figure 1. IREPlatform. Main Components and Technologies](images/image2.jpg)
-
->>>>>>> branch 'master' of https://github.com/marrerom/APONE.git
 #### APONE
 
 RESTful Web Services developed in Java (Jersey) to be deployed in [Tomcat](http://tomcat.apache.org) (at least 8.5). The platform requires connection to [RabbitMQ](https://www.rabbitmq.com) and [MongoDB](https://www.mongodb.com) services. It uses [Twitter4j](http://twitter4j.org) as a library to delegate Twitter to grant access to the users via Oauth, and [PlanOut4j](https://github.com/Glassdoor/planout4j) as a library to define the experiments and randomize the assignment of experimental units to variants. 
