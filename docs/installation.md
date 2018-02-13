@@ -103,9 +103,9 @@ Download or clone the project APONE from [github](https://github.com/marrerom/AP
 Generate the WAR file to deploy in Tomcat. You can do this easily with Maven, by writing the following command in the project folder:
 
 ```bash
-mvn clean install
+mvn clean install mvn install -DskipTests
 ```
-It will generate the WAR file in the *target* folder of the project. 
+It will generate the WAR file in the *target* folder of the project. Make sure you skip the tests (-DskipTest) to generate the WAR file, as they requires the WAR file already deployed in a server in order to test the functionality. 
 
 ## 6. Deploy the platform
 
