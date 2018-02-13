@@ -38,7 +38,7 @@ It is listening to port 15672, and you can access (only from localhost) by using
 
 ## 4. Check Configuration
 
-Download or clone the project APONE from github and check the file *config.properties* located in WEB-INF. Set the appropriate configuration for Mongo and RabbitMQ, and save the changes:
+Download or clone the project APONE from [github](https://github.com/marrerom/APONE) and check the file *config.properties* located in WEB-INF. Set the appropriate configuration for Mongo and RabbitMQ, and save the changes:
 
 <a href="" id="t.84ac78255f151322362bd85d853525d09fddda2a"></a><a href="" id="t.0"></a>
 

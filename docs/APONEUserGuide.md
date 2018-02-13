@@ -39,6 +39,8 @@ APONE is not restricted to any specific domain of research. The domain of the ex
 
 The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the [installation guide](docs/installation.md).
 
+The repository is located at: [https://github.com/marrerom/APONE](https://github.com/marrerom/APONE)
+
 ***
 ## <a id="section2">2. INFORMATION RETRIEVAL AND A/B EXPERIMENTS</a>
 ***

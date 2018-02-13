@@ -5,9 +5,11 @@ The Academic Platform for ONline Experiments (APONE) is an open source platform 
 
 The platform supports the definition of complex experiments as well as the recording of complex information from the interactions with users. It is not restricted to any specific domain of research and supports any technology used in the developing of the clients users are exposed to. Additionally, the users accesing the platform are able to participate in running experiments, which makes the platform useful for educational purposes as well. 
 
-A [user guide](docs/APONEUserGuide.md) explains how to easily define, run and control an experiment using a demo Client ([Client Example, or ClientE](https://github.com/marrerom/ClientE)) and the [running instace of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), where you can also find three running experiments with ClientE for demonstration purposes. ClientE and most examples in this user guide are focused on the Information Retrieval domain. 
+A [user guide](docs/APONEUserGuide.md) explains how to easily define, run and control an experiment using a demo Client ([Client Example, or ClientE](https://marrerom.github.io/ClientE/)) and the [running instace of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), where you can also find three running experiments with ClientE for demonstration purposes. ClientE and most examples in this user guide are focused on the Information Retrieval domain. 
 
 It is also possible to download and install the platform following the [installation instructions](docs/installation.md).
+
+The repository is located at: [https://github.com/marrerom/APONE](https://github.com/marrerom/APONE)
 
 ### Current Features
 
