@@ -6,33 +6,21 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.ws.rs.NotAuthorizedException;
-
 import org.apache.commons.lang3.StringUtils;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -48,22 +36,16 @@ import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.data.schema.UserRol;
-import tudelft.dds.irep.services.Experiment;
 import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
-import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.utils.Utils;
-
 import static com.mongodb.client.model.Filters.*;
 import org.bson.types.ObjectId;
 import static com.mongodb.client.model.Projections.*;
 
 
 public class MongoDB implements Database {
-	
-	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
-	
 	//public final String DB = "test"; //irep in production, test for testing purposes
 	public final String EXP_COL = "experiment";
 	public final String EVENT_COL = "event";
@@ -92,7 +74,6 @@ public class MongoDB implements Database {
 			return experiments.find(and(getUserFilter("experimenter", authuser, action),eq("_id", new ObjectId(idexp)))).first();
 		} catch (NullPointerException e) {
 			String msg = "Experiment "+idexp+" does not exist or you don't have authorization to access it";
-			log.log(Level.WARNING, msg, e);
 			throw new BadRequestException(msg);
 		}
 	}
@@ -105,7 +86,6 @@ public class MongoDB implements Database {
 			return ((ArrayList<Document>)doc.get("config")).get(0);
 		} catch (NullPointerException e) {
 			String msg = "Experiment configuration "+idconf+" does not exist or you don't have authorization to access it";
-			log.log(Level.WARNING, msg, e);
 			throw new BadRequestException(msg);
 		}
 	}
@@ -115,7 +95,6 @@ public class MongoDB implements Database {
 			return events.find(and(getUserFilter("experimenter", authuser, action),eq("_id", new ObjectId(idevent)))).first();
 		} catch (NullPointerException e) {
 			String msg = "Event "+idevent+" does not exist or you don't have authorization to access it";
-			log.log(Level.WARNING, msg, e);
 			throw new BadRequestException(msg);
 		}
 	}
@@ -125,7 +104,6 @@ public class MongoDB implements Database {
 			return users.find(and(getUserFilter("idname", authuser, action), eq("idTwitter", idTwitter))).first();
 		} catch (NullPointerException e) {
 			String msg = "User "+idTwitter+" does not exist or you don't have authorization to access it";
-			log.log(Level.WARNING, msg, e);
 			throw new BadRequestException(msg);
 		}
 	}
@@ -135,7 +113,6 @@ public class MongoDB implements Database {
 			return users.find(and(getUserFilter("idname", authuser, action), eq("idname", idname))).first();
 		} catch (NullPointerException e) {
 			String msg = "User "+idname+" does not exist or you don't have authorization to access it";
-			log.log(Level.WARNING, msg, e);
 			throw new BadRequestException(msg);
 		}
 	}
@@ -193,25 +170,7 @@ public class MongoDB implements Database {
 		users.insertOne(doc);
 		return newuser;
 	}
-	
-//	public void updateUser(JUser toupdate, JUser authuser) throws ParseException, IOException {
-//		Security.checkAuthorized(authuser, toupdate.getIdname());
-//		Document doc = this.checkExistUserByIdtwitter(toupdate.getIdTwitter(), authuser);
-//		ObjectId id = (ObjectId) doc.get("_id");
-//		if (!id.toString().equals(toupdate.get_id())){
-//			InternalServerException e = new InternalServerException("Error updating user: idTwitter is not unique in users db any more?");
-//			log.log(Level.SEVERE, e.getMessage(), e);
-//		}
-//		if (!doc.getString("idname").equals(toupdate.getIdname())){
-//			BadRequestException e = new BadRequestException("Error updating user: it is not possible to modify idTwitter or idName");
-//			log.log(Level.WARNING, e.getMessage(), e);
-//		}
-//				
-//		ObjectMapper mapper = new ObjectMapper();
-//		Map<String, Object> docmap = mapper.convertValue(toupdate, Map.class);
-//		Document toupdatedoc = new Document(new JacksonToMongo().convert(docmap, JUser.class));
-//		users.insertOne(toupdatedoc, InsertOneOptions);
-//	}
+
 	
 	public void updateUserParticipation(JUser user, String[] newlist, JUser authuser) throws IOException {
 		//Security.checkAuthorized(authuser, user.getIdname(), Security.Useraction.WRITE);
@@ -254,10 +213,6 @@ public class MongoDB implements Database {
 
 		ObjectId idevent = new ObjectId();
 		docmap.put("_id", idevent.toString());
-		
-//		String timestamp = (String) docmap.get("timestamp");
-//		docmap.put("timestamp", Utils.getDate(timestamp));
-		
 		Document doc = new Document(new JacksonToMongo().convert(docmap, JEvent.class));
 		events.insertOne(doc);
 		return idevent.toString();
@@ -374,9 +329,6 @@ public class MongoDB implements Database {
 		if (docmap.get("idTwitter") != null) conditions.add(eq("idTwitter", docmap.get("idTwitter")));	
 		if (docmap.get("idname") != null) conditions.add(eq("idname", docmap.get("idname")));	
 		if (docmap.get("rol") != null) conditions.add(eq("rol", docmap.get("rol")));	
-//		ArrayList<String> participated = ((ArrayList<String>)docmap.get("participatedexps"));
-//		if (!participated.isEmpty()) conditions.add(in("participatedexps", participated));	
-		
 		conditions.add(getUserFilter("idname", authuser, Security.Useraction.READ));
 		FindIterable<Document> results = users.find(and(conditions));
 		return results;
@@ -400,7 +352,6 @@ public class MongoDB implements Database {
 			if (treatitem.get("name") != null) treatcond.add(eq("treatment.name", treatitem.get("name")));
 			if (treatitem.get("description") != null) treatcond.add(regex("treatment.description", treatitem.get("description").toString()));
 			if (treatitem.get("definition") != null) treatcond.add(regex("treatment.definition", treatitem.get("definition").toString()));
-//			if (treatitem.get("url") != null) treatcond.add(regex("treatment.url", treatitem.get("url").toString()));
 			if (treatitem.get("control") != null) treatcond.add(eq("treatment.control", treatitem.get("control")));
 			treatmentscond.add(and(treatcond));
 		}
@@ -429,8 +380,7 @@ public class MongoDB implements Database {
 				elemMatch.append("$elemMatch", valueMatch);
 				criteria.append("config.date_started", elemMatch);
 				configcond.add(criteria);
-				//conditions.add(com.mongodb.client.model.Filters.elemMatch("config.date_started", gte("date", date )));
-				}
+			}
 			for (Date date: ((ArrayList<Date>)configitem.get("date_ended"))) {
 				configsearch=true;
 				BasicDBObject criteria = new BasicDBObject();
@@ -441,8 +391,7 @@ public class MongoDB implements Database {
 				elemMatch.append("$elemMatch", valueMatch);
 				criteria.append("config.date_ended", elemMatch);
 				configcond.add(criteria);
-				//conditions.add(in("config.date_ended", and(gte("config.date_ended", date ),lte("config.date_ended", Utils.addDay(date)))));
-				}
+			}
 			
 			if (configitem.get("date_to_end") != null) {
 				configsearch=true; 
@@ -597,23 +546,5 @@ public class MongoDB implements Database {
 			return or(eq(field, authuser.getIdname()), eq(field, Security.getAnonymousUser().getIdname()));
 		return eq(field, authuser.getIdname());
 	}
-	
-//	private Bson getUserFilter(JUser authuser, Security.Useraction action) {
-//		if (authuser.isAdmin())
-//			return regex("idname", ".*");
-//		if (action == Security)
-//		return or(eq("idname", authuser.getIdname()), eq("experimenter", Security.getAnonymousUser().getIdname()));
-//	}
-	
-//	public List<JExperiment> getExperiments() throws JsonParseException, JsonMappingException, IOException, ParseException{
-//		List<JExperiment> result = new ArrayList<JExperiment>();
-//		FindIterable<Document> docs = experiments.find();
-//		ObjectMapper mapper = new ObjectMapper();
-//		for (Document doc: docs) {
-//			result.add(mapper.readValue(new StringReader(new Document(new MongoToJackson().convert(doc, JExperiment.class)).toJson()),JExperiment.class));
-//		}
-//		return result;
-//	}
-	
 	
 }

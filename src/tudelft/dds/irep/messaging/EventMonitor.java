@@ -23,30 +23,11 @@ public class EventMonitor {
 	Map<String, List<String>> treatcount;
 	Map<String, Map<Map<String, ?>, List<String>>> subtreatmentcount; //treatment - set<unitid>
 	ObjectMapper mapper = new ObjectMapper();
-	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	public EventMonitor() {
 		treatcount = new HashMap<String, List<String>>();
 		subtreatmentcount = new HashMap<String, Map<Map<String,?>, List<String>>>(); //treatment - set<unitid>
 	}
-	
-//	public EventMonitor(Collection<JEvent> events) {
-//		this();
-//		for (JEvent exp:events)
-//			try {
-//				loadEvent(exp);
-//			} catch (IOException e) {
-//				log.log(Level.SEVERE, "IO ERROR in EventMonitoringConsumer while loading events",e);
-//			}
-//	}
-	
-//	public Map<String, Map<Map<String, ?>, List<String>>> getSubtreatmentCount() { //treatment - params -set<unitid>
-//		return subtreatmentcount;
-//	}
-//
-//	public Map<String, List<String>> getTreatmentCount() {
-//		return treatcount;
-//	}
 	
 	
 	protected synchronized void loadEvent(JEvent exp) throws JsonProcessingException, IOException {
@@ -61,10 +42,6 @@ public class EventMonitor {
 			return treatcount.values().stream().mapToLong(p -> p.size()).sum();
 		else
 			return	treatcount.values().stream().mapToLong(p -> p.stream().distinct().count()).sum();
-//		int count = 0;
-//		for (Set<String> value:treatcount.values())
-//			count += value.size();
-//		return count;
 	}
 	
 	public Set<String> getTreatments(){

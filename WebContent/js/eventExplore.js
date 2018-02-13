@@ -76,19 +76,6 @@ $(document).ready(function() {
 			}
 		});
 
-		
-//		tabexpevent.find("[name=binary]").on("change", function(){
-//			if ($(this).is(":checked")){
-//				tabexpevent.find("[name=nobinary]").prop("checked", false);
-//			}
-//		});
-		
-//		tabexpevent.find("[name=nobinary]").on("change", function(){
-//			if ($(this).is(":checked")){
-//				tabexpevent.find("[name=binary]").prop("checked", false);
-//			}
-//		});
-		
 		var data = window.location.search;
 		if (data){
 			data = data.split("=")[1];
@@ -98,22 +85,11 @@ $(document).ready(function() {
 			loadEvents(getFilter());
 			tabexpevent_idexp=null;
 		}
-
-//		tabexpevent.on("menu_selection", function(){
-//			if (tabexpevent_idexp){
-//				clear();
-//				tabexpevent.find("[name=idconfig]").val(tabexpevent_idexp);
-//				loadEvents(getFilter());
-//				tabexpevent_idexp=null;
-//				}
-//		});
 	}
 	
 	function clear(){
 		tabexpevent.find(".ui.form").find("input[type=text]").val("");
 		tabexpevent.find("#etype_none").attr("checked",true);
-		//tabexpevent.find("[name=binary]").prop("checked",false);
-		//tabexpevent.find("[name=nobinary]").prop("checked",false);
 	}
 	
 	function removeItem(idevent){
@@ -123,13 +99,6 @@ $(document).ready(function() {
 	function removeSuccess(){
 		removeItem($(this).attr("data"));
 	}
-	
-//	function removeError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Event "+$(this).attr("data")+" could not be deleted</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
 	
 	function removeEvent(idevent){
 		var errorMessage = "<p>Event "+idevent+" could not be deleted</p>";
@@ -154,19 +123,12 @@ $(document).ready(function() {
         window.URL.revokeObjectURL(url);
 	}
 	
-//	function downloadError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>There was an error downloading the events</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
 	
 	function downloadcsv(event_list){
 		var errorMessage = "<p>There was an error downloading the events</p>";
 		$.ajax({
 			  type: 'POST',	
 			  contentType: 'application/json',
-			  //dataType: 'application/octet-stream',
 			  url: getCSVURL,
 			  data: JSON.stringify(event_list),
 			  success: downloadSuccess,
@@ -179,7 +141,6 @@ $(document).ready(function() {
 		$.ajax({
 			  type: 'POST',	
 			  contentType: 'application/json',
-			  //dataType: 'application/octet-stream',
 			  url: getJSONURL,
 			  data: JSON.stringify(event_list),
 			  success: downloadSuccess,
@@ -187,12 +148,6 @@ $(document).ready(function() {
 			});
 	}
 	
-//	function searchError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>There was an error loading the events</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
 	
 	function searchSuccess(data){
 		tabexpevent.find(".ui.relaxed.divided.list").empty();

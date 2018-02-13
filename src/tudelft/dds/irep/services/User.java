@@ -3,27 +3,19 @@ package tudelft.dds.irep.services;
 import java.io.IOException;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -31,27 +23,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.ResponseBuilder;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-
 import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
-import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
@@ -84,7 +69,6 @@ public class User {
 			callbackURL.replace(index, callbackURL.length(), "").append("/callback");
 
 			RequestToken requestToken = twitter.getOAuthRequestToken(callbackURL.toString());
-			// RequestToken requestToken = twitter.getOAuthRequestToken();
 			request.getSession().setAttribute("requestToken", requestToken);
 
 			URI uri = new URI(requestToken.getAuthenticationURL());
@@ -110,7 +94,6 @@ public class User {
 			//TODO: check if valid user in db and rol
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			Security.setAuthenticatedUser(request, em, ((Long)tok.getUserId()).toString(), tok.getScreenName());			
-			//URI uri = new URI("http://ireplatform.ewi.tudelft.nl:8080/IREPlatform");
 			
 			URI uri = new URI(request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getServletContext().getContextPath());
 			Response response = Response.seeOther(uri).build();
@@ -162,10 +145,7 @@ public class User {
 			throw new InternalServerException(e.getMessage());
 		} 
 	}
-	
-	
-	
-	
+
 	@Path("/assignexp")
 	@GET
 	public String assign(@Context HttpServletRequest request, @Context UriInfo uriInfo) {
@@ -241,19 +221,7 @@ public class User {
 			throw new InternalServerException(e.getMessage());
 		} 
 	}
-	
-//	@Path("/setCompletedExp/{idrun}/{idunit}")
-//	@PUT
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public void setCompletedExp() {
-//		Set<String> list = new HashSet<String>();
-//		list.addAll(Arrays.asList(authuser.getParticipatedexps()));
-//		list.add(idexp);
-//		String[] array = list.toArray(new String[list.size()]);
-//		em.updateUserParticipation(authuser,array, Security.getMasterUser());
-//Security.setAuthenticatedUser(request, em, authuser.getIdTwitter());
-//	}
-	
+
 	
 	private Collection<JConfiguration> getOwnExperiments(ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		Collection<JConfiguration> result = new HashSet<JConfiguration>();
@@ -343,23 +311,4 @@ public class User {
 		}
 	}
 	
-//	private Collection<RunningExpInfo> getLeft(ExperimentManager em, Collection<RunningExpInfo> candidates, JUser user, UserRol restrictToRol) throws IOException, ParseException{
-//		Collection<RunningExpInfo> result = new HashSet<RunningExpInfo>();
-//		List<String> list = Arrays.asList(user.getParticipatedexps());
-//		
-//		for (RunningExpInfo exp: candidates) {
-//			if (!list.contains(exp.getIdconfig())) {
-//				if (restrictToRol == null)
-//					result.add(exp);
-//				else {
-//					JUser expuser = em.getUserByIdname(exp.getExperimenter(), Security.getMasterUser());
-//					if (expuser.getRolEnum() == restrictToRol)
-//						result.add(exp);
-//				}
-//			}
-//		}
-//		return result;
-//	}
-	
-
 }

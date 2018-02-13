@@ -4,12 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,7 +28,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
@@ -48,10 +43,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.glassdoor.planout4j.config.ValidationException;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 
 import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JConfiguration;
@@ -146,7 +139,6 @@ public class Experiment {
 			return em.addExperiment(exp, authuser);
 		} catch (BadRequestException | JsonProcessingException | ProcessingException | ValidationException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
-			//throw new javax.ws.rs.WebApplicationException(e.getMessage(),e.getCause(), Status.BAD_REQUEST.getStatusCode());
 			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
 			throw new AuthenticationException();
@@ -185,34 +177,6 @@ public class Experiment {
 			throw new InternalServerException(e.getMessage());
 		} 
 	}
-	
-//	@Path("/start")
-//	@POST
-//	@Consumes(MediaType.MULTIPART_FORM_DATA)
-//	@Produces(MediaType.TEXT_PLAIN)
-//	public String startExperiment(@FormDataParam("idexp") String idexp, @FormDataParam("configuration") InputStream configuration){
-//		try {
-//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-//			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
-//			
-//			ObjectMapper mapper = new ObjectMapper();
-//			JsonNode jnode = mapper.readTree(configuration);
-//			JConfiguration conf = mapper.convertValue(jnode, JConfiguration.class);
-//			ProcessingReport pr = jval.validate(conf,jnode, context);
-//			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
-//			
-//			JExperiment exp = em.getExperiment(idexp);
-//			String idrun = em.addConfig(idexp,conf);
-//			conf.set_id(idrun);
-//			em.start(exp,conf);
-//			return idrun;
-//		} catch (IOException | ProcessingException | ParseException | ValidationException e) {
-//			e.printStackTrace();
-//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage()));
-//		}
-//	}
-	
-
 	
 	@Path("/start")
 	@PUT
@@ -561,9 +525,6 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			Map<String, ?> params = em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser);
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
-
-			//JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-			//em.registerEvent(idrun, event, authuser);
 			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			String target = jtreat.getUrl();
@@ -620,10 +581,6 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			response.header("Access-Control-Allow-Origin", "*");
 		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
 		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-//			if (response.build().getStatus() < 400) {
-//				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-//				em.registerEvent(idrun, event, authuser);
-//			}
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);

@@ -282,7 +282,7 @@
 							</div>
 						
 							<div class='field'>
-								<label>Name</label> <input name='ename' placeholder='Event type'
+								<label>Type</label> <input name='ename' placeholder='Event type'
 									type='text' readonly>
 							</div>
 							<div class='field'>
@@ -319,7 +319,7 @@
 						<div class='fields'>
 						
 							<div class='sixteen wide field'>
-								<label>Parameter values</label> 
+								<label>Pairs PlanOut variable-value</label> 
 								<textarea name='paramvalues'  rows='2' readonly></textarea>
 							</div>
 						

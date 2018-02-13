@@ -30,10 +30,7 @@ $(document).ready(function() {
 	function refresh(){
 		getRunning();
 	}
-	
-//	function getRunningError(xhr, status, error){
-//		console.error("There was an error loading the running experiments");
-//	}
+
 	
 	function getTreatmentsHTML(exposures, completed){
 		var result = "";
@@ -41,10 +38,7 @@ $(document).ready(function() {
 		$.each(exposures, function (index, value) {
 			totalexposures = totalexposures + parseInt(value.value);
 		});
-//		$.each(treatments, function (index, value) {
-//			var per = Math.round((parseInt(value.value) / total) * 100);
-//			result = result +"<div class='ui mini statistic'><div class='value'>"+value.value+" ("+per+"%)</div><div class='label'>"+value.name+"</div></div>";
-//		});
+
 		result = result + "<div class='ui mini statistic exposures'><div class='value sort'>"+totalexposures+"</div><div class='label'> Exposures </div></div>";
 		
 		var totalcompleted = 0;
@@ -89,7 +83,6 @@ $(document).ready(function() {
 		
 		//Important to remove before adding new experiments as running
 		$.each(tofinish, function(index, id){ 
-			//monfinished.append(value);
 			finish(id);
 		});
 		
@@ -101,7 +94,6 @@ $(document).ready(function() {
 	function finish(id){
 		item = monrunning.find("#"+id);
 		item.find("[name=toggle]").prop("checked", false);
-		//item.find(".treatments").off(); //removes click event
 		item.find(".ui.mini.statistic.exposure").off();
 		item.find(".ui.mini.statistic.completed").off();
 		item.find(".chart.icon").off();
@@ -123,15 +115,8 @@ $(document).ready(function() {
 				}
 			 }
 		});
-//		newrow.find(".treatments").on("click", function(){
-//			var id = newrow.attr("id");
-//			displayParamValues(id.substr(0,id.indexOf("-")), monitorSubtreatExposureURL);
-//		});
-//		newrow.find(".treatments").css( 'cursor', 'pointer' );
-	
 		
 		var date_started = new Date(value.laststarted);
-		//newrow.find(".date_started").text(date_started.toLocaleDateString()+" "+date_started.toLocaleTimeString());
 		newrow.find(".date_started").html("<span hidden class='sort date'>"+date_started+"</span><span>"+date_started.toLocaleDateString()+" "+date_started.toLocaleTimeString()+"</span>");
 		monrunning.prepend(newrow);
 		getExperimentCreate(value.idrun);
@@ -156,16 +141,8 @@ $(document).ready(function() {
 		newrow.find(".ui.mini.statistic.completed").css( 'cursor', 'pointer' );
 	}
 	
-//	function displayParamError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>There was an error loading data from experiment +"+$(this).attr("data")+"</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-	
 	function displayChart(id){
 		$(".ui.modal._chart").find(".header").empty();
-		//$(".ui.modal._chart").find("#chart").empty();
 		$(".ui.modal._chart").find(".content").empty();
 		$(".ui.modal._chart").find(".content").append("<canvas id='chart' width='400' height='300'>");
 		var errorMessage = "<p>There was an error loading data from experiment +"+id+"</p>";
@@ -242,9 +219,6 @@ $(document).ready(function() {
 		    },
 		    options: {
 		        barValueSpacing: 20,
-  //              legend: {
-   //                 position: "top",
-    //            },
                 scales: {
                     xAxes: [{
                         display: true,
@@ -372,15 +346,6 @@ $(document).ready(function() {
 			});
 	}
 	
-//	function startError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Experiment +"+$(this).attr("data")+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//
-//	}
-	
-	
 	function startExperiment(idrun){
 		var errorMessage = "<p>Experiment +"+idrun+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>";
 		$.ajax({
@@ -391,13 +356,7 @@ $(document).ready(function() {
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});
 	}
-	
-//	function stopError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Experiment "+$(this).attr("data")+" did not start</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
+
 	
 	function stopExperiment(idrun){
 		var errorMessage = "<p>Experiment "+idrun+" did not start</p>";

@@ -64,6 +64,7 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
 
 import tudelft.dds.irep.data.schema.JConfiguration;
+import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.experiment.ExperimentManager;
@@ -111,10 +112,17 @@ public class RunTest {
 		
 
 		@GET
-		public Response test(@Context HttpServletRequest request) throws ClientProtocolException, IOException {
+		@Path("/{timebeforetest}")
+		public Response test(@PathParam("timebeforetest") String timebeforetest, @Context HttpServletRequest request) throws ClientProtocolException, IOException {
 			Response response;
 			final Integer NUSERS = 120;
 			final Integer NEXPS = 10;
+			Integer sleep;
+			try {
+				sleep = Integer.parseInt(timebeforetest);
+			} catch (Exception e) {
+				sleep = 60000;
+			}
 			try {
 				for (int i=1;i<=NUSERS;i++) {
 					System.out.println("Creating experiment user "+i);
@@ -126,12 +134,12 @@ public class RunTest {
 						assignExperiment(Integer.toString(i));
 					}
 				}
-				Thread.sleep(5000); //to prevent events not registered by rabbit during the following check of monitoring events
+				Thread.sleep(sleep); //to prevent events not registered by rabbit during the following check of monitoring events
 				for (int i=1;i<=NUSERS;i++) {
 						System.out.println("Testing events experiment user "+i);
 						testEvents(Integer.toString(i));
 					}
-				response = Response.ok().build();
+				response = Response.ok("Test completed", MediaType.TEXT_PLAIN).build();
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 				e.printStackTrace();
@@ -249,9 +257,11 @@ public class RunTest {
 				JSONObject results = new JSONObject(exposures);
 				JSONArray treatments = results.getJSONArray("treatments");
 				Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
-				if (ename.equals("exposures") || ename.equals("completed")) {
+				if (ename.equals(JEvent.EXPOSURE_ENAME.toString()) || ename.equals(JEvent.COMPLETED_ENAME.toString())) {
 					Assert.assertTrue("Events "+ename+": number of monitored events does not match with number of DISTINCT actual events", distinct == (long)differentExposuresMonitor);
 				} else {
+					if (arrayevents.length() != differentExposuresMonitor)
+						System.out.println(arrayevents.length() +" "+ differentExposuresMonitor);
 					Assert.assertTrue("Events "+ename+": number of monitored events does not match with the actual events", arrayevents.length() == differentExposuresMonitor);
 				}
 			} catch (BadRequestException e) {

@@ -193,16 +193,7 @@ function sortTable(tableClass, n) {
 	 	});
 	 }
 
-	 /*
-	  * Custom event triggered when a menu is selected. Useful to make changes coming from other menus before display
-	  */
-//	 $.event.trigger({
-//		type: "menu_selection",
-//		message: "Menu selected",
-//		time: new Date()
-//	 });
-
-	 
+ 
 	 init();
 	 
 	 

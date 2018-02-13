@@ -7,14 +7,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,12 +25,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -160,7 +156,6 @@ public class Event {
 			String ename = inputNode.get("ename").asText();
 			JsonNode evalueNode = inputNode.get("evalue");
 			String evalue = evalueNode.toString();
-			//String useragent = inputNode.get("useragent").asText();
 			
 			String timestamp;
 			if (inputNode.get("timestamp") != null)
@@ -233,25 +228,6 @@ public class Event {
 			throw new InternalServerException(e.getMessage());
 		} 
 	}
-	
-//	@Path("/monitor/{idconf}")
-//	@GET
-//	@Consumes(MediaType.TEXT_PLAIN)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public String monitor(@PathParam("idconf") String idconf) {
-//		try {
-//			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-//			Map<String, Integer> expcount = em.getExposures(idconf);
-//			//return Response.ok(expcount,MediaType.APPLICATION_JSON).build();
-//			ObjectMapper mapper = new ObjectMapper();
-//			String expcountstr = mapper.writeValueAsString(expcount); 
-//			return expcountstr;
-//		} catch (BadRequestException | JsonProcessingException e) {
-//			e.printStackTrace();
-//			throw new javax.ws.rs.BadRequestException(e.getCause().getMessage());
-//		}
-//	}
-	
 
 
 	@Path("/delete")
@@ -318,11 +294,6 @@ public class Event {
 			    } catch (NullPointerException e) {
 			    	node.put("experiment", "[deleted]");
 			    }
-//			    if (ev.getETypeEnum() != EventType.BINARY && !ev.getEvalue().isEmpty()) {
-//			    	int len = ev.getEvalue().length();
-//			    	if ( len > SNIPPET) len = SNIPPET; 
-//			    	node.put("evalue", ev.getEvalue().substring(0, len));
-//			    }
 		        arrayNode.add(node);
 			}
 			return mapper.writeValueAsString(arrayNode);

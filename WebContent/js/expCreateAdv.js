@@ -27,7 +27,6 @@ $(document).ready(function() {
 
 	function init(){
 		tabnewexpadv = $("#contents_expnew_adv");
-		//$(".nexp.treatment.ui.dropdown").on("click", treatdropboxClick);
 		tabnewexpadv.find("[name='tname']").on("change", updateTreatSelection);
 		tabnewexpadv.find("._treat.minus.inline.link.circle.icon").on("click", treatminusClick);
 		tabnewexpadv.find("._treat.add.inline.link.circle.icon").on("click", treataddClick);
@@ -60,12 +59,6 @@ $(document).ready(function() {
 			tabnewexpadv_existingexp = $.parseJSON(data);
 			block();
 		}
-		
-		
-		//$("#contents_expnew_adv").on("menu_selection", function(){
-			//if (tabnewexpadv_existingexp){block();}
-		//});
-		
 	}
 	
 	function block(){
@@ -79,7 +72,7 @@ $(document).ready(function() {
 			tabnewexpadv.find(".ui.fluid.segment._treatments").append(tabnewexpadv_segment_treatment);
 			tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=tname]").val(value.name);
 			tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=tdesc]").val(value.description);
-			tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=turl]").text(value.url);
+			tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=turl]").val(value.url);
 			tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=tdef]").text(value.definition);
 			if (value.control){tabnewexpadv.find(".ui.fluid.segment._treatments").children().last().find("[name=tcontrol]").prop("checked",true);}
 		});
@@ -150,26 +143,6 @@ $(document).ready(function() {
 		updateTreatSelection();
 	}
 	
-//	function newexpError(xhr){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>The experiment was not saved</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-	
-//	function newexpSuccess(data){
-//		$(".ui.modal._success").find(".content").empty();
-//		$(".ui.modal._success").find(".content").append("<p>The experiment has been saved successfully</p>");
-//		$(".ui.modal._success").modal('show');
-//	}
-//	
-//	function newconfSuccess(data){
-//		unblock();
-//		$(".ui.modal._success").find(".content").empty();
-//		$(".ui.modal._success").find(".content").append("<p>The experiment has been saved successfully</p>");
-//		$(".ui.modal._success").modal('show');
-//	}
-	
 	function addExperiment(){
 		var successMessage = "<p>The experiment has been saved successfully</p>";
 		var errorMessage = "<p>The experiment was not saved</p>";
@@ -186,12 +159,8 @@ $(document).ready(function() {
 				    });
 			} else {
 				var inputJson = getNewConfJSON();
-				//var fd = new FormData();    
-				//fd.append( 'idexp', tabnewexpadv_existingexp._id);
-				//fd.append('configuration', formjson);
 				$.ajax({
 					contentType: 'application/json',
-					//processData: false,
 				    type: 'POST',
 				    url: newconfURL,
 				    data: inputJson,
@@ -227,7 +196,6 @@ $(document).ready(function() {
 		var date_to_end = tabnewexpadv.find("[name='date_toend']").val();
 		if (date_to_end)
 			config.date_to_end = date_to_end;
-			//config.date_to_end = new Date(date_to_end).toISOString();
 		var max_exposures = tabnewexpadv.find("[name='maxexp']").val();
 		if (max_exposures)
 			config.max_exposures = parseInt(max_exposures); 
@@ -306,10 +274,6 @@ $(document).ready(function() {
 		})
 		if (!checked){correct = false;list=list+"<li class='item'>Treatment control "+emptyprompt+".</li>";}
 	
- 
-//		tabnewexpadv.find("[name=tdef]").each(function(){
-//			if (!$(this).val()){correct = false;list=list+"<li class='item'>Treatment definition "+emptyprompt+".</li>"}
-//		});
 		tabnewexpadv.find("[name=treatdropdown]").each(function(){
 			if (!$(this).val()){correct = false;list=list+"<li class='item'>Treatment selection in configuration "+emptyprompt+".</li>"}
 		});
@@ -343,7 +307,5 @@ $(document).ready(function() {
 
 	
 	init();
-	
-		
-	
+
 });

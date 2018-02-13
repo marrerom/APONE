@@ -133,13 +133,6 @@ public class ExperimentManager {
 			if (dateToEnd != null && dateToEnd.compareTo(Utils.getDate(Utils.getTimestamp(new Date()))) < 0) {
 				return true;
 			}
-//			maxCompleted = jconf.getMax_exposures();
-//			if (maxCompleted != null) {
-//				emc = createMonitoringConsumer(createMonitoringQueue(idconf), Optional.of(getMonitoringEvents(idconf, authuser)));
-//				actualCompleted = emc.getCompleteEvents().getTotalCount();
-//				if (actualCompleted >= maxCompleted)
-//					return true;
-//			}
 		} else {
 			RunningExpInfo running = re.getExpInfo(idconf, authuser);
 			dateToEnd = running.getDateToEnd();
@@ -296,27 +289,6 @@ public class ExperimentManager {
 		return results;
 	}
 	
-//	private Map<String, Integer> getExposures(JExperiment exp, JConfiguration conf) throws JsonParseException, JsonMappingException, IOException, ParseException{
-//		Map<String, Integer> expcount = new HashMap<String, Integer>();
-//		ObjectMapper mapper = new ObjectMapper();
-//		List<JTreatment> treatments = db.getTreatments(exp.get_id());
-//		for (JTreatment treat:treatments) {
-//			expcount.put(treat.getName(), 0);
-//		}
-//		JEvent filter = new JEvent();
-//		filter.setIdconfig(conf.get_id());
-//		filter.setEname(JExposureBody.EVENT_ENAME);
-//		List<JEvent> expevents = db.getEvents(filter);
-//		for (JEvent event: expevents) {
-//			String body = event.getEvalue();
-//			JExposureBody expbody = mapper.readValue(new StringReader(body),JExposureBody.class);
-//			//JExposureBody expbody = mapper.convertValue(body, JExposureBody.class); //It does not work
-//			String treatment = expbody.getTreatment();
-//			Integer count = expcount.get(treatment);
-//			expcount.put(treatment, ++count); //Throws exception if treatment does not exist, but if that happens, something went very wrong in the registering process
-//		}
-//		return expcount;
-//	}
 	
 	//It should do nothing if the current status is on or paused
 	public boolean start(JExperiment exp, JConfiguration conf, JUser authuser) throws IOException, ValidationException, ParseException {
@@ -410,12 +382,6 @@ public class ExperimentManager {
 		channel.basicPublish("", queue, null, body);
 	}
 	
-//	public Map<String, Set<String>> getUnitCount(String idconfig, JUser authuser) throws javax.ws.rs.BadRequestException {
-//		if (re.getExpStatus(idconfig) == Status.OFF)
-//			throw new javax.ws.rs.BadRequestException("The experiment is not running/paused");
-//		EventMonitoringConsumer emc = re.getExpInfo(idconfig, authuser).getMonConsumer();
-//		return emc.getTreatmentCount();
-//	}
 	
 	public JEvent createEvent(String idconf, String unitid, String ename, EventType etype, InputStream evalue, String timestamp, 
 			String treatment, JParamValues params, String useragent, String expowner) throws IOException, ParseException {
@@ -440,19 +406,6 @@ public class ExperimentManager {
 		return event;
 	}
 	
-//	public JExposureBody createExposureBody(String treatment, Map<String, ?> params) {
-//		JExposureBody expbody = new JExposureBody();
-//		expbody.setTreatment(treatment);
-//		expbody.setParamvalues(params);
-//		return expbody;
-//	}
-//	
-//	public JEvent createExposureEvent(String idconfig, String idunit, String timestamp, JExposureBody expbody) throws IOException, ParseException {
-//		ObjectMapper mapper = new ObjectMapper();
-//		//InputStream is = new ByteArrayInputStream(mapper.convertValue(expbody, Map.class).toString().getBytes());
-//		InputStream is = new ByteArrayInputStream(mapper.writeValueAsString(expbody).getBytes());
-//		return createEvent(idconfig, idunit, JExposureBody.EVENT_ENAME, false, is, timestamp);
-//	}
 	
 	private NamespaceConfig createNamespace(JExperiment exp, JConfiguration config) throws ValidationException {
 		String nsName = exp.getName()+"@"+config.getExperimenter()+"."+config.getName();
@@ -475,7 +428,6 @@ public class ExperimentManager {
 			if (dist.getActionEnum() == Action.REMOVE)
 				ns.removeExperiment(dist.getTreatment());
 		}
-		
 		return ns;
 	}
 	

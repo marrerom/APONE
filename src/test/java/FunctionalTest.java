@@ -26,6 +26,7 @@ public class FunctionalTest {
 		String host = p.getProperty("HOST");
 		String port = p.getProperty("PORT");
 		String context = p.getProperty("CONTEXT");
+		String timebeforetest = p.getProperty("TIMEBEFORETEST");
 		
 		HttpContext httpContext = new BasicHttpContext();
 		HttpClient httpClient1 = new DefaultHttpClient();
@@ -35,7 +36,7 @@ public class FunctionalTest {
 		Assert.assertTrue("Test init",res.getStatusLine().getStatusCode() == 200 || res.getStatusLine().getStatusCode() == 204);
 		
 		
-		httpGet = new HttpGet("http://"+host+":"+port+"/"+context+"/service/test");
+		httpGet = new HttpGet("http://"+host+":"+port+"/"+context+"/service/test/"+timebeforetest);
 		HttpClient httpClient2 = new DefaultHttpClient();
 		httpClient2.execute(httpGet, httpContext);
 		Assert.assertTrue("Test result",res.getStatusLine().getStatusCode() == 200 || res.getStatusLine().getStatusCode() == 204);

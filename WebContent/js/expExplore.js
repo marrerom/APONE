@@ -79,19 +79,12 @@ $(document).ready(function() {
 			$(".ui.modal._info").find(".content").append("<p>The associated events will be removed. Continue?</p>");
 			$(".ui.modal._info").find(".content").append("<div class='actions'><div class='ui approve button'>Yes</div><div class='ui cancel button'>No</div></div>");
 			$(".ui.modal._info").modal('setting', {
-//			    onDeny: function(){
-//					tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
-//						var idrun = $(this).closest(".item").attr("id");
-//						removeExperiment(idrun);
-//					});
-//			      },
-			      onApprove : function() {
-						tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
-							var idrun = $(this).closest(".item").attr("id");
-							//removeEventsExperiment(idrun);
-							removeExperiment(idrun);
-						});
-			      }
+		      onApprove : function() {
+				tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
+					var idrun = $(this).closest(".item").attr("id");
+					removeExperiment(idrun);
+				});
+		      }
 			});
 			 
 			$(".ui.modal._info").modal('show');
@@ -144,22 +137,11 @@ $(document).ready(function() {
 		tabexpsearch.find('.ui.calendar._started').calendar({type: 'date'});
 	}
 	
-//	function newConfigError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>There was an error loading the experiment</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-	
 	function newConfigSuccess(data){
-		//tabnewexp.find(".ui.button._clear").trigger("click");
-		//tabnewexp_existingexp = data;
 		$("#menu_expnew").trigger("click", [data]);		
 	}
 	
 	function newConfigAdvSuccess(data){
-		//tabnewexpadv.find(".ui.button._clear").trigger("click");
-		//tabnewexpadv_existingexp = data;
 		$("#menu_expnew_adv").trigger("click", [data]);		
 	}
 	
@@ -222,13 +204,6 @@ $(document).ready(function() {
 		tabexpsearch.find(".ui.relaxed.divided.list").find("#"+idrun).remove();
 	}
 	
-//	function searchError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>There was an error loading the experiments</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-	
 	function searchSuccess(data){
 		tabexpsearch.find(".ui.relaxed.divided.list").empty();
 		$.each(data, function (index, value) {
@@ -260,14 +235,6 @@ $(document).ready(function() {
 			});
 	}
 	
-//	function startError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Experiment +"+$(this).attr("data")+" did not start.</p><p>The date or exposures might have exceeded the settings.</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//
-//	}
-	
 	function startSuccess(){
 		switchON($(this).attr("data"));
 	}
@@ -288,36 +255,6 @@ $(document).ready(function() {
 	function removeSuccess(){
 		removeItem($(this).attr("data"));
 	}
-//	
-//	function removeError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Experiment "+$(this).attr("data")+" could not be deleted</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-//	
-//	function removeEventsError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Events associated to experiment "+$(this).attr("data")+" could not be deleted</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
-	
-//	function removeEventsSuccess(){
-//		removeExperiment($(this).attr("data"));
-//	}
-//	
-//	function removeEventsExperiment(idrun){
-//		var errorMessage = "<p>Events associated to experiment "+$(this).attr("data")+" could not be deleted</p>";
-//		$.ajax({
-//			  contentType: 'text/plain',
-//			  type: 'POST',
-//			  url: removeEventsURL,
-//			  data: idrun,
-//			  success: removeEventsSuccess,
-//			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
-//			});	
-//	}
 	
 	function removeExperiment(idrun){
 		var errorMessage = "<p>Experiment "+idrun+" could not be deleted</p>";
@@ -331,13 +268,6 @@ $(document).ready(function() {
 		});
 	}
 
-	
-//	function stopError(xhr, status, error){
-//		$(".ui.modal._error").find(".content").empty();
-//		$(".ui.modal._error").find(".content").append("<p>Experiment "+$(this).attr("data")+" did not stop</p>");
-//		//$(".ui.modal._error").find(".content").append(xhr.responseText);
-//		$(".ui.modal._error").modal('show');
-//	}
 	
 	function stopSuccess(){
 		switchOFF($(this).attr("data"));
@@ -421,15 +351,6 @@ $(document).ready(function() {
 	function test(idrun){
 		var url = testURL+"/"+idrun;
 		window.open(url);
-		
-//		var errorMessage = "There was an error during the test";
-//		$.ajax({
-//			  type: 'GET',	
-//			  dataType: "text",
-//			  url: testURL+"/"+idrun,
-//			  success: function(data){window.open(data);},
-//			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
-//			});
 	}
 	
 	init();
