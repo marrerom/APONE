@@ -572,7 +572,7 @@ colorsMobile = ['blue', 'green'];
 if (browser == 'mobile') { 
     linkColor = uniformChoice(choices=colorsMobile,unit=userid);
 } else {
-    linkColor = 'blue';  \#no treatment
+    linkColor = 'blue';  #no treatment
 }
 ```
 
