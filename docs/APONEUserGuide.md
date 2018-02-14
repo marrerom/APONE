@@ -37,7 +37,7 @@ In order to show the capabilities of the platform as well as to ease the develop
 
 APONE is not restricted to any specific domain of research. The domain of the experiments defined and run is actually given by the client linked to it, which determines the experience of the user. Nonetheless, the provided ClientE and most examples in this user guide are limited to the Information Retrieval domain.
 
-The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the [installation guide](docs/installation.md).
+The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the [installation guide](installation.md).
 
 The repository is located at: [https://github.com/marrerom/APONE](https://github.com/marrerom/APONE)
 
