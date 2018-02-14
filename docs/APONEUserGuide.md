@@ -266,18 +266,19 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <a href="" id="t.f4384f47af2b59f6a5c664fcf930d37adc4ec76c"></a><a href="" id="t.0"></a>
 
 <table>
+<caption>Table 1. JSON consumed by the endpoint to register an event.</caption>
 <colgroup>
 <col width="33%" />
 <col width="33%" />
 <col width="33%" />
 </colgroup>
 <tbody>
-<tr class="odd">
-<td align="left"><p>name</p></td>
-<td align="left"><p>type</p></td>
-<td align="left"><p>comment</p></td>
-</tr>
 <tr class="even">
+<th align="left"><p>name</p></th>
+<th align="left"><p>type</p></th>
+<th align="left"><p>comment</p></th>
+</tr>
+<tr class="odd">
 <td align="left"><p>idconfig</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experiment</p></td>
@@ -287,7 +288,7 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experimental unit (eg. user)</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>ename</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Type of event (e.g. ‘click’). Reserved names are ‘exposures’ and ‘completed’.</p></td>
@@ -297,7 +298,7 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <td align="left"><p>string</p></td>
 <td align="left"><p>Information we want to save</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>etype </p></td>
 <td align="left"><p>Enum: [“BINARY”, “STRING”, “JSON”]</p></td>
 <td align="left"><p>Data type of the information contained in evalue. It will determine the type of data used to save the contents in the database. If the contents are binary, they should be previously encoded in Base64<sup><a href="#ftnt6" id="ftnt_ref6">[8]</a></sup>.</p></td>
@@ -307,16 +308,13 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <td align="left"><p>object</p></td>
 <td align="left"><p>Optional: if you use PlanOut (see section 7.2), pairs variable-value received (the platform can not always calculate them as some may have been overwritten).</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>timestamp</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Optional: timestamp of the event (ISO 8601 format). If it is not set then the platform will assign the current timestamp when it starts processing the petition.</p></td>
 </tr>
 </tbody>
 </table>
-
-Table 1. JSON consumed by the endpoint to register an event.
-
 
 When we register an event, the variant name assigned to the user will also be saved automatically, together with the information about the user agent, the owner of the experiment, and a unique identifier of the event.
 
@@ -375,7 +373,7 @@ A new experiment has three areas of information to be filled: metadata about the
 -   Name: name or any other identification of the experiment. Useful to look it up or identify it quickly when searching or monitoring our experiments. This is not a unique identifier of an experiment, it is just to make it easier the search and visualization of a specific experiment.
 -   Description: a description of the experiment. It should be a brief summary of objectives and methodology, that is, what we want to prove with the experiment, and how we are going to do it.
 
-**Variants: **
+**Variants:**
 
 -   Name: name to identify the specific variant of the experiment (eg. in ColorExp, *Blue* and *Green*).
 -   Description: brief description of the approach the variant represents. 
@@ -420,7 +418,7 @@ When an experiment is running, we can register events from our client through ca
 -   Variant: name of the variant the user is being exposed to.
 -   Pairs PlanOut variable-value: name and values of the PlanOut variables (if any) for that specific experimental unit.
 
-**Interaction: **
+**Interaction:**
 
 -   Unit id: identification of the experimental unit (typically a user).
 -   Timestamp: timestamp of the event.
@@ -498,18 +496,19 @@ With this endpoint it is possible to set values of existing variables in the def
 <a href="" id="t.7ecf52ee33dbf14a50751162c93b37e2730da86b"></a><a href="" id="t.1"></a>
 
 <table>
+<caption>Table 2. JSON consumed by the endpoint to get information of the assigned variant.</caption>
 <colgroup>
 <col width="33%" />
 <col width="33%" />
 <col width="33%" />
 </colgroup>
 <tbody>
-<tr class="odd">
-<td align="left"><p>name</p></td>
-<td align="left"><p>type</p></td>
-<td align="left"><p>comment</p></td>
-</tr>
 <tr class="even">
+<th align="left"><p>name</p></th>
+<th align="left"><p>type</p></th>
+<th align="left"><p>comment</p></th>
+</tr>
+<tr class="odd">
 <td align="left"><p>idconfig</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experiment</p></td>
@@ -519,16 +518,13 @@ With this endpoint it is possible to set values of existing variables in the def
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experimental unit (eg. user)</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>overrides</p></td>
 <td align="left"><p>object</p></td>
 <td align="left"><p>JSON document with the pairs variable-values we want to set before running the corresponding PlanOut script.</p></td>
 </tr>
 </tbody>
 </table>
-
-Table 2. JSON consumed by the endpoint to get information of the assigned variant.
-
 <br>
 ### 7.2 PlanOut
 
@@ -551,8 +547,8 @@ When the platform assigns a variant according to the value of an experimental un
 However, we can also define multivariate experiments and and automatically run full-factorial experiments thanks to the random operators that PlanOut language includes. For example, if we wanted to test the impact of the link color and the ranking algorithm at the same time, we could create one variant with the following script: 
 
 ```bash
-possibleRankings = [‘default’,‘BM25’];
-possibleColors = ['blue’, 'green'];
+possibleRankings = ['default','BM25'];
+possibleColors = ['blue', 'green'];
 rankingAlg = uniformChoice(choices=possibleRankings, unit=userid);
 linkColor = uniformChoice(choices=possibleColors, unit=userid);
 ```
@@ -572,11 +568,11 @@ As a result, we would get all the different combinations of parameters rankingAl
 It is also possible to use [control flow operators](https://facebook.github.io/planout/docs/planout-language-reference.html) (if else), as well as other [random assignment operators](https://facebook.github.io/planout/docs/random-operators.html) to define more complex experiments. The use of control flow operators is useful to assign variables that depend on the assignment of previous variables, but it is also possible to overwrite others that depend on the experimental conditions, so we could end up writing something like this:
 
 ```bash
-colorsMobile = ['blue’, 'green'];
-if (browser == ‘mobile’) { 
+colorsMobile = ['blue', 'green'];
+if (browser == 'mobile') { 
     linkColor = uniformChoice(choices=colorsMobile,unit=userid);
 } else {
-    linkColor = ‘blue’;  \#no treatment
+    linkColor = 'blue';  \#no treatment
 }
 ```
 
