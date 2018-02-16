@@ -396,12 +396,13 @@ public class ExperimentManager {
 		event.setUseragent(useragent);
 		event.setExperimenter(expowner);
 		String valuestr;
-		if (etype == EventType.BINARY) {
-			byte[] valuebin = ByteStreams.toByteArray(evalue);
-			valuestr = Utils.encodeBinary(valuebin);
-		} else {
+		//if (etype == EventType.BINARY) {
+			//byte[] valuebin = ByteStreams.toByteArray(evalue);
+			//valuestr = Utils.encodeBinary(valuebin);
+			
+		//} else {
 			valuestr = CharStreams.toString(new InputStreamReader(evalue));
-		}
+		//}
 		event.setEvalue(valuestr);
 		return event;
 	}

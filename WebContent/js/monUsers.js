@@ -1,5 +1,5 @@
 /**
- * Experiment Monitoring
+ * Users Monitoring
  */
 var tabmonusr;
 
@@ -8,11 +8,11 @@ $(document).ready(function() {
 	const REFRESH=30000; //update after time in milliseconds
 	
 	const row = "<tr>" +
-			"<td><span class='name'>User name</span></td>" +
-			"<td><span class='rol'>Rol</span></td>" +
-			"<td><span class='created'>Exp. Created</span></td>" +
-			"<td><span class='participated'>Exp. Completed</span></td>" +
-			"<td><span class='left'>Left (running) experiments </span></td>" +
+			"<td><span class='name sort'>User name</span></td>" +
+			"<td><span class='rol sort'>Rol</span></td>" +
+			"<td><span class='created sort'>Exp. Created</span></td>" +
+			"<td><span class='participated sort'>Exp. Completed</span></td>" +
+			"<td><span class='left sort'>Left (running) experiments </span></td>" +
 			"</tr>";
 	
 	var monusr;

@@ -45,6 +45,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 
 import tudelft.dds.irep.data.schema.EventType;
 import tudelft.dds.irep.data.schema.JEvent;
@@ -86,7 +87,7 @@ public class Event {
 				timestamp = Utils.getTimestamp(new Date());
 			
 			ObjectMapper mapper = new ObjectMapper();
-			JsonNode jnode = mapper.readTree(paramvalues);
+			
 			//JParamValues params = mapper.convertValue(jnode, JParamValues.class);
 			JExperiment jexp = em.getExperimentFromConf(idconfig,authuser);
 			String unitExp = jexp.getUnit();
@@ -94,14 +95,17 @@ public class Event {
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
 			
 			JParamValues params;
-			if (paramvalues == null || paramvalues.isEmpty()) {
+			if (paramvalues == null) {
 				params =  mapper.convertValue(em.getParams(jexp.getUnit(), idconfig, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
-				
 			} else {
-				params = mapper.convertValue(paramvalues, JParamValues.class);
+				JsonNode jnode = mapper.readTree(paramvalues);
+				params = mapper.convertValue(jnode, JParamValues.class);
 			}
 			
-			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalue, timestamp,treatment, params, useragent, jexp.getExperimenter());
+			byte[] valuebin = ByteStreams.toByteArray(evalue);
+			InputStream evalueEncoded = new ByteArrayInputStream(Utils.encodeBinary(valuebin).getBytes());
+
+			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), evalueEncoded, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event, authuser);
@@ -143,6 +147,7 @@ public class Event {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+	
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
@@ -154,9 +159,15 @@ public class Event {
 			
 			String etype = inputNode.get("etype").asText();
 			String ename = inputNode.get("ename").asText();
-			JsonNode evalueNode = inputNode.get("evalue");
-			String evalue = evalueNode.toString();
 			
+			String evalue;
+			if (etype.equals(EventType.BINARY.toString()))
+				evalue = inputNode.get("evalue").asText(); //no quotes
+			else {
+				JsonNode evalueNode = inputNode.get("evalue");
+				evalue = evalueNode.toString();
+			}
+
 			String timestamp;
 			if (inputNode.get("timestamp") != null)
 				timestamp = inputNode.get("timestamp").asText();
@@ -176,7 +187,6 @@ public class Event {
 			} else {
 				params = mapper.convertValue(paramnode, JParamValues.class);
 			}
-
 			
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
 			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params, useragent, jexp.getExperimenter());

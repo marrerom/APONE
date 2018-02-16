@@ -471,12 +471,6 @@ public class Experiment {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			
-//			if (request.getCookies()!=null) {
-//				for (Cookie cookie: request.getCookies()) {
-//					if (cookie.getName().equals(idrun))
-//						idunit = cookie.getName();
-//				}
-//			}
 			if (idunit == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
 			
@@ -606,7 +600,7 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response exposureGetParamsJsonTxt(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+	public Response exposureGetParamsText(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		return exposureGetParamsJson(inputJson, useragent, request);
 	}
 	
@@ -626,50 +620,52 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			String idrun = inputNode.get("idconfig").asText();
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			String unitExp = jexp.getUnit();
-			String idunit = null;
-			if (request.getCookies()!=null) {
-				for (Cookie cookie: request.getCookies()) {
-					if (cookie.getName().equals(idrun))
-						idunit = cookie.getName();
-				} 
-			}
-			if (idunit == null)
+			String idunit;
+			JsonNode idunitnode = inputNode.get("idunit");
+
+			if (idunitnode == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
+			else
+				idunit = idunitnode.asText();
 			
-			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
-			Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap, authuser);
+			
+			JParamValues jparams;
+			JsonNode overrides = inputNode.get("overrides");
+			if (overrides == null) {
+				jparams =  mapper.convertValue(em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
+				
+			} else {
+				Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
+				Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap, authuser);
+				jparams = mapper.convertValue(params, JParamValues.class);
+			}
+			
 			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 
 			InputStream is = new ByteArrayInputStream("".getBytes());
 			
-			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
+			
 			ObjectNode node = mapper.createObjectNode();
 			
 			node.putPOJO("params", jparams);
 			node.put("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			node.put("_variant", jtreat.getName());
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
 				node.put("_url", jtreat.getUrl());
-				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
-				response = response.cookie(Utils.getCookie(origin, idrun, idunit));
+				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
+				//response = response.cookie(Utils.getCookie(origin, idrun, idunit));
 				}
 			result = mapper.writeValueAsString(node);
-
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
+			response.header("Access-Control-Allow-Origin", "*");
 	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-	    	response.header("Access-Control-Allow-Credentials", "true");
 	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
-			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-				em.registerEvent(idrun, event, authuser);
-				//em.monitorEvent(event);
-			}
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);

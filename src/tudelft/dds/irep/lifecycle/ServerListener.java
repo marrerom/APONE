@@ -118,6 +118,7 @@ public class ServerListener implements ServletContextListener {
     		ExperimentManager em = new ExperimentManager(db,new RunningExperiments(), channel);
     		sce.getServletContext().setAttribute("ExperimentManager", em);
     		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    		sce.getServletContext().setAttribute("limitedAccess", Boolean.parseBoolean(prop.getProperty("LIMITEDACCESS")));
     		
     		//CREATE PREDEFINED USERS IN DATABASE
     		JUser master = Security.getMasterUser();

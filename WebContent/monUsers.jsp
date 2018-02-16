@@ -51,9 +51,17 @@
 					<div class="menu">
 						<a id='menu_monexp' class="item">Experiments</a>
 						<a id='menu_monusr' class="active item">Users</a>
+					</div>
+				</div>
+
+				<div class="item">
+					<div class="header">Administration</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Users</a>
 
 					</div>
 				</div>
+
 
 			</div>
 		</div>
@@ -74,11 +82,11 @@
 
 							<thead>
 								<tr>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">User name</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Rol</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments created</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Experiments completed</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',5);">Remaining (running) experiments to participate</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',0);">User name</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">Rol</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Experiments created</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments completed</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Remaining (running) experiments to participate</th>
 								</tr>
 							</thead>
 							<tbody>

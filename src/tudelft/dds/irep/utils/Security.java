@@ -54,9 +54,8 @@ public class Security {
 	
 	public static void checkAuthorized(JUser authuser, String username, Useraction action) {
 		if (!isAuthorized(authuser, username, action)) {
-			String msg = "User not authorized";
-			NotAuthorizedException e = new NotAuthorizedException(msg);
-			log.log(Level.WARNING, msg, e);
+			AuthenticationException e = new AuthenticationException();
+			log.log(Level.WARNING, e.getMessage(), e);
 			throw e;
 		}
 	}

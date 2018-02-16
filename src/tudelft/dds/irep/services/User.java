@@ -90,17 +90,23 @@ public class User {
 			AccessToken tok = twitter.getOAuthAccessToken(requestToken, verifier);
 			request.getSession().removeAttribute("requestToken");
 			request.getSession().removeAttribute("twitter");
-			
-			//TODO: check if valid user in db and rol
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Boolean limitedAccess = (Boolean) context.getAttribute("limitedAccess");
+			if (limitedAccess) {
+				em.getUserByIdtwitter(((Long)tok.getUserId()).toString(), Security.getMasterUser());
+			}
 			Security.setAuthenticatedUser(request, em, ((Long)tok.getUserId()).toString(), tok.getScreenName());			
 			
 			URI uri = new URI(request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getServletContext().getContextPath());
 			Response response = Response.seeOther(uri).build();
 			return response;
+		} catch (BadRequestException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
 		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
-		}
+		} 
 	}
 	
 

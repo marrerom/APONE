@@ -191,6 +191,11 @@ function sortTable(tableClass, n) {
 	 	$("#menu_monusr").on("click",function(){
 	 		location.href='monUsers.jsp';
 	 	});
+	 	
+	 	$("#menu_admusr").on("click",function(){
+	 		location.href='adminUsers.jsp';
+	 	});
+
 	 }
 
  

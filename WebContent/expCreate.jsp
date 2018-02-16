@@ -52,6 +52,15 @@
 						<a id='menu_monusr' class="item">Users</a>
 					</div>
 				</div>
+				
+				<div class="item">
+					<div class="header">Administration</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Users</a>
+
+					</div>
+				</div>
+				
 
 			</div>
 		</div>

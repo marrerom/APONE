@@ -55,6 +55,15 @@
 					</div>
 				</div>
 
+				<div class="item">
+					<div class="header">Administration</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Users</a>
+
+					</div>
+				</div>
+
+
 			</div>
 		</div>
 
@@ -71,11 +80,11 @@
 							<thead>
 								<tr>
 								    <th>Status</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',1);">Experiment</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',2);">Started</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',3);">Max. Completed</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',4);">Date to End</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact red celled table _running',5);">Units</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _running',1);">Experiment</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _running',2);">Started</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _running',3);">Max. Completed</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _running',4);">Date to End</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _running',5);">Units</th>
 									<th>Data</th>
 								</tr>
 							</thead>
