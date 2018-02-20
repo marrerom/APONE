@@ -16,6 +16,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -28,21 +29,27 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.fge.jsonschema.core.report.ProcessingReport;
+import com.google.common.base.Preconditions;
+
 import tudelft.dds.irep.utils.Security;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
+import tudelft.dds.irep.data.schema.Status;
 import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExpInfo;
 import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
+import tudelft.dds.irep.utils.JsonValidator;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
@@ -116,10 +123,49 @@ public class User {
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getAuthenticatedUser(@Context HttpServletRequest request) {
 		JUser user = Security.getAuthenticatedUser(request);
-		return user.getName();
+		return user.getIdname();
 	}
 	
 	@Path("/monitoring")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response leaderBoard(@Context HttpServletRequest request) {
+		try {
+			
+			JUser authuser = Security.getMasterUser();
+			UserRol restrictedTo = null; //assignment of experiments to participate restricted to this rol. Null means no restriction
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			JUser filter = new JUser();
+			filter.setRol(UserRol.USER.toString());
+			Collection<JUser> users = em.getUsers(filter, authuser); //only with rol 'user'
+			ObjectMapper mapper = new ObjectMapper();
+			ArrayNode arrayNode = mapper.createArrayNode();
+			for (JUser user: users) {
+				ObjectNode node = mapper.createObjectNode();
+				//node.put("_id", user.get_id());
+				node.put("idname", user.getIdname());
+				//node.put("rol", user.getRol());
+				node.put("ncompleted", getExperimentsEvent(JEvent.COMPLETED_ENAME.toString(), em, user).size());
+				node.put("nparticipated", getExperimentsEvent(JEvent.EXPOSURE_ENAME.toString(), em, user).size());
+				Collection<JConfiguration> created = getOwnExperiments(em, user);
+				//node.put("ncreated", created.size());
+				//node.put("running", created.stream().filter(p -> (p.getRunEnum()== Status.ON || p.getRunEnum()== Status.PAUSED) ).count());
+				node.put("nleft", getCandidateExperiments(getExperimentsEvent(JEvent.COMPLETED_ENAME.toString(), em, user), em,user,restrictedTo).size());
+				arrayNode.add(node);
+			}
+		return Response.ok(mapper.writeValueAsString(arrayNode), MediaType.APPLICATION_JSON).build();
+		} catch (BadRequestException | JsonProcessingException | ParseException | IllegalArgumentException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
+	}
+	
+	@Path("/admin")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response monitoringUsers(@Context HttpServletRequest request) {
@@ -132,12 +178,17 @@ public class User {
 			ArrayNode arrayNode = mapper.createArrayNode();
 			for (JUser user: users) {
 				ObjectNode node = mapper.createObjectNode();
-				node.put("_id", user.get_id());
+				//node.put("_id", user.get_id());
 				node.put("idname", user.getIdname());
+				node.put("name", user.getName());
+				node.put("idTwitter", user.getIdTwitter());
 				node.put("rol", user.getRol());
-				node.put("nparticipated", getCompletedExperiments(em, user).size());
-				node.put("ncreated", getOwnExperiments(em,user).size());
-				node.put("nleft", getCandidateExperiments(getCompletedExperiments(em, user), em,user,restrictedTo).size());
+				node.put("ncompleted", getExperimentsEvent(JEvent.COMPLETED_ENAME.toString(), em, user).size());
+				node.put("nparticipated", getExperimentsEvent(JEvent.EXPOSURE_ENAME.toString(), em, user).size());
+				Collection<JConfiguration> created = getOwnExperiments(em, user);
+				node.put("ncreated", created.size());
+				node.put("nrunning", created.stream().filter(p -> (p.getRunEnum()== Status.ON || p.getRunEnum()== Status.PAUSED) ).count());
+				//node.put("nleft", getCandidateExperiments(getExperimentsEvent(JEvent.COMPLETED_ENAME.toString(), em, user), em,user,restrictedTo).size());
 				arrayNode.add(node);
 			}
 		return Response.ok(mapper.writeValueAsString(arrayNode), MediaType.APPLICATION_JSON).build();
@@ -159,7 +210,7 @@ public class User {
 			JUser authuser = Security.getAuthenticatedUser(request);
 			UserRol restrictedTo = null; //assignment of experiments to participate restricted to this rol. Null means no restriction
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-			Collection<RunningExpInfo> leftlist = getCandidateExperiments(getCompletedExperiments(em, authuser), em, authuser, restrictedTo);
+			Collection<RunningExpInfo> leftlist = getCandidateExperiments(getExperimentsEvent(JEvent.COMPLETED_ENAME.toString(), em, authuser), em, authuser, restrictedTo);
 			if (leftlist.isEmpty())
 				throw new BadRequestException("No more running experiments left to participate");
 			//Select that one with less exposures -tricky: 
@@ -241,10 +292,10 @@ public class User {
 		return result;
 	}
 	
-	private Collection<String> getCompletedExperiments(ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException{
+	private Collection<String> getExperimentsEvent(String eventName, ExperimentManager em, JUser user) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		JUser authuser = Security.getMasterUser();
 		JEvent filterEvent = new JEvent();
-		filterEvent.setEname(JEvent.COMPLETED_ENAME);
+		filterEvent.setEname(eventName);
 		filterEvent.setIdunit(user.getIdname());
 		Set<String> completedExps = em.getEvents(filterEvent,authuser).stream().map(p->p.getIdconfig()).collect(Collectors.toSet());
 		return completedExps;
@@ -296,7 +347,8 @@ public class User {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			if (!authuser.isAdmin())
 				throw new AuthenticationException();
-			
+			if (Security.PredefinedUsers.isPredefined(idname))
+				throw new BadRequestException("Predefined users can not be deleted");
 			JExperiment filter = new JExperiment();
 			filter.setExperimenter(idname);
 			for (JExperiment exp: em.getExperiments(filter, authuser))
@@ -317,4 +369,42 @@ public class User {
 		}
 	}
 	
+	@Path("add")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	public String addUser(String newuser, @Context HttpServletRequest request) {
+		try {
+			JUser authuser = Security.getAuthenticatedUser(request);
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			if (!authuser.isAdmin())
+				throw new AuthenticationException();
+			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
+			ObjectMapper mapper = new ObjectMapper();
+			
+			JsonNode inputNode = mapper.readTree(newuser);
+			String name = inputNode.get("name").asText();
+			String idTwitter = inputNode.get("idTwitter").asText();
+			String rol = inputNode.get("rol").asText();
+			
+			JUser juser = mapper.convertValue(inputNode, JUser.class);
+			ProcessingReport pr = jval.validate(juser,inputNode, context);
+			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			JUser userAdded;
+			if (juser.getRolEnum() == UserRol.ADMIN)
+				userAdded = em.createMasterUser(idTwitter, name, authuser);
+			else
+				userAdded = em.createRegularUser(idTwitter, name, authuser);
+			return userAdded.getIdname();
+		} catch (BadRequestException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (AuthenticationException e) {
+			throw new AuthenticationException();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		}
+		
+	}
 }

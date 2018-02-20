@@ -3,6 +3,7 @@
 <head>
 <meta content='text/html;charset=utf-8' http-equiv='Content-Type'>
 <meta content='utf-8' http-equiv='encoding'>
+<meta name="robots" content="noindex, nofollow">
 <title>Semantic Test</title>
 <link rel='stylesheet' href='css/semantic.min.css'>
 <link rel='stylesheet' href='css/specific.css'>
@@ -23,8 +24,8 @@
 
 %> 
 	<div class='ui blue stacked segment'>
-		<h4 class='ui blue huge header'>Information Retrieval
-			Experimental Platform</h4>
+			<h4 class='ui blue huge header'>Academic Platform for ONline Experiments (APONE)</h4>
+			<div class='user'>User: <%= session.getAttribute("idname") %></div>
 	</div>
 	<div class='ui padded content grid' style='height: 90%;'>
 		<div class='two wide column'>
@@ -46,21 +47,21 @@
 				</div>
 
 				<div class="item">
+					<div class="header">Users</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Explore</a>
+						<a id='menu_usrnew' class="item">New User</a>
+					</div>
+				</div>
+
+
+				<div class="item">
 					<div class="header">Monitoring</div>
 					<div class="menu">
 						<a id='menu_monexp' class="item">Experiments</a>
 						<a id='menu_monusr' class="item">Users</a>
 					</div>
 				</div>
-
-				<div class="item">
-					<div class="header">Administration</div>
-					<div class="menu">
-						<a id='menu_admusr' class="item">Users</a>
-
-					</div>
-				</div>
-
 
 			</div>
 		</div>

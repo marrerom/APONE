@@ -33,19 +33,24 @@ public class JUser extends JCommon implements Serializable {
 	protected String _id;
 	protected String idTwitter;
 	protected String idname; //unique name assigned. The actual name in twitter of someone may change, but this id must stay the same
-	protected String name; //screen name in twitter (it can be changed in twitter)
+	protected String name; //screen name in twitter (it can be changed in twitter). Not used except to create the idname. After that, idname is the one used
 	protected String rol;
 	
 	public JUser() {
 		
 	}
-	
-	public JUser(String idname, UserRol rol) {
+
+	public JUser(String idname, String idTwitter, UserRol rol) {
 		this.idname = idname;
 		this.rol = rol.toString();
 		this.name = idname;
-		this.idTwitter = idname;
+		this.idTwitter = idTwitter;
 	}
+	
+	public JUser(String idname, UserRol rol) {
+		this(idname, idname, rol);
+	}
+	
 	
 	public String get_id() {
 		return _id;

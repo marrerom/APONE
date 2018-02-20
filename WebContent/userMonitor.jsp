@@ -3,6 +3,7 @@
 <head>
 <meta content='text/html;charset=utf-8' http-equiv='Content-Type'>
 <meta content='utf-8' http-equiv='encoding'>
+<meta name="robots" content="noindex, nofollow">
 <title>Semantic Test</title>
 <link rel='stylesheet' href='css/semantic.min.css'>
 <link rel='stylesheet' href='css/specific.css'>
@@ -11,7 +12,7 @@
 <script src='js/semantic.min.js'></script>
 <script src='js/general.js'></script>
 <script src='js/calendar.min.js'></script>
-<script src='js/monUsers.js'></script>
+<script src='js/userMonitor.js'></script>
 </head>
 <body>
 
@@ -24,8 +25,8 @@
 
 %> 
 	<div class='ui blue stacked segment'>
-		<h4 class='ui blue huge header'>Information Retrieval
-			Experimental Platform</h4>
+		<h4 class='ui blue huge header'>Academic Platform for ONline Experiments (APONE)</h4>
+			<div class='user'>User: <%= session.getAttribute("idname") %></div>
 	</div>
 	<div class='ui padded content grid' style='height: 90%;'>
 		<div class='two wide column'>
@@ -46,6 +47,15 @@
 					</div>
 				</div>
 
+
+				<div class="item">
+					<div class="header">Users</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Explore</a>
+						<a id='menu_usrnew' class="item">New User</a>
+					</div>
+				</div>
+
 				<div class="item">
 					<div class="header">Monitoring</div>
 					<div class="menu">
@@ -53,15 +63,6 @@
 						<a id='menu_monusr' class="active item">Users</a>
 					</div>
 				</div>
-
-				<div class="item">
-					<div class="header">Administration</div>
-					<div class="menu">
-						<a id='menu_admusr' class="item">Users</a>
-
-					</div>
-				</div>
-
 
 			</div>
 		</div>
@@ -82,11 +83,10 @@
 
 							<thead>
 								<tr>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',0);">User name</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">Rol</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Experiments created</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments completed</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Remaining (running) experiments to participate</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',0);">User unique name</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">Experiments participated</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Experiments completed</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Remaining (running) experiments not completed</th>
 								</tr>
 							</thead>
 							<tbody>

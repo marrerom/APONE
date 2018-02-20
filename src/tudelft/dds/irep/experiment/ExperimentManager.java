@@ -45,6 +45,7 @@ import tudelft.dds.irep.data.schema.JParamValues;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.messaging.EventMonitorConsumer;
 import tudelft.dds.irep.messaging.EventRegisterConsumer;
 import tudelft.dds.irep.utils.BadRequestException;
@@ -478,8 +479,12 @@ public class ExperimentManager {
 		return db.getUserByIdname(idname, authuser);
 	}
 	
-	public JUser createUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
-		return db.addUser(idTwitter, screenName, authuser);
+	public JUser createMasterUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
+		return db.addUser(idTwitter, screenName, UserRol.ADMIN, authuser);
+	}
+	
+	public JUser createRegularUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
+		return db.addUser(idTwitter, screenName, UserRol.USER, authuser);
 	}
 	
 	public Collection<JUser> getUsers(JUser filter, JUser authuser) throws IOException, ParseException{

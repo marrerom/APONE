@@ -145,7 +145,7 @@ public class MongoDB implements Database {
 		
 	}
 	
-	public JUser addUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException {
+	public JUser addUser(String idTwitter, String screenName, UserRol rol, JUser authuser) throws ParseException, IOException {
 		if (idTwitter == null)
 			throw new BadRequestException("addUser: IdTwitter can not be null");
 		
@@ -154,14 +154,15 @@ public class MongoDB implements Database {
 		filter.setIdTwitter(idTwitter);
 		List<JUser> sameidtwitter = this.getUsers(filter, authuser);
 		if (!sameidtwitter.isEmpty()) { //already exists
-			return sameidtwitter.get(0);
+			JUser existing = sameidtwitter.get(0);
+			return existing;
 			//throw new BadRequestException("User with idTwitter "+newuser.getIdTwitter()+" already exists in the database");
 		}
 		JUser newuser = new JUser();
 		newuser.setIdTwitter(idTwitter);
 		newuser.setName(screenName);
 		newuser.setIdname(setIdname(screenName, screenName, authuser, 1));
-		newuser.setRol(UserRol.USER.toString());
+		newuser.setRol(rol.toString());
 		ObjectId iduser = new ObjectId();
 		newuser.set_id(iduser.toString());
 		ObjectMapper mapper = new ObjectMapper();

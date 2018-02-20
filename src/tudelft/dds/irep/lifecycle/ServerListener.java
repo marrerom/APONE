@@ -31,9 +31,11 @@ import com.rabbitmq.client.ShutdownSignalException;
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
 import tudelft.dds.irep.data.schema.JUser;
+import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExperiments;
 import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Security;
 
@@ -124,17 +126,33 @@ public class ServerListener implements ServletContextListener {
     		JUser master = Security.getMasterUser();
     		JUser anonymous = Security.getAnonymousUser();
     		JUser client = Security.getClientUser();
-    		if (em.getUsers(master, master).isEmpty()) {
-    				em.createUser(master.getIdTwitter(), master.getName(), master);
-    			}
-    		if (em.getUsers(client, master).isEmpty()) {
-				em.createUser(client.getIdTwitter(), client.getName(), master);
-			}
-    		if (em.getUsers(anonymous, master).isEmpty()) {
-				em.createUser(anonymous.getIdTwitter(), anonymous.getName(), master);
-			}
+    		JUser socialdatadelft = new JUser("socialdatadelft",  "937708183979773955", UserRol.ADMIN);
 
-    	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
+	
+    		if (em.getUsers(master, master).isEmpty()) {
+    			JUser masteruser = em.createMasterUser(master.getIdTwitter(), master.getName(), master);
+    			if (!masteruser.getIdname().equals(master.getIdname()))
+    				throw new InternalServerException("Master (MASTER) user name already existing in the database for other user");
+    		}
+    		if (em.getUsers(client, master).isEmpty()) {
+    			JUser clientuser = em.createMasterUser(client.getIdTwitter(), client.getName(),  master);
+    			if (!clientuser.getIdname().equals(client.getIdname()))
+    				throw new InternalServerException("Client (CLIENT) user name already existing in the database for other user");
+    		}
+    		
+    		if (em.getUsers(socialdatadelft, master).isEmpty()) {
+    			JUser sdduser = em.createMasterUser(socialdatadelft.getIdTwitter(), socialdatadelft.getName(), master);
+    			if (!sdduser.getIdname().equals(socialdatadelft.getIdname()))
+    				throw new InternalServerException("SocialDataDelft (socialdatadelft) user name already existing in the database for other user");
+    		}
+
+    		if (em.getUsers(anonymous, master).isEmpty()) {
+				JUser anonuser = em.createRegularUser(anonymous.getIdTwitter(), anonymous.getName(), master);
+    			if (!anonuser.getIdname().equals(anonymous.getIdname()))
+    				throw new InternalServerException("Anonymous (ANONYMOUS) user name already existing in the database for other user");
+
+    		}
+    	} catch (Exception  e) {
     		log.log(Level.SEVERE, e.getMessage(), e);
     		throw new RuntimeException(e);
 		}

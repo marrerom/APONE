@@ -15,6 +15,7 @@ import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JTreatment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.Status;
+import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.utils.AuthenticationException;
 import tudelft.dds.irep.utils.BadRequestException;
 
@@ -54,7 +55,7 @@ public interface Database {
 	
 	public String addEvent(JEvent event, JUser authuser) throws BadRequestException, IOException, ParseException;
 	
-	public JUser addUser(String idTwitter, String screenName, JUser authuser) throws ParseException, IOException;
+	public JUser addUser(String idTwitter, String screenName, UserRol rol, JUser authuser) throws ParseException, IOException;
 	
 	public void updateUserParticipation(JUser user, String[] newlist, JUser authuser) throws BadRequestException, IOException;
 	

@@ -10,9 +10,9 @@
 "properties" : 
 	{
 	"_id": {"type":"string"},
-	"idTwitter": {"type": "number"},
+	"idTwitter": {"type": "string"},
 	"name": {"type":"string"},
-	"namesuffix": {"type":"number"},
+	"idname": {"type":"string"},
 	"rol" : {"enum": ["USER", "ADMIN"], "default":"USER"}
 	}
 

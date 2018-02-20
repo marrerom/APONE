@@ -75,22 +75,23 @@ $(document).ready(function() {
 		});
 		
 		tabexpsearch.find(".ui.button._remove").on("click", function() {
-			$(".ui.modal._info").find(".content").empty();
-			$(".ui.modal._info").find(".content").append("<p>The associated events will be removed. Continue?</p>");
-			$(".ui.modal._info").find(".content").append("<div class='actions'><div class='ui approve button'>Yes</div><div class='ui cancel button'>No</div></div>");
-			$(".ui.modal._info").modal('setting', {
-		      onApprove : function() {
-				tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
-					var idrun = $(this).closest(".item").attr("id");
-					removeExperiment(idrun);
-				});
-		      }
+			tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").each(function(){
+				var idrun = $(this).closest(".item").attr("id");
+				$(".ui.modal._info").find(".content").empty();
+				$(".ui.modal._info").find(".content").append("<p>You are about to remove experiment "+idrun+"</p>");
+				$(".ui.modal._info").find(".content").append("<p>The associated events will be removed. Continue?</p>");
+				$(".ui.modal._info").find(".content").append("<div class='actions'><div class='ui approve button'>Yes</div><div class='ui cancel button'>No</div></div>");
+				$(".ui.modal._info").modal('setting', {
+					onApprove : function() {
+						removeExperiment(idrun);
+						}
+					});
+			
+				$(".ui.modal._info").modal('show');
 			});
 			 
-			$(".ui.modal._info").modal('show');
-			
 		});
-
+		
 		tabexpsearch.find(".ui.button._new").on("click", function(){
 			var idrun = tabexpsearch.find(".ui.relaxed.divided.list").children().find("[type=checkbox]:checked").first().closest(".item").attr("id");
 			if (idrun){	newConfig(idrun);}

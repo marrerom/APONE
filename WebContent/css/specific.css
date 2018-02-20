@@ -23,4 +23,8 @@ li.item:before {
 	left:unset;
 }
 
+.user{
+	float: right;
+}
+
 

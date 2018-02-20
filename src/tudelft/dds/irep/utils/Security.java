@@ -67,8 +67,9 @@ public class Security {
 	}
 	
 	public synchronized static JUser setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
-		JUser user = em.createUser(idTwitter, screenName, getMasterUser());
+		JUser user = em.createRegularUser(idTwitter, screenName, getMasterUser());
 		request.getSession().setAttribute("authuser", user);
+		request.getSession().setAttribute("idname", user.getIdname());
 		return user;
 	}
 	
