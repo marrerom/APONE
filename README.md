@@ -36,7 +36,9 @@ You may have already created two clients, one per variant, or two versions of th
 APONE offers a solution to all those problems so the experimenter can focus on the experiment design. The experimenter defines the experiments in the platform through a web GUI, and makes RESTful calls from the client/s to assign a variant to a user or to 
 register information about the interaction. The experimenter just has to develop and deploy the client, include in it calls to APONE to register events, and define and start an experiment in the platform to make it work:
 
-<img align="center" src="docs/images/process2.png">
+<p align="center">
+  <img src="docs/images/process2.png">
+</p><br>
 
 ## Usage Scenarios
 
@@ -44,34 +46,42 @@ register information about the interaction. The experimenter just has to develop
 
 Alice, an Information Retrieval researcher, wants to investigate whether personalized query suggestions lead to more clicks than non-personalized suggestions. She develops three variants, deploys them on three server instances and starts an APONE experiment: each variant is assigned a URL. The users all receive the same APONE endpoint and are automatically assigned and redirected to the different variants depending on the experimental conditions (e.g. the user ID saved in cookies). The clicks on a personalized suggestion are registered from the variants. Alice can check in real-time APONE’s dashboard for the progress of her experiments, including the number of exposures and the registered events per exposure. Once ended, she proceeds to filter and download the information saved to analyze it. 
 
-
-<img align="center" src="docs/images/processAlice2.png">
+<p align="center">
+   <img src="docs/images/processAlice2.png">
+</p><br>
 
 ### Bob
 
 Bob has designed three different search boxes for the site search of his university. Design A is the most radical and thus Bob wants just 10% of the university website visitors to receive it, designs B and C should receive an equal fraction of all visitors. He hypothesizes that design A will lead to longer queries. Query length is thus the information to register. He creates a corresponding experiment on APONE where each variant has a variable and a value associated (eg. query-length = 20). For every visitor of the university website, an AJAX call requests the platform (using their session ID as key) for the corresponding variant. The search box with the received query length is displayed and the lengths of the issued queries are registered in the platform, also with an AJAX request. After 5,000 exposures in total the experiment is complete and the standard design is automatically returned to the visitors. 
 
+<p align="center">
 <img align="center" src="docs/images/processBob2.png">
+</p><br>
 
 ### Charlie
 
 Charlie runs a similar experiment to Bob's for his own website but he thinks that the caption, length and color of the search box may have different impacts on the query length. He defines a multivariate experiment to automatically expose his website users to all the possible combinations. He assigns a script to the experiment where the three variables are assigned different values. For every visitor of his website, it request the variant to the platform, which will include the combination of values of those variables. In this case the requests to APONE and changes to the search box are made from the server to avoid malicious users modifying the experimental conditions. 
 
-<img align="center" src="docs/images/processCharlie2.png">
+<p align="center">
+<img src="docs/images/processCharlie2.png">
+</p><br>
+
 
 ### Dave's course
 
 Dave teaches a graduate course where students have to reproduce A/B experiments. The students deploy their clients in different public servers and associate the URL where they are hosted to the experiments defined in APONE. Each student accesses the platform to participate in each other's experiment: by clicking a button, they are assigned randomly to a running experiment. APONE ensures that no user can access several variants of the same experiment or participate multiple times in it once they complete it (the experimenter decides when an experiment is completed by sending a signal to the platform). Dave can check the status of all the experiment as well as the most active users in a leaderboard.
 
-
-<img align="center" src="docs/images/processDave2.png">
-
+<p align="center">
+<img src="docs/images/processDave2.png">
+</p><br>
 
 ## Arquitecture
 
 APONE builds upon [PlanOut](https://facebook.github.io/planout/) to define experiments, and offers RESTful endpoints and a web GUI to easily create, manage and monitor them. Therefore the platform is completely independent of the programming language of the client or the domain of the experiments you want to run.
 
-<img align="center" src="docs/images/components2.jpg">
+<p align="center">
+<img src="docs/images/components2.jpg">
+</p><br>
 
 APONE delegates authentication to Twitter’s OAuth, and makes use of RabbitMQ as message broker to digest events sent by clients. The events are then stored in a MongoDB backend. All experiments and collected events can be managed and monitored in real-time through a Web interface implemented in JavaScript.
 
@@ -107,4 +117,4 @@ It is also possible to download and install the platform following the [installa
 
 
 <br>
-<p align="center"><span style=“color:grey;font-size:50%”>[Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by tvol / [CC BY](https://creativecommons.org/licenses/by/2.0/)</span></p>
+[Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by tvol / [CC BY](https://creativecommons.org/licenses/by/2.0/)
