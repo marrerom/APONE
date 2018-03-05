@@ -117,5 +117,6 @@ It is also possible to download and install the platform from [Github](https://g
 - (Statistical) analysis of events from within the platform
 <br>
 <br>
+
 ***
 [Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by University of Exeter / [CC BY](https://creativecommons.org/licenses/by/2.0/)
