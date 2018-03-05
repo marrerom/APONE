@@ -1,7 +1,7 @@
 # Academic Platform for ONline Experiments
 
 
-<img align="right" title="University of Exeter" src="docs/images/intro.jpg" alt="University of Exeter">
+<img align="right" title="University of Exeter" src="docs/images/intro2.jpg" alt="University of Exeter">
 
 Open source platform to set up **controlled A/B experiments on the Web** 
 
@@ -90,7 +90,7 @@ APONE delegates authentication to Twitter’s OAuth, and makes use of RabbitMQ a
 ## How
 A [user guide](docs/APONEUserGuide.md) explains how to easily define, run and control an experiment using a demo Client ([Client Example, or ClientE](https://marrerom.github.io/ClientE/)) and the [running instace of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), where you can also find three running experiments with ClientE for demonstration purposes. ClientE and most examples in the user guide are focused on the Information Retrieval domain. 
 
-It is also possible to download and install the platform following the [installation instructions](docs/installation.md).
+It is also possible to download and install the platform from [Github](https://github.com/marrerom/APONE) following the [installation instructions](docs/installation.md).
 
 ## Current Features
 
@@ -115,7 +115,7 @@ It is also possible to download and install the platform following the [installa
 
 ## Future Features
 - (Statistical) analysis of events from within the platform
-
-***
 <br>
+<br>
+***
 [Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by University of Exeter / [CC BY](https://creativecommons.org/licenses/by/2.0/)
