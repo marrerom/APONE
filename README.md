@@ -10,6 +10,7 @@ Open source platform to set up **controlled A/B experiments on the Web**
 A/B testing has become the norm within Web portals to decide what changes should be implemented and which ones discarded. Online users are exposed to two or more different variants (usually changes in interfaces) and according to their behaviour, the best approach is selected.
 
 A/B testing is also used in the academic world to test with real users if the developed approach (usually an algorithm) is better than the state-of-the art approach, or to measure the impact that the changes in specific features have in the users: 
+<br>
 <table><tbody>
   <tr><td align="center">
     <p>Would users make longer queries if we offer them longer search boxes?</p>
@@ -115,6 +116,6 @@ It is also possible to download and install the platform following the [installa
 ## Future Features
 - (Statistical) analysis of events from within the platform
 
-
+***
 <br>
-[Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by tvol / [CC BY](https://creativecommons.org/licenses/by/2.0/)
+[Photo](https://www.flickr.com/photos/26126239@N02/14381457066/) by University of Exeter / [CC BY](https://creativecommons.org/licenses/by/2.0/)
