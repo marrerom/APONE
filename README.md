@@ -1,9 +1,10 @@
 # Academic Platform for ONline Experiments
 
+Open source platform to set up **controlled A/B experiments on the Web** 
+
+***
 
 <img align="right" title="University of Exeter" src="docs/images/intro2.jpg" alt="University of Exeter">
-
-Open source platform to set up **controlled A/B experiments on the Web** 
 
 ## What
 
