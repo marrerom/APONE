@@ -291,7 +291,7 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <tr class="odd">
 <td align="left"><p>ename</p></td>
 <td align="left"><p>string</p></td>
-<td align="left"><p>Type of event (e.g. ‘click’). Reserved names are ‘exposures’ and ‘completed’.</p></td>
+<td align="left"><p>Type of event (e.g. ‘click’). Reserved names are ‘exposure’ and ‘completed’.</p></td>
 </tr>
 <tr class="odd">
 <td align="left"><p>evalue</p></td>
