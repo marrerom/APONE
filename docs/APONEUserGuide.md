@@ -260,7 +260,7 @@ The client is responsible of sending to the platform the information related to 
 POST /service/event/register
 ```
 
-which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the information of the event we want to save (see Table 1).
+which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup><sup><a href="#ftnt7" id="ftnt_ref7">[7]</a></sup>with the information of the event we want to save (see Table 1).
 
 
 <a href="" id="t.f4384f47af2b59f6a5c664fcf930d37adc4ec76c"></a><a href="" id="t.0"></a>
