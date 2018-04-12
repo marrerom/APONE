@@ -77,7 +77,7 @@ Dave teaches a graduate course where students have to reproduce A/B experiments.
 <img src="docs/images/processDave2.png">
 </p><br>
 
-## Arquitecture
+## Architecture
 
 APONE builds upon [PlanOut](https://facebook.github.io/planout/) to define experiments, and offers RESTful endpoints and a web GUI to easily create, manage and monitor them. Therefore the platform is completely independent of the programming language of the client or the domain of the experiments you want to run.
 
