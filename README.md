@@ -116,6 +116,7 @@ It is also possible to download and install the platform from [Github](https://g
 
 ## Future Features
 - (Statistical) analysis of events from within the platform
+- JavaScript library with functions to make easier the interaction with the platform
 <br>
 <br>
 
