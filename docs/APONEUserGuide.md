@@ -37,7 +37,7 @@ In order to show the capabilities of the platform as well as to ease the develop
 
 APONE is not restricted to any specific domain of research. The domain of the experiments defined and run is actually given by the client linked to it, which determines the experience of the user. Nonetheless, the provided ClientE and most examples in this user guide are limited to the Information Retrieval domain.
 
-The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the [installation guide](docs/installation.md).
+The purpose of this guide is to explain how to define, run and control an experiment. We assume that the experimenter has online access to APONE. It is also possible to download and install the platform following the [installation guide](installation.md).
 
 The repository is located at: [https://github.com/marrerom/APONE](https://github.com/marrerom/APONE)
 
@@ -239,14 +239,14 @@ Figure 6. Events saved from ClientE.
 
 Each event is saved in JSON format. You should see those events in the right window in *Events::Manage*, together with a predefined type of event *exposure* (which will be used together with *completed* to monitor the experiment). Predefined events are also registered by clients; in the case of ClientE, the exposure event is registered every time the page is loaded. Click on the events to check the information they contain, or filter, select and download those of interest for you in CSV or JSON format by using the buttons at the bottom.
 
-You can also check the status of the experiment in *Monitoring::Experiments*. There you should see the experiments running, the number of different experimental units (eg. users) which have completed/been exposed to the experiment (we will talk about this in the next section). Clicking on those numbers, they breakdown into groups according to the variant assigned<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup>.
+You can also check the status of the experiment in *Monitoring::Experiments*. There you should see the experiments running, the number of different experimental units (eg. users) which have completed/been exposed to the experiment (we will talk about this in the next section). Clicking on those numbers, they breakdown into groups according to the variant assigned.
 
 <br>
 ### Step 4. System in Production
 
 When you develop your own client, after making sure everything works as expected, you will need to host it in a public domain, so any user can access it. Create a new experiment in the platform with the proper URLs, and remember to update the new experiment identifier in your client.
 
-Once the client is up and running in the new host, you can turn on the experiment in the platform. The users of the platform will be able to participate in the running experiments created by other users by pressing the button *Participate in an experiment*<sup><a href="#cmnt7" id="cmnt_ref7">[7]</a></sup> from the menu *Monitoring::Users*. There you can also see how many experiments you have created, in how many experiments you have participated (and completed the experiment) and the remaining number of experiments you can participate in (those which are running and you have not completed yet).
+Once the client is up and running in the new host, you can turn on the experiment in the platform. The users of the platform will be able to participate in the running experiments created by other users by pressing the button *Participate in an experiment* from the menu *Monitoring::Users*. There you can also see how many experiments you have created, in how many experiments you have participated (and completed the experiment) and the remaining number of experiments you can participate in (those which are running and you have not completed yet).
 
 Maybe it is a good idea in general to test first the experiment with real users for a short period of time. To this end, you can create the experiment (maybe with more users assigned to control if it is safer), and check the events are properly registered. Afterwards, selecting the experiment from *Experiment::Manage*, you can create a new experiment with the button *New conf.* which will create an experiment with exactly the same metadata (except for the identifier) and variants, but you can assign a different distribution of users among variants. Now you can stop or remove the previous one, and start the new one. Again, remember to update the experiment identifier in your client.
 
@@ -260,24 +260,25 @@ The client is responsible of sending to the platform the information related to 
 POST /service/event/register
 ```
 
-which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the information of the event we want to save (see Table 1).
+which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup><sup><a href="#ftnt7" id="ftnt_ref7">[7]</a></sup>with the information of the event we want to save (see Table 1).
 
 
 <a href="" id="t.f4384f47af2b59f6a5c664fcf930d37adc4ec76c"></a><a href="" id="t.0"></a>
 
 <table>
+<caption>Table 1. JSON consumed by the endpoint to register an event.</caption>
 <colgroup>
 <col width="33%" />
 <col width="33%" />
 <col width="33%" />
 </colgroup>
 <tbody>
-<tr class="odd">
-<td align="left"><p>name</p></td>
-<td align="left"><p>type</p></td>
-<td align="left"><p>comment</p></td>
-</tr>
 <tr class="even">
+<th align="left"><p>name</p></th>
+<th align="left"><p>type</p></th>
+<th align="left"><p>comment</p></th>
+</tr>
+<tr class="odd">
 <td align="left"><p>idconfig</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experiment</p></td>
@@ -287,17 +288,17 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experimental unit (eg. user)</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>ename</p></td>
 <td align="left"><p>string</p></td>
-<td align="left"><p>Type of event (e.g. ‘click’). Reserved names are ‘exposures’ and ‘completed’.</p></td>
+<td align="left"><p>Type of event (e.g. ‘click’). Reserved names are ‘exposure’ and ‘completed’.</p></td>
 </tr>
 <tr class="odd">
 <td align="left"><p>evalue</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Information we want to save</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>etype </p></td>
 <td align="left"><p>Enum: [“BINARY”, “STRING”, “JSON”]</p></td>
 <td align="left"><p>Data type of the information contained in evalue. It will determine the type of data used to save the contents in the database. If the contents are binary, they should be previously encoded in Base64<sup><a href="#ftnt6" id="ftnt_ref6">[8]</a></sup>.</p></td>
@@ -307,16 +308,13 @@ which consumes a JSON<sup><a href="#ftnt6" id="ftnt_ref6">[6]</a></sup> with the
 <td align="left"><p>object</p></td>
 <td align="left"><p>Optional: if you use PlanOut (see section 7.2), pairs variable-value received (the platform can not always calculate them as some may have been overwritten).</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>timestamp</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Optional: timestamp of the event (ISO 8601 format). If it is not set then the platform will assign the current timestamp when it starts processing the petition.</p></td>
 </tr>
 </tbody>
 </table>
-
-Table 1. JSON consumed by the endpoint to register an event.
-
 
 When we register an event, the variant name assigned to the user will also be saved automatically, together with the information about the user agent, the owner of the experiment, and a unique identifier of the event.
 
@@ -375,7 +373,7 @@ A new experiment has three areas of information to be filled: metadata about the
 -   Name: name or any other identification of the experiment. Useful to look it up or identify it quickly when searching or monitoring our experiments. This is not a unique identifier of an experiment, it is just to make it easier the search and visualization of a specific experiment.
 -   Description: a description of the experiment. It should be a brief summary of objectives and methodology, that is, what we want to prove with the experiment, and how we are going to do it.
 
-**Variants: **
+**Variants:**
 
 -   Name: name to identify the specific variant of the experiment (eg. in ColorExp, *Blue* and *Green*).
 -   Description: brief description of the approach the variant represents. 
@@ -420,7 +418,7 @@ When an experiment is running, we can register events from our client through ca
 -   Variant: name of the variant the user is being exposed to.
 -   Pairs PlanOut variable-value: name and values of the PlanOut variables (if any) for that specific experimental unit.
 
-**Interaction: **
+**Interaction:**
 
 -   Unit id: identification of the experimental unit (typically a user).
 -   Timestamp: timestamp of the event.
@@ -498,18 +496,19 @@ With this endpoint it is possible to set values of existing variables in the def
 <a href="" id="t.7ecf52ee33dbf14a50751162c93b37e2730da86b"></a><a href="" id="t.1"></a>
 
 <table>
+<caption>Table 2. JSON consumed by the endpoint to get information of the assigned variant.</caption>
 <colgroup>
 <col width="33%" />
 <col width="33%" />
 <col width="33%" />
 </colgroup>
 <tbody>
-<tr class="odd">
-<td align="left"><p>name</p></td>
-<td align="left"><p>type</p></td>
-<td align="left"><p>comment</p></td>
-</tr>
 <tr class="even">
+<th align="left"><p>name</p></th>
+<th align="left"><p>type</p></th>
+<th align="left"><p>comment</p></th>
+</tr>
+<tr class="odd">
 <td align="left"><p>idconfig</p></td>
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experiment</p></td>
@@ -519,16 +518,13 @@ With this endpoint it is possible to set values of existing variables in the def
 <td align="left"><p>string</p></td>
 <td align="left"><p>Id of the experimental unit (eg. user)</p></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><p>overrides</p></td>
 <td align="left"><p>object</p></td>
 <td align="left"><p>JSON document with the pairs variable-values we want to set before running the corresponding PlanOut script.</p></td>
 </tr>
 </tbody>
 </table>
-
-Table 2. JSON consumed by the endpoint to get information of the assigned variant.
-
 <br>
 ### 7.2 PlanOut
 
@@ -551,8 +547,8 @@ When the platform assigns a variant according to the value of an experimental un
 However, we can also define multivariate experiments and and automatically run full-factorial experiments thanks to the random operators that PlanOut language includes. For example, if we wanted to test the impact of the link color and the ranking algorithm at the same time, we could create one variant with the following script: 
 
 ```bash
-possibleRankings = [‘default’,‘BM25’];
-possibleColors = ['blue’, 'green'];
+possibleRankings = ['default','BM25'];
+possibleColors = ['blue', 'green'];
 rankingAlg = uniformChoice(choices=possibleRankings, unit=userid);
 linkColor = uniformChoice(choices=possibleColors, unit=userid);
 ```
@@ -572,11 +568,11 @@ As a result, we would get all the different combinations of parameters rankingAl
 It is also possible to use [control flow operators](https://facebook.github.io/planout/docs/planout-language-reference.html) (if else), as well as other [random assignment operators](https://facebook.github.io/planout/docs/random-operators.html) to define more complex experiments. The use of control flow operators is useful to assign variables that depend on the assignment of previous variables, but it is also possible to overwrite others that depend on the experimental conditions, so we could end up writing something like this:
 
 ```bash
-colorsMobile = ['blue’, 'green'];
-if (browser == ‘mobile’) { 
+colorsMobile = ['blue', 'green'];
+if (browser == 'mobile') { 
     linkColor = uniformChoice(choices=colorsMobile,unit=userid);
 } else {
-    linkColor = ‘blue’;  \#no treatment
+    linkColor = 'blue';  #no treatment
 }
 ```
 

@@ -50,9 +50,9 @@ Download or clone the project APONE from [github](https://github.com/marrerom/AP
 </colgroup>
 <tbody>
 <tr class="odd">
-<td align="left"><p><span class="c11 c1">Property</span></p></td>
-<td align="left"><p><span class="c11 c1">Predefined Value</span></p></td>
-<td align="left"><p><span class="c11 c1">Comment</span></p></td>
+<th align="left"><p><span class="c11 c1">Property</span></p></th>
+<th align="left"><p><span class="c11 c1">Predefined Value</span></p></th>
+<th align="left"><p><span class="c11 c1">Comment</span></p></th>
 </tr>
 <tr class="even">
 <td align="left"><p><span class="c1">MONGO</span><span class="c1">HOST</span></p></td>
@@ -100,10 +100,10 @@ Download or clone the project APONE from [github](https://github.com/marrerom/AP
 
 ## 5. Generate WAR
 
-Generate the WAR file to deploy in Tomcat. You can do this easily with Maven, by writing the following command in the project folder:
+Generate the WAR file to deploy in Tomcat. You can get it directly from the repository (release) or you can generate it easily with Maven, by writing the following command in the project folder:
 
 ```bash
-mvn clean install mvn install -DskipTests
+mvn clean install -DskipTests
 ```
 It will generate the WAR file in the *target* folder of the project. Make sure you skip the tests (-DskipTest) to generate the WAR file, as they requires the WAR file already deployed in a server in order to test the functionality. 
 
@@ -131,9 +131,9 @@ Previously, you have to make sure that the platform is deployed, and the *config
 </colgroup>
 <tbody>
 <tr class="odd">
-<td align="left"><p><span class="c1 c11">Property</span></p></td>
-<td align="left"><p><span class="c11 c1">Predefined Value</span></p></td>
-<td align="left"><p><span class="c11 c1">Comment</span></p></td>
+<th align="left"><p><span class="c1 c11">Property</span></p></th>
+<th align="left"><p><span class="c11 c1">Predefined Value</span></p></th>
+<th align="left"><p><span class="c11 c1">Comment</span></p></th>
 </tr>
 <tr class="even">
 <td align="left"><p><span class="c11 c12 c4">HOST</span></p></td>
