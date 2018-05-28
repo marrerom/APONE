@@ -113,10 +113,11 @@ It is also possible to download and install the platform from [Github](https://g
 - Assignment methods: client-side, server-side, traffic-splitting
 - RESTful web services
 - Web GUI to manage experiments and events
+- [JavaScript library](https://github.com/marrerom/APONE/blob/master/resources/jsApone.js) with functions to make easier the interaction with the platform
 
 ## Future Features
 - (Statistical) analysis of events from within the platform
-- JavaScript library with functions to make easier the interaction with the platform
+
 <br>
 <br>
 
