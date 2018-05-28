@@ -23,6 +23,10 @@ var monitorUsersURL =  "service/user/monitoring";
 var assignmentURL =  "service/user/assignexp";
 var completedURL =  "service/user/completedexp";
 var testURL =  "service/experiment/redirect"
+var adminUsersURL =  "service/user/admin";
+var deleteUserURL =  "service/user/delete";
+var newUserURL = "service/user/add";
+
 
 
 function alertError(xhr, errorMessage){
@@ -38,7 +42,7 @@ function alertError(xhr, errorMessage){
 		action = "Check permissions";
 	} else if (xhr.status == 401){
 		errorType = "Unauthorized request "+xhr.status;
-		action = "User unauthorized. Reload the web app in the browser and try again";
+		action = "User unauthorized. If you are an authorized user, reload the web app in the browser and try again";
 	} else {
 		errorType = "Server error "+xhr.status;
 		action = "Contact Admin.";
@@ -185,12 +189,21 @@ function sortTable(tableClass, n) {
 	 	});
 	 	
 	 	$("#menu_monexp").on("click",function(){
-	 		location.href='monExperiments.jsp';
+	 		location.href='expMonitor.jsp';
 	 	});
 	 	
 	 	$("#menu_monusr").on("click",function(){
-	 		location.href='monUsers.jsp';
+	 		location.href='userMonitor.jsp';
 	 	});
+	 	
+	 	$("#menu_admusr").on("click",function(){
+	 		location.href='userExplore.jsp';
+	 	});
+	 	
+	 	$("#menu_usrnew").on("click",function(){
+	 		location.href='userCreate.jsp';
+	 	});
+
 	 }
 
  

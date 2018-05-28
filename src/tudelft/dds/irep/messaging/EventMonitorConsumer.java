@@ -66,12 +66,14 @@ public class EventMonitorConsumer extends DefaultConsumer {
 	public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
 		JEvent event;
 		int attempts = MAXATTEMPTS;
+		boolean done = false;
 		while (attempts > 0) {
 			try {
 				event = (JEvent) Utils.deserialize(body);
 				getEventMonitor(event.getEname()).loadEvent(event);
 				this.getChannel().basicAck(envelope.getDeliveryTag(), true);
 				attempts = 0;
+				done = true;
 			} catch (ClassNotFoundException e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 				Thread.currentThread().interrupt();
@@ -82,7 +84,19 @@ public class EventMonitorConsumer extends DefaultConsumer {
 					log.log(Level.SEVERE, "IO ERROR. Attempt "+attempts+"/"+MAXATTEMPTS+". Monitoring Event message not processed for monitoring. "+e.getMessage(), e);
 				}
 			}
-		}
+			finally {
+				if (attempts <= 0 && !done) {
+					try {
+						this.getChannel().basicNack(envelope.getDeliveryTag(), true, false);
+					} catch(IOException e) {
+						log.log(Level.SEVERE, "RabbitMQ: basic Ack error "+e.getMessage(), e);
+						throw new tudelft.dds.irep.utils.InternalServerException("RabbitMQ: basic Ack error "+e.getMessage());
+					}
+					//throw new tudelft.dds.irep.utils.BadRequestException("Message lost: the event could not be registered in the database. Please, check the contents are correct");
+				}
+
+			}
+		} 
 	}
 	
 	public void handleShutdownSignal​(String consumerTag, ShutdownSignalException sig) {

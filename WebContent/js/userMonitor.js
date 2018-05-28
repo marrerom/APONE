@@ -1,5 +1,5 @@
 /**
- * Experiment Monitoring
+ * Users Monitoring
  */
 var tabmonusr;
 
@@ -8,11 +8,10 @@ $(document).ready(function() {
 	const REFRESH=30000; //update after time in milliseconds
 	
 	const row = "<tr>" +
-			"<td><span class='name'>User name</span></td>" +
-			"<td><span class='rol'>Rol</span></td>" +
-			"<td><span class='created'>Exp. Created</span></td>" +
-			"<td><span class='participated'>Exp. Completed</span></td>" +
-			"<td><span class='left'>Left (running) experiments </span></td>" +
+			"<td><span class='name sort'>User name</span></td>" +
+			"<td><span class='participated sort'>Exp. Participated</span></td>" +
+			"<td><span class='completed sort'>Exp. Completed</span></td>" +
+			"<td><span class='left sort'>Left (running) experiments </span></td>" +
 			"</tr>";
 	
 	var monusr;
@@ -36,18 +35,17 @@ $(document).ready(function() {
 	
 	function getUsersSuccess(data){
 		$.each(data, function (index, value) {
-			var existing = monusr.find("#"+value._id);
+			var existing = monusr.find("#"+value.idname);
 			var newrow = row;
 			if (existing.length != 0) {
 				newrow = $(existing[0]);
 			}else{
-				newrow = $(newrow).attr("id", value._id);
+				newrow = $(newrow).attr("id", value.idname);
 				monusr.prepend(newrow);
 			}
 			newrow.find(".name").text(value.idname);
-			newrow.find(".rol").text(value.rol);
 			newrow.find(".participated").text(value.nparticipated); //TODO: only count
-			newrow.find(".created").text(value.ncreated); //TODO:only count
+			newrow.find(".completed").text(value.ncompleted); //TODO: only count
 			newrow.find(".left").text(value.nleft); //TODO:only count
 		});
 	}

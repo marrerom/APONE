@@ -1,8 +1,10 @@
 package tudelft.dds.irep.lifecycle;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Map;
@@ -30,10 +32,13 @@ import com.rabbitmq.client.ShutdownSignalException;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
+import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JUser;
+import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.experiment.RunningExperiments;
 import tudelft.dds.irep.services.Experiment;
+import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Security;
 
@@ -80,6 +85,19 @@ public class ServerListener implements ServletContextListener {
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent sce)  { 
+   	
+		
+		
+//    	try {
+//    		FileInputStream streamIn = new FileInputStream("/home/mmarrero/Downloads/msg-0000");
+//    	     ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
+//    	     JEvent readCase = (JEvent) objectinputstream.readObject();
+//    	     readCase.setIdconfig("5a8d9b9bda0ed1063b9303f5");
+//    	     System.out.println(readCase);
+//    	 } catch (Exception e) {
+//    	     e.printStackTrace();
+//    	 }
+    	
     	
     	try {
     		//PROPERTIES FILE
@@ -118,22 +136,42 @@ public class ServerListener implements ServletContextListener {
     		ExperimentManager em = new ExperimentManager(db,new RunningExperiments(), channel);
     		sce.getServletContext().setAttribute("ExperimentManager", em);
     		sce.getServletContext().setAttribute("JsonValidator", new JsonValidator());
+    		sce.getServletContext().setAttribute("limitedAccess", Boolean.parseBoolean(prop.getProperty("LIMITEDACCESS")));
     		
     		//CREATE PREDEFINED USERS IN DATABASE
     		JUser master = Security.getMasterUser();
     		JUser anonymous = Security.getAnonymousUser();
     		JUser client = Security.getClientUser();
-    		if (em.getUsers(master, master).isEmpty()) {
-    				em.createUser(master.getIdTwitter(), master.getName(), master);
-    			}
-    		if (em.getUsers(client, master).isEmpty()) {
-				em.createUser(client.getIdTwitter(), client.getName(), master);
-			}
-    		if (em.getUsers(anonymous, master).isEmpty()) {
-				em.createUser(anonymous.getIdTwitter(), anonymous.getName(), master);
-			}
+    		JUser socialdatadelft = new JUser("socialdatadelft",  "937708183979773955", UserRol.ADMIN);
 
-    	} catch (IOException | ValidationException | ParseException | TimeoutException e) {
+	
+    		if (em.getUsers(master, master).isEmpty()) {
+    			JUser masteruser = em.createMasterUser(master.getIdTwitter(), master.getName(), master);
+    			if (!masteruser.getIdname().equals(master.getIdname()))
+    				throw new InternalServerException("Master (MASTER) user name already existing in the database for other user");
+    		}
+    		if (em.getUsers(client, master).isEmpty()) {
+    			JUser clientuser = em.createMasterUser(client.getIdTwitter(), client.getName(),  master);
+    			if (!clientuser.getIdname().equals(client.getIdname()))
+    				throw new InternalServerException("Client (CLIENT) user name already existing in the database for other user");
+    		}
+    		
+    		if (em.getUsers(socialdatadelft, master).isEmpty()) {
+    			JUser sdduser = em.createMasterUser(socialdatadelft.getIdTwitter(), socialdatadelft.getName(), master);
+    			if (!sdduser.getIdname().equals(socialdatadelft.getIdname()))
+    				throw new InternalServerException("SocialDataDelft (socialdatadelft) user name already existing in the database for other user");
+    		}
+
+    		if (em.getUsers(anonymous, master).isEmpty()) {
+				JUser anonuser = em.createRegularUser(anonymous.getIdTwitter(), anonymous.getName(), master);
+    			if (!anonuser.getIdname().equals(anonymous.getIdname()))
+    				throw new InternalServerException("Anonymous (ANONYMOUS) user name already existing in the database for other user");
+    		}
+    		
+    		
+   		
+    		
+    	} catch (Exception  e) {
     		log.log(Level.SEVERE, e.getMessage(), e);
     		throw new RuntimeException(e);
 		}

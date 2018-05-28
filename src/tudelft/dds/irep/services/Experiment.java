@@ -19,6 +19,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -28,6 +29,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
@@ -471,12 +473,6 @@ public class Experiment {
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			
-//			if (request.getCookies()!=null) {
-//				for (Cookie cookie: request.getCookies()) {
-//					if (cookie.getName().equals(idrun))
-//						idunit = cookie.getName();
-//				}
-//			}
 			if (idunit == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
 			
@@ -492,8 +488,15 @@ public class Experiment {
 			String target = jtreat.getUrl();
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-				Response response = Response.seeOther(uri).cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
-				return response;
+				ResponseBuilder response = Response.seeOther(uri)
+						.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+						.header("Access-Control-Allow-Origin", "*")
+			    		.header("Access-Control-Allow-Headers","origin, content-type, accept")
+			    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+			    		.header("Access-Control-Allow-Credentials", "true");
+				
+						//.cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
+				return response.build();
 			}
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -512,12 +515,19 @@ public class Experiment {
 	
 	@Path("/redirect/{idrun}/{idunit}")
 	@GET
-	public Response 
-RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+	public Response RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			System.out.println("redirect endpoint "+idrun+"/"+idunit);
+			
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			
+			System.out.println("redirect endpoint, before get config");
+			
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
+			
+			System.out.println("redirect endpoint, after get config");
+			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
@@ -526,14 +536,30 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			
+			System.out.println("redirect endpoint, before get treatment");
+			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			
+			System.out.println("redirect endpoint, after get treatment");
+			
 			String target = jtreat.getUrl();
+			
+			System.out.println("redirect endpoint, target "+target);
+			
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-				Response response = Response.seeOther(uri).build();
-				return response;
-			}
+				ResponseBuilder response = Response.seeOther(uri)
+						.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+						.header("Access-Control-Allow-Origin", "*")
+					    .header("Access-Control-Allow-Headers","origin, content-type, accept")
+					    .header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+					    .header("Access-Control-Allow-Credentials", "true");
+				return response.build();
+			} else
+				throw new BadRequestException("No target to redirect to");
+			
 		} catch (BadRequestException | ParseException e) {
+			System.out.println("redirect endpoint, before badrequest");
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
@@ -543,8 +569,8 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			throw new InternalServerException(e.getMessage());
 		}
 
-	    
-		return Response.status(Status.BAD_REQUEST).build();
+		
+		
 	}
 	
 	@Path("/getparams/{idrun}/{idunit}")
@@ -577,10 +603,12 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 //				response.header("Access-Control-Allow-Origin", origin.getScheme()+"://"+origin.getHost()+":"+origin.getPort());
 			}
 			result = mapper.writeValueAsString(node);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
-		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON)
+					.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+		    		.header("Access-Control-Allow-Headers","origin, content-type, accept")
+		    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+		    		.header("Access-Control-Allow-Credentials", "true");
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -606,7 +634,7 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response exposureGetParamsJsonTxt(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+	public Response exposureGetParamsText(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		return exposureGetParamsJson(inputJson, useragent, request);
 	}
 	
@@ -626,50 +654,54 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			String idrun = inputNode.get("idconfig").asText();
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
 			String unitExp = jexp.getUnit();
-			String idunit = null;
-			if (request.getCookies()!=null) {
-				for (Cookie cookie: request.getCookies()) {
-					if (cookie.getName().equals(idrun))
-						idunit = cookie.getName();
-				} 
-			}
-			if (idunit == null)
+			String idunit;
+			JsonNode idunitnode = inputNode.get("idunit");
+
+			if (idunitnode == null)
 				idunit = Utils.getRequestIdentifier(idrun,request);
+			else
+				idunit = idunitnode.asText();
 			
-			Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
-			Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap, authuser);
+			
+			JParamValues jparams;
+			JsonNode overrides = inputNode.get("overrides");
+			if (overrides == null) {
+				jparams =  mapper.convertValue(em.getParams(jexp.getUnit(), idrun, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
+				
+			} else {
+				Map<String,?> overridesMap = mapper.convertValue(inputNode.get("overrides"), Map.class);
+				Map<String, ?> params = em.getParams(unitExp, idrun, idunit, overridesMap, authuser);
+				jparams = mapper.convertValue(params, JParamValues.class);
+			}
+			
 			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 
 			InputStream is = new ByteArrayInputStream("".getBytes());
 			
-			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
+			
 			ObjectNode node = mapper.createObjectNode();
 			
 			node.putPOJO("params", jparams);
 			node.put("_idunit", idunit);
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
 			node.put("_variant", jtreat.getName());
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
 			URI origin=null;
 			if (jtreat.getUrl() != null) {
 				origin = new URI(jtreat.getUrl());
 				node.put("_url", jtreat.getUrl());
-				response.header("Access-Control-Allow-Origin", jtreat.getUrl());
-				response = response.cookie(Utils.getCookie(origin, idrun, idunit));
+				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
+				//response = response.cookie(Utils.getCookie(origin, idrun, idunit));
 				}
 			result = mapper.writeValueAsString(node);
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON)
+					.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization")
+					.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+					.header("Access-Control-Allow-Credentials", "true");
 
-	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-	    	response.header("Access-Control-Allow-Credentials", "true");
-	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-
-			if (response.build().getStatus() < 400) {
-				JEvent event = em.createEvent(idrun, idunit, JEvent.EXPOSURE_ENAME, EventType.STRING, is, timestamp, treatment, jparams, useragent, jexp.getExperimenter());
-				em.registerEvent(idrun, event, authuser);
-				//em.monitorEvent(event);
-			}
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);

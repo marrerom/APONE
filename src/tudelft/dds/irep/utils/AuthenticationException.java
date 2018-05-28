@@ -14,7 +14,10 @@ public class AuthenticationException extends WebApplicationException {
 
 	public AuthenticationException ()  {
          super(Response.status(Response.Status.UNAUTHORIZED)
-                 .entity("Unauthenticated user").type(MediaType.TEXT_PLAIN).build());
+     			.header("Access-Control-Allow-Origin", "*")
+    			.header("Access-Control-Allow-Headers","origin, content-type, accept")
+    			.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+                .entity("Unauthenticated user").type(MediaType.TEXT_PLAIN).build());
     }
 	
 	

@@ -10,9 +10,9 @@ $(document).ready(function() {
 	const row = "<tr id='idrun.laststarted'><td>  <div class='inline field'><div class='ui toggle checkbox'><input tabindex='0' name='toggle' type='checkbox'>" +
 			"<label>ON</label></div></div></td>" +
 			"<td><span class='experiment sort'>Experiment</span></td>" +
-			"<td><span class='date_started'>Date</span><span class='date_ended'></span></td>" +
+			"<td><span class='date_started sort'>Date</span><span class='date_ended'></span></td>" +
 			"<td><span class='max_exposures sort'>None</span></td>" +
-			"<td><span class='date_to_end'>None</span></td>" +
+			"<td><span class='date_to_end sort'>None</span></td>" +
 			"<td><span class='treatments'>Treatments</span></td>" +
 			"<td><span class='data'><i class='big area chart icon'></i></span></td>" +
 			"</tr>";

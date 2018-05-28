@@ -3,6 +3,7 @@
 <head>
 <meta content='text/html;charset=utf-8' http-equiv='Content-Type'>
 <meta content='utf-8' http-equiv='encoding'>
+<meta name="robots" content="noindex, nofollow">
 <title>Semantic Test</title>
 <link rel='stylesheet' href='css/semantic.min.css'>
 <link rel='stylesheet' href='css/specific.css'>
@@ -11,7 +12,7 @@
 <script src='js/semantic.min.js'></script>
 <script src='js/general.js'></script>
 <script src='js/calendar.min.js'></script>
-<script src='js/monUsers.js'></script>
+<script src='js/userMonitor.js'></script>
 </head>
 <body>
 
@@ -24,8 +25,8 @@
 
 %> 
 	<div class='ui blue stacked segment'>
-		<h4 class='ui blue huge header'>Information Retrieval
-			Experimental Platform</h4>
+		<h4 class='ui blue huge header'>Academic Platform for ONline Experiments (APONE)</h4>
+			<div class='user'>User: <%= session.getAttribute("idname") %></div>
 	</div>
 	<div class='ui padded content grid' style='height: 90%;'>
 		<div class='two wide column'>
@@ -46,12 +47,20 @@
 					</div>
 				</div>
 
+
+				<div class="item">
+					<div class="header">Users</div>
+					<div class="menu">
+						<a id='menu_admusr' class="item">Explore</a>
+						<a id='menu_usrnew' class="item">New User</a>
+					</div>
+				</div>
+
 				<div class="item">
 					<div class="header">Monitoring</div>
 					<div class="menu">
 						<a id='menu_monexp' class="item">Experiments</a>
 						<a id='menu_monusr' class="active item">Users</a>
-
 					</div>
 				</div>
 
@@ -65,8 +74,23 @@
 <!-- 				<div class='sixteen wide stretched column' style="height: 100%;"> -->
 <!-- 					<h3 class='ui blue header'>Users</h3> -->
 <!-- 					<div class="ui grid" style="height: 80%; overflow-y: auto;"> -->
+				
+								<div class='ui grid'>
+					<div class='sixteen wide column'>
+						<div class='ui center aligned basic segment'>
+							<div class='big blue ui button _assign' tabindex='0'>Participate in an experiment</div>
+								
+							
+						</div>
+						Please, note that you may be redirected to the same experiment more than once if the client of that experiment does not indicate that you have already completed it (by means of the "completed" event). In that case, close the pop-up window and click the button again.
+					</div>
+
+				</div>
+				
 				<div class='ui grid' style='height: 90%;'>
 					<div class='sixteen wide column'>
+					
+					
 						<div class='ui blue segment'
 							style='height: 85%; overflow-y: auto'>
 								<h3 class='ui blue header'>Leaderboard</h3>
@@ -74,11 +98,10 @@
 
 							<thead>
 								<tr>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">User name</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Rol</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Experiments created</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',4);">Experiments completed</th>
-									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',5);">Remaining (running) experiments to participate</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',0);">User unique name</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',1);">Experiments participated</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',2);">Experiments completed</th>
+									<th style='cursor: pointer;' onclick="sortTable('ui compact blue celled table _users',3);">Remaining (running) experiments not completed</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -87,14 +110,6 @@
 
 					</div>
 
-				<div class='ui grid'>
-					<div class='sixteen wide column'>
-						<div class='ui center aligned basic segment'>
-							<div class='big blue ui button _assign' tabindex='0'>Participate in an experiment</div>
-						</div>
-					</div>
-
-				</div>
 
 
 				</div>

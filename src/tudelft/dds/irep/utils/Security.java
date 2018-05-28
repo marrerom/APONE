@@ -54,9 +54,8 @@ public class Security {
 	
 	public static void checkAuthorized(JUser authuser, String username, Useraction action) {
 		if (!isAuthorized(authuser, username, action)) {
-			String msg = "User not authorized";
-			NotAuthorizedException e = new NotAuthorizedException(msg);
-			log.log(Level.WARNING, msg, e);
+			AuthenticationException e = new AuthenticationException();
+			log.log(Level.WARNING, e.getMessage(), e);
 			throw e;
 		}
 	}
@@ -68,8 +67,9 @@ public class Security {
 	}
 	
 	public synchronized static JUser setAuthenticatedUser(HttpServletRequest request, ExperimentManager em, String idTwitter, String screenName) throws IOException, ParseException {
-		JUser user = em.createUser(idTwitter, screenName, getMasterUser());
+		JUser user = em.createRegularUser(idTwitter, screenName, getMasterUser());
 		request.getSession().setAttribute("authuser", user);
+		request.getSession().setAttribute("idname", user.getIdname());
 		return user;
 	}
 	

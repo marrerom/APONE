@@ -116,6 +116,16 @@
   		<artifactId>junit</artifactId>
   		<version>4.12</version>
   	</dependency>
+  	<dependency>
+  		<groupId>org.apache.httpcomponents</groupId>
+  		<artifactId>httpmime</artifactId>
+  		<version>4.3.4</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.glassfish.jersey.ext</groupId>
+  		<artifactId>jersey-entity-filtering</artifactId>
+  		<version>2.25.1</version>
+  	</dependency>
   </dependencies>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0</version>
 </project>

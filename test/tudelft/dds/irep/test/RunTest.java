@@ -1,41 +1,29 @@
 package tudelft.dds.irep.test;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
@@ -45,32 +33,23 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.google.common.base.Preconditions;
-
-import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
-import tudelft.dds.irep.data.schema.JExperiment;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.experiment.ExperimentManager;
 import tudelft.dds.irep.utils.BadRequestException;
 import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.Utils;
+
 
 
 @Path("/test")
@@ -78,8 +57,12 @@ public class RunTest {
 	
 		final Integer MINDATETOEND = 2; //experiments with userid % 3 = 1, will be running for those minutes
 	
-		public static Map<String, String> experiments = new HashMap<String, String>(); //username - idrun
-		public static Map<String, String> idmapname = new HashMap<String, String>(); //user id - user idname
+		public static Map<String, String> user2idrun = new HashMap<String, String>(); //username - idrun
+		public static Map<String, String> idrun2user = new HashMap<String, String>(); //idrun - username
+		public static Map<String, Long> user2endtime = new HashMap<String, Long>(); //username - endtime
+		public static Map<String, Integer> user2maxexp = new HashMap<String, Integer>(); //username - maxexposures
+		public static Map<String, String> idname2name = new HashMap<String, String>(); //username - user idname
+		public static Map<String, Integer> idrun2exp = new HashMap<String, Integer>(); //idrun - exposures
 		final static String localhost = "http://localhost:8080"; 
 		final static String jerseyServices = "service";
 		
@@ -124,9 +107,12 @@ public class RunTest {
 				sleep = 60000;
 			}
 			try {
+				
+				int port= request.getServerPort();
+				String contextPath = request.getContextPath();
 				for (int i=1;i<=NUSERS;i++) {
 					System.out.println("Creating experiment user "+i);
-					createExperiment(Integer.toString(i));
+					createExperiment(Integer.toString(i), contextPath, port);
 				}
 				for (int nexp=1;nexp<=NEXPS;nexp++) {
 					for (int i=1;i<=NUSERS;i++) {
@@ -153,56 +139,63 @@ public class RunTest {
 			return response; 			
 		}
 		
-		public void createExperiment(String userid) throws ClientProtocolException, IOException {
+		public void createExperiment(String userid, String contextPath, int port) throws ClientProtocolException, IOException {
 			String username = "user"+userid;
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			String idname = Utils.checkWebResponse(Collections.emptySet(), resUser, "Experiment set-up Error: create user");
-			idmapname.put(userid, idname);
+			String idname = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resUser, "Experiment set-up Error: create user");
+			idname2name.put(userid, idname);
 			username = idname;
 			
-			HttpResponse resCreate = createExperiment(httpContext, userid, username);
-			String expid = Utils.checkWebResponse(Collections.emptySet(), resCreate, "Experiment set-up Error: create experiment");
+			HttpResponse resCreate = createExperiment(httpContext, userid, username, contextPath, port);
+			String expid = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resCreate, "Experiment set-up Error: create experiment");
 
-			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
-			String resultSearch = Utils.checkWebResponse(Collections.emptySet(), resCheck, "Experiment set-up Error: search");
+			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid, contextPath, port);
+			String resultSearch = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resCheck, "Experiment set-up Error: search");
 			JSONArray results = new JSONArray(resultSearch);
 			Assert.assertTrue("Experiment set-up Error: search experiment", results.length() == 1);
 			
 			JSONObject rsearch = new JSONObject(results.get(0).toString());
 			String idrun = rsearch.get("idrun").toString();
-			experiments.put(username,idrun);
-				
+			user2idrun.put(username,idrun);
+			idrun2user.put(idrun,username);	
 			HttpResponse resStart = start(httpContext, idrun);
-			Utils.checkWebResponse(Collections.emptySet(), resStart, "Experiment set-up Error: start");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resStart, "Experiment set-up Error: start");
 		}
 		
 		public void assignExperiment(String userid) throws ClientProtocolException, IOException {
-			String username = idmapname.get(userid);
+			String username = idname2name.get(userid);
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			Utils.checkWebResponse(Collections.emptySet(), resUser, "Assignment: set user");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resUser, "Assignment: set user");
 			try {
 				Boolean assigned = false;
 				do {
 					HttpResponse resAssign = assign(httpContext);
-					String redirectionURI = Utils.checkWebResponse(Arrays.asList(new BadRequestException("Assignment: assign")), resAssign, "Assignment: assign");
-					for (String idrun: experiments.values()) {
+					String redirectionURI = tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Assignment: assign")), resAssign, "Assignment: assign");
+					for (String idrun: user2idrun.values()) {
 						if (redirectionURI.contains(idrun)) {
 							HttpResponse resSetrun = setIdrun(httpContext, idrun);
-							Utils.checkWebResponse(Collections.emptySet(), resSetrun, "Assignment: set idrun");
+							tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resSetrun, "Assignment: set idrun");
 							try {
+								
+								System.out.println(redirectionURI);
+								
 								HttpResponse resRedirect = redirect(httpContext,redirectionURI);
-								Utils.checkWebResponse(Arrays.asList(new BadRequestException("Assignment: redirect")), resRedirect, "Assignment: redirect");
+								
+								tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Assignment: redirect")), resRedirect, "Assignment: redirect");
 								assigned = true;
 								break;
 							} catch (BadRequestException e) {
-								System.out.println(e.getMessage());
+								System.out.println("catch exception "+e.getMessage());
+								
+								String expuser = idrun2user.get(idrun);
+								finishedExperiment(idrun);
 							}
 						}
 					} 
@@ -213,47 +206,58 @@ public class RunTest {
 		}
 		
 		public void testEvents(String userid) throws ClientProtocolException, IOException {
-			String username = idmapname.get(userid);
+			String username = idname2name.get(userid);
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
 			HttpResponse resUser = setUser( httpContext, userid, username);
-			Utils.checkWebResponse(Collections.emptySet(), resUser, "Events: set user");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resUser, "Events: set user");
 			event ("exposure", httpContext, userid, username);
-			event ("test", httpContext, userid, username);
+			event ("search", httpContext, userid, username);
+			event ("click", httpContext, userid, username);
+			event ("binarytest1", httpContext, userid, username);
+			event ("binarytest2", httpContext, userid, username);
 			event ("completed", httpContext, userid, username);
 		}
 		
 		public void clear(String userid) throws ClientProtocolException, IOException {
-			String username = idmapname.get(userid);
+			String username = idname2name.get(userid);
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
 			httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 			cookieStore.addCookie(new org.apache.http.impl.cookie.BasicClientCookie("username", username));
 			HttpResponse resUser = setMasterUser( httpContext);
-			Utils.checkWebResponse(Collections.emptySet(), resUser, "Clear: set user");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resUser, "Clear: set user");
 			HttpResponse resDeleteUser = deleteUser( httpContext, username);
-			Utils.checkWebResponse(Collections.emptySet(), resDeleteUser, "Clear: delete user");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resDeleteUser, "Clear: delete user");
 		}
 		
 		public void event(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
 			
-			HttpResponse resCheckEvents = checkEvents(ename, httpContext, userid, username);
-			String expevents = Utils.checkWebResponse(Collections.emptySet(), resCheckEvents, "Events: check");
+			HttpResponse resCheckEvents = checkEvents(ename, httpContext, username);
+			String expevents = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resCheckEvents, "Events: check");
+			
 			JSONArray arrayevents = new JSONArray(expevents);
 			Long distinct = arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("idunit");}).distinct().count();
-
+			
+			if (arrayevents.length() > 0 && (ename.equals("binarytest1") || ename.equals("binarytest2"))){
+				JSONObject event = (JSONObject) arrayevents.get(0);
+				String encodedValue = event.get("evalue").toString();
+				String original = new String(Utils.decodeBinary(encodedValue), StandardCharsets.UTF_8);
+				Assert.assertTrue("Event "+ename+" : Contents", original.equals("mycontents"));
+			}
+			
 			JSONArray eventids = new JSONArray(arrayevents.toList().stream().map(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.get("_id");}).toArray());
 			HttpResponse resDownloadJSON = getFile(httpContext, eventids, "JSON");
-			Utils.checkWebResponse(Collections.emptySet(), resDownloadJSON, "Events: download JSON");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resDownloadJSON, "Events: download JSON");
 
 			HttpResponse resDownloadCSV = getFile(httpContext, eventids, "CSV");
-			Utils.checkWebResponse(Collections.emptySet(), resDownloadCSV, "Events: download CSV");
+			tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resDownloadCSV, "Events: download CSV");
 						
 			try {
 				HttpResponse resMonitor = monitor(ename, httpContext, userid, username);
-				String exposures = Utils.checkWebResponse(Arrays.asList(new BadRequestException("Events: monitor")), resMonitor, "Events: monitor");
+				String exposures = tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Events: monitor")), resMonitor, "Events: monitor");
 				JSONObject results = new JSONObject(exposures);
 				JSONArray treatments = results.getJSONArray("treatments");
 				Integer differentExposuresMonitor = treatments.toList().stream().mapToInt(p->{JSONObject pjson = new JSONObject((HashMap<String, Object>)p);return pjson.getInt("value");}).sum();
@@ -265,9 +269,22 @@ public class RunTest {
 					Assert.assertTrue("Events "+ename+": number of monitored events does not match with the actual events", arrayevents.length() == differentExposuresMonitor);
 				}
 			} catch (BadRequestException e) {
-				System.out.println(e.getMessage());
+				finishedExperiment(user2idrun.get(username));
 			}
 			
+		}
+		
+		public static void finishedExperiment(String idrun) {
+			String username = idrun2user.get(idrun);
+			Long endtime = user2endtime.get(username);
+			if (endtime != null) {
+				Assert.assertNotNull(endtime);
+				Calendar now = Calendar.getInstance();
+				Assert.assertTrue("Finished experiment: test deadline", now.getTimeInMillis() >= endtime);
+			} else {
+				Integer maxexp = user2maxexp.get(username);
+				Assert.assertTrue("Finisthed experiment: test max exposures", idrun2exp.get(idrun) >= maxexp);
+			}
 		}
 		
 		public HttpResponse deleteUser(HttpContext httpContext, String username) throws ClientProtocolException, IOException {
@@ -332,10 +349,10 @@ public class RunTest {
 			return res;
 		}
 		
-		public HttpResponse createExperiment(HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+		public HttpResponse createExperiment(HttpContext httpContext, String userid, String username, String contextPath, int port) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/new/experiment");
-			JSONObject experiment = getExperiment(userid, username);
+			JSONObject experiment = getExperiment(userid, username, contextPath, port);
 			StringEntity entity = new StringEntity(experiment.toString());
 		    httpPost.setEntity(entity);
 		    httpPost.setHeader("Accept", "application/json");
@@ -344,10 +361,10 @@ public class RunTest {
 			return res;		//return experiment id
 		}
 		
-		public HttpResponse checkExperiment(HttpContext httpContext, String userid, String username, String expid) throws ClientProtocolException, IOException {
+		public HttpResponse checkExperiment(HttpContext httpContext, String userid, String username, String expid, String contextPath, int port) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/search");
-			JSONObject experiment = getExperimentFilter(userid, username, expid);
+			JSONObject experiment = getExperimentFilter(userid, username, expid, contextPath, port);
 			StringEntity entity = new StringEntity(experiment.toString());
 		    httpPost.setEntity(entity);
 		    httpPost.setHeader("Accept", "application/json");
@@ -356,10 +373,10 @@ public class RunTest {
 			return res;		
 		}
 		
-		public HttpResponse checkEvents(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+		public HttpResponse checkEvents(String ename, HttpContext httpContext, String username) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/event/search");
-			JSONObject event = getEventFilter(ename, experiments.get(username));
+			JSONObject event = getEventFilter(ename, user2idrun.get(username));
 			StringEntity entity = new StringEntity(event.toString());
 		    httpPost.setEntity(entity);
 		    httpPost.setHeader("Accept", "application/json");
@@ -370,7 +387,7 @@ public class RunTest {
 		
 		public HttpResponse monitor(String ename, HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/monitor/subtreatments/"+experiments.get(username)+"/"+ename);
+			HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/monitor/subtreatments/"+user2idrun.get(username)+"/"+ename);
 			HttpResponse res = httpClient.execute(httpGet, httpContext);
 			return res;
 		}
@@ -382,8 +399,8 @@ public class RunTest {
 			return filter;
 		}
 
-		public JSONObject getExperimentFilter(String userid, String username, String expid) {
-			JSONObject filter = getExperiment(userid, username);
+		public JSONObject getExperimentFilter(String userid, String username, String expid, String contextPath, int port) {
+			JSONObject filter = getExperiment(userid, username, contextPath, port);
 			filter.put("_id", expid);
 			JSONArray treatments = filter.getJSONArray("treatment");
 			JSONArray newtreatments = new JSONArray();
@@ -396,10 +413,9 @@ public class RunTest {
 			}
 			filter.put("treatment", newtreatments);
 			return filter;
-		} 
+		}
 		
-		public JSONObject getExperiment(String userid, String username) {
-			
+		public JSONObject getExperiment(String userid, String username, String contextPath, int port) {
 			JSONObject experiment = new JSONObject();
 			experiment.put("name", "experiment"+userid);
 			experiment.put("experimenter", username);
@@ -423,15 +439,16 @@ public class RunTest {
 			JSONArray distribution = new JSONArray();
 			config.put("distribution", distribution);
 			
+			
 			//exp simple or advanced
 			Integer mod = Integer.parseInt(userid) % 2;
 			if (mod == 0) {
-				control.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=blue");
-				treatment.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=green");
+				control.put("url", "http://localhost:"+port+contextPath+"/service/test/client?rankingAlg=default&linkColor=blue");
+				treatment.put("url", "http://localhost:"+port+contextPath+"/service/test/client?rankingAlg=default&linkColor=green");
 			} else {
-				control.put("url", "http://localhost:8080/APONE/service/test/client");
+				control.put("url", "http://localhost:"+port+contextPath+"/service/test/client");
 				control.put("definition", "rankingAlg=\"default\";linkColor=\"blue\";");
-				treatment.put("url", "http://localhost:8080/APONE/service/test/client");
+				treatment.put("url", "http://localhost:"+port+contextPath+"/service/test/client");
 				treatment.put("definition", "rankingAlg=\"default\";linkColor=\"green\";");
 			}
 			
@@ -443,8 +460,12 @@ public class RunTest {
 				Date delay=new Date(t + (1 * 60000 * MINDATETOEND ));
 				
 				config.put("date_to_end",tudelft.dds.irep.utils.Utils.getTimestamp(delay));
+				Calendar now = Calendar.getInstance();
+				now.add(Calendar.MINUTE, MINDATETOEND);
+				user2endtime.put(username, now.getTimeInMillis());
 			} else if (mod == 2) {
 				config.put("max_exposures", 10);
+				user2maxexp.put(username, 10);
 			}
 			
 			//distributions
