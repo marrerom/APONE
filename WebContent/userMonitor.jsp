@@ -74,8 +74,23 @@
 <!-- 				<div class='sixteen wide stretched column' style="height: 100%;"> -->
 <!-- 					<h3 class='ui blue header'>Users</h3> -->
 <!-- 					<div class="ui grid" style="height: 80%; overflow-y: auto;"> -->
+				
+								<div class='ui grid'>
+					<div class='sixteen wide column'>
+						<div class='ui center aligned basic segment'>
+							<div class='big blue ui button _assign' tabindex='0'>Participate in an experiment</div>
+								
+							
+						</div>
+						Please, note that you may be redirected to the same experiment more than once if the client of that experiment does not indicate that you have already completed it (by means of the "completed" event). In that case, close the pop-up window and click the button again.
+					</div>
+
+				</div>
+				
 				<div class='ui grid' style='height: 90%;'>
 					<div class='sixteen wide column'>
+					
+					
 						<div class='ui blue segment'
 							style='height: 85%; overflow-y: auto'>
 								<h3 class='ui blue header'>Leaderboard</h3>
@@ -95,14 +110,6 @@
 
 					</div>
 
-				<div class='ui grid'>
-					<div class='sixteen wide column'>
-						<div class='ui center aligned basic segment'>
-							<div class='big blue ui button _assign' tabindex='0'>Participate in an experiment</div>
-						</div>
-					</div>
-
-				</div>
 
 
 				</div>

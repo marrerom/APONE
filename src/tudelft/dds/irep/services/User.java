@@ -23,6 +23,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -37,6 +38,7 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.google.common.base.Preconditions;
 
 import tudelft.dds.irep.utils.Security;
+import tudelft.dds.irep.utils.Utils;
 import tudelft.dds.irep.data.schema.JConfiguration;
 import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JExperiment;
@@ -263,10 +265,12 @@ public class User {
 			Boolean result = false;
 			if (!em.getEvents(filter, authuser).isEmpty())
 				result = true;
-			ResponseBuilder response = Response.ok(result.toString(),MediaType.TEXT_PLAIN);
-			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
-		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			ResponseBuilder response = Response.ok(result.toString(),MediaType.TEXT_PLAIN)
+					.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Headers","origin, content-type, accept")
+		    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+		    		.header("Access-Control-Allow-Credentials", "true");
 			return response.build();
 		} catch (BadRequestException | JsonProcessingException | ParseException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -277,6 +281,14 @@ public class User {
 			log.log(Level.SEVERE, e.getMessage(), e);
 			throw new InternalServerException(e.getMessage());
 		} 
+	}
+	
+	@Path("/checkcompleted/{idrun}")
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response userCompletedExpNoid(@PathParam("idrun") String idrun, @Context HttpServletRequest request) {
+		String idunit = Utils.getRequestIdentifier(idrun,request);
+		return userCompletedExp(idrun, idunit, request);
 	}
 
 	

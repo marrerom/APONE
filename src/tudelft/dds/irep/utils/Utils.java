@@ -137,15 +137,23 @@ public class Utils {
 	 }
 	 
 	 static public String checkWebResponse(Collection<WebApplicationException> validExceptions , HttpResponse response, String message) throws IOException {
+		 
+		 System.out.println("check response, code "+response.getStatusLine().getStatusCode());
+				 
 		 HttpEntity entity = response.getEntity();
 		 String contents = null;
 		 if (entity != null)
 			 contents = EntityUtils.toString(response.getEntity());
 		 for (WebApplicationException e: validExceptions) {
 			 if (response.getStatusLine().getStatusCode() == e.getResponse().getStatusInfo().getStatusCode()) {
+				 System.out.println("checkResponse, throw exception "+e.getMessage());
 				 throw e;
 			}
 		 }
+		 
+		 
+	    System.out.println("checkResponse before assert");
+		 
 		Assert.assertTrue(message, response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 204);
 		return contents;
 	 }

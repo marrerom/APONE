@@ -78,6 +78,8 @@ public class Client extends HttpServlet {
 	@GET 
 	public Response client(@Context HttpServletRequest request) throws UnsupportedEncodingException {
 	
+		System.out.println("Entering client");
+		
 		Map<String, String> queryparams = 	tudelft.dds.irep.utils.Utils.decodeQueryParams(request.getQueryString());
 	    String idunit = queryparams.get("_idunit");
 	    String idrun= (String) request.getSession().getAttribute("idrun"); 
@@ -98,9 +100,16 @@ public class Client extends HttpServlet {
 	    
 		try {
 
+			System.out.println("Entering client: get params");
+			
 			//get params
 			HttpResponse resGetParams = getParams(idrun, idunit);
+			
+			System.out.println("Client response get params "+resGetParams.getStatusLine().getStatusCode());
+			
 			String returnedParams = tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: getparams")), resGetParams, "Client: getparams");
+			
+			
 			
 			//if planout script, overwrite param
 			boolean overwrite = false;
@@ -118,12 +127,15 @@ public class Client extends HttpServlet {
 				}
 			}
 			
+			System.out.println("Entering client: get params override");
+			
 			//get params with overwriting if planout script exists
 			JSONObject inputGetParams = new JSONObject();
 			inputGetParams.put("idconfig", idrun);
 			inputGetParams.put("idunit", idunit);
 			inputGetParams.put("overrides", overrides);
 			HttpResponse resGetParamsJSON = getParamsJSON(inputGetParams);
+			
 			String returnedParamsJSON = tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Client: getparams overwriting")), resGetParamsJSON, "Client: getparams overwriting");
 			if (overwrite) {
 				JSONObject jsonparams = new JSONObject(returnedParamsJSON);
@@ -263,6 +275,7 @@ public class Client extends HttpServlet {
 	}
 	
 	public HttpResponse getParams(String idrun, String idunit) throws ClientProtocolException, IOException {
+		System.out.println("get params "+localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/getparams/"+idrun+"/"+idunit);
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet httpGet = new HttpGet(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/getparams/"+idrun+"/"+idunit);
 	    HttpResponse res = httpClient.execute(httpGet);

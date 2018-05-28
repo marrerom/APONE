@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -106,9 +107,12 @@ public class RunTest {
 				sleep = 60000;
 			}
 			try {
+				
+				int port= request.getServerPort();
+				String contextPath = request.getContextPath();
 				for (int i=1;i<=NUSERS;i++) {
 					System.out.println("Creating experiment user "+i);
-					createExperiment(Integer.toString(i));
+					createExperiment(Integer.toString(i), contextPath, port);
 				}
 				for (int nexp=1;nexp<=NEXPS;nexp++) {
 					for (int i=1;i<=NUSERS;i++) {
@@ -135,7 +139,7 @@ public class RunTest {
 			return response; 			
 		}
 		
-		public void createExperiment(String userid) throws ClientProtocolException, IOException {
+		public void createExperiment(String userid, String contextPath, int port) throws ClientProtocolException, IOException {
 			String username = "user"+userid;
 			CookieStore cookieStore = new BasicCookieStore();
 			HttpContext httpContext = new BasicHttpContext();
@@ -145,10 +149,10 @@ public class RunTest {
 			idname2name.put(userid, idname);
 			username = idname;
 			
-			HttpResponse resCreate = createExperiment(httpContext, userid, username);
+			HttpResponse resCreate = createExperiment(httpContext, userid, username, contextPath, port);
 			String expid = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resCreate, "Experiment set-up Error: create experiment");
 
-			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid);
+			HttpResponse resCheck = checkExperiment(httpContext, userid, username, expid, contextPath, port);
 			String resultSearch = tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resCheck, "Experiment set-up Error: search");
 			JSONArray results = new JSONArray(resultSearch);
 			Assert.assertTrue("Experiment set-up Error: search experiment", results.length() == 1);
@@ -179,11 +183,17 @@ public class RunTest {
 							HttpResponse resSetrun = setIdrun(httpContext, idrun);
 							tudelft.dds.irep.utils.Utils.checkWebResponse(Collections.emptySet(), resSetrun, "Assignment: set idrun");
 							try {
+								
+								System.out.println(redirectionURI);
+								
 								HttpResponse resRedirect = redirect(httpContext,redirectionURI);
+								
 								tudelft.dds.irep.utils.Utils.checkWebResponse(Arrays.asList(new BadRequestException("Assignment: redirect")), resRedirect, "Assignment: redirect");
 								assigned = true;
 								break;
 							} catch (BadRequestException e) {
+								System.out.println("catch exception "+e.getMessage());
+								
 								String expuser = idrun2user.get(idrun);
 								finishedExperiment(idrun);
 							}
@@ -339,10 +349,10 @@ public class RunTest {
 			return res;
 		}
 		
-		public HttpResponse createExperiment(HttpContext httpContext, String userid, String username) throws ClientProtocolException, IOException {
+		public HttpResponse createExperiment(HttpContext httpContext, String userid, String username, String contextPath, int port) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/new/experiment");
-			JSONObject experiment = getExperiment(userid, username);
+			JSONObject experiment = getExperiment(userid, username, contextPath, port);
 			StringEntity entity = new StringEntity(experiment.toString());
 		    httpPost.setEntity(entity);
 		    httpPost.setHeader("Accept", "application/json");
@@ -351,10 +361,10 @@ public class RunTest {
 			return res;		//return experiment id
 		}
 		
-		public HttpResponse checkExperiment(HttpContext httpContext, String userid, String username, String expid) throws ClientProtocolException, IOException {
+		public HttpResponse checkExperiment(HttpContext httpContext, String userid, String username, String expid, String contextPath, int port) throws ClientProtocolException, IOException {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpPost httpPost = new HttpPost(localhost+context.getContextPath()+"/"+jerseyServices+"/experiment/search");
-			JSONObject experiment = getExperimentFilter(userid, username, expid);
+			JSONObject experiment = getExperimentFilter(userid, username, expid, contextPath, port);
 			StringEntity entity = new StringEntity(experiment.toString());
 		    httpPost.setEntity(entity);
 		    httpPost.setHeader("Accept", "application/json");
@@ -389,8 +399,8 @@ public class RunTest {
 			return filter;
 		}
 
-		public JSONObject getExperimentFilter(String userid, String username, String expid) {
-			JSONObject filter = getExperiment(userid, username);
+		public JSONObject getExperimentFilter(String userid, String username, String expid, String contextPath, int port) {
+			JSONObject filter = getExperiment(userid, username, contextPath, port);
 			filter.put("_id", expid);
 			JSONArray treatments = filter.getJSONArray("treatment");
 			JSONArray newtreatments = new JSONArray();
@@ -405,7 +415,7 @@ public class RunTest {
 			return filter;
 		}
 		
-		public JSONObject getExperiment(String userid, String username) {
+		public JSONObject getExperiment(String userid, String username, String contextPath, int port) {
 			JSONObject experiment = new JSONObject();
 			experiment.put("name", "experiment"+userid);
 			experiment.put("experimenter", username);
@@ -429,15 +439,16 @@ public class RunTest {
 			JSONArray distribution = new JSONArray();
 			config.put("distribution", distribution);
 			
+			
 			//exp simple or advanced
 			Integer mod = Integer.parseInt(userid) % 2;
 			if (mod == 0) {
-				control.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=blue");
-				treatment.put("url", "http://localhost:8080/APONE/service/test/client?rankingAlg=default&linkColor=green");
+				control.put("url", "http://localhost:"+port+contextPath+"/service/test/client?rankingAlg=default&linkColor=blue");
+				treatment.put("url", "http://localhost:"+port+contextPath+"/service/test/client?rankingAlg=default&linkColor=green");
 			} else {
-				control.put("url", "http://localhost:8080/APONE/service/test/client");
+				control.put("url", "http://localhost:"+port+contextPath+"/service/test/client");
 				control.put("definition", "rankingAlg=\"default\";linkColor=\"blue\";");
-				treatment.put("url", "http://localhost:8080/APONE/service/test/client");
+				treatment.put("url", "http://localhost:"+port+contextPath+"/service/test/client");
 				treatment.put("definition", "rankingAlg=\"default\";linkColor=\"green\";");
 			}
 			

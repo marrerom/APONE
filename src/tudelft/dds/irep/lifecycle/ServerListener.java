@@ -1,8 +1,10 @@
 package tudelft.dds.irep.lifecycle;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Map;
@@ -30,6 +32,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 
 import tudelft.dds.irep.data.database.Database;
 import tudelft.dds.irep.data.database.MongoDB;
+import tudelft.dds.irep.data.schema.JEvent;
 import tudelft.dds.irep.data.schema.JUser;
 import tudelft.dds.irep.data.schema.UserRol;
 import tudelft.dds.irep.experiment.ExperimentManager;
@@ -82,6 +85,19 @@ public class ServerListener implements ServletContextListener {
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent sce)  { 
+   	
+		
+		
+//    	try {
+//    		FileInputStream streamIn = new FileInputStream("/home/mmarrero/Downloads/msg-0000");
+//    	     ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
+//    	     JEvent readCase = (JEvent) objectinputstream.readObject();
+//    	     readCase.setIdconfig("5a8d9b9bda0ed1063b9303f5");
+//    	     System.out.println(readCase);
+//    	 } catch (Exception e) {
+//    	     e.printStackTrace();
+//    	 }
+    	
     	
     	try {
     		//PROPERTIES FILE
@@ -150,8 +166,11 @@ public class ServerListener implements ServletContextListener {
 				JUser anonuser = em.createRegularUser(anonymous.getIdTwitter(), anonymous.getName(), master);
     			if (!anonuser.getIdname().equals(anonymous.getIdname()))
     				throw new InternalServerException("Anonymous (ANONYMOUS) user name already existing in the database for other user");
-
     		}
+    		
+    		
+   		
+    		
     	} catch (Exception  e) {
     		log.log(Level.SEVERE, e.getMessage(), e);
     		throw new RuntimeException(e);

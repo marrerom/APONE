@@ -246,7 +246,7 @@ $(document).ready(function() {
 		if (tabexpevent.find("[name=evalue]").val()) {filter.evalue = tabexpevent.find("[name=evalue]").val();}
 		if (tabexpevent.find("[name=treatment]").val()) {filter.treatment = tabexpevent.find("[name=treatment]").val();}
 		if (tabexpevent.find("[name=agent]").val()) {filter.useragent = tabexpevent.find("[name=agent]").val();}
-		if (tabexpevent.find("[name=experiment]").val()) {filter.experiment = tabexpevent.find("[name=experiment]").val();}
+		if (tabexpevent.find("[name=experimenter]").val()) {filter.experimenter = tabexpevent.find("[name=experimenter]").val();}
 
 		paramvalues = new Object();
 		

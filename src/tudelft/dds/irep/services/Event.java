@@ -2,36 +2,56 @@ package tudelft.dds.irep.services;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.annotation.Retention;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletContext;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NameBinding;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.ext.Provider;
+import javax.ws.rs.ext.WriterInterceptor;
+import javax.ws.rs.ext.WriterInterceptorContext;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.glassfish.jersey.message.GZipEncoder;
+import org.glassfish.jersey.message.filtering.EntityFilteringFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.filter.EncodingFilter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,12 +83,56 @@ import tudelft.dds.irep.utils.InternalServerException;
 import tudelft.dds.irep.utils.JsonValidator;
 import tudelft.dds.irep.utils.Utils;
 
+
+
 @Path("/event")
-public class Event {
+@MultipartConfig
+public class Event extends ResourceConfig {
 	
 	static protected final Logger log = Logger.getLogger(Experiment.class.getName());
 	
 	@Context ServletContext context;
+
+	//compressing everything: it doesn't work
+//	public Event() {
+//
+//        packages("tudelft.dds.irep.services");
+//		//register(EntityFilteringFeature.class);
+//		EncodingFilter.enableFor(this, GZipEncoder.class);		
+//
+//	}
+	
+	
+	//compressin only specific endopints: it does't work
+//	@NameBinding
+//	@Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+//	public @interface Compress {}
+//	
+//	@Provider
+//	@Compress
+//	public class GZIPWriterInterceptor implements WriterInterceptor {
+//
+//	    @Override
+//	    public void aroundWriteTo(WriterInterceptorContext context)
+//	                    throws IOException, WebApplicationException {
+//
+//	    	MultivaluedMap<String,Object> headers = context.getHeaders();
+//	    	headers.add("Content-Encoding", "gzip");
+//
+//	        final OutputStream outputStream = context.getOutputStream();
+//	        context.setOutputStream(new GZIPOutputStream(outputStream));
+//	        context.proceed();
+//	    }
+//	}
+
+	
+//	@Path("/registerTest")
+//	@POST
+//	@Consumes(MediaType.MULTIPART_FORM_DATA)
+//	public Response registerMultipartTest(@FormDataParam("idconfig") String idconfig, @FormDataParam("timestamp") String timestamp,   @FormDataParam("evalue") InputStream evalue, @Context HttpServletRequest request) {
+//		//public Response registerMultipartTest(@FormDataParam("idconfig") String idconfig) {
+//		return registerMultipart(null,null,null,null, null, null, null, null, null);
+//	}
 	
 	//TODO: make it more efficient asking first if the experiment is running, and only in that case obtain the treatment from nsConfig in memory
 	@Path("/register")
@@ -86,6 +150,9 @@ public class Event {
 			if (timestamp == null)
 				timestamp = Utils.getTimestamp(new Date());
 			
+			if (idunit == null)
+				idunit = Utils.getRequestIdentifier(idconfig,request);
+			
 			ObjectMapper mapper = new ObjectMapper();
 			
 			//JParamValues params = mapper.convertValue(jnode, JParamValues.class);
@@ -102,6 +169,7 @@ public class Event {
 				params = mapper.convertValue(jnode, JParamValues.class);
 			}
 			
+			
 			byte[] valuebin = ByteStreams.toByteArray(evalue);
 			InputStream evalueEncoded = new ByteArrayInputStream(Utils.encodeBinary(valuebin).getBytes());
 
@@ -109,16 +177,13 @@ public class Event {
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
 			em.registerEvent(idconfig, event, authuser);
-			ResponseBuilder response = Response.ok();
-			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
-		    //response.header("Access-Control-Allow-Credentials", "true");
-		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			ResponseBuilder response = Response.ok()
+					.cookie(new NewCookie(idconfig, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Headers","origin, content-type, accept")
+					.header("Access-Control-Allow-Credentials", "true")
+		    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
 
-//			if (jtreat.getUrl() != null) {
-//				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
-//			    //response.allow("OPTIONS");
-//			}
 		    return response.build();
 		} catch (BadRequestException | ParseException | ProcessingException | IllegalArgumentException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -136,6 +201,10 @@ public class Event {
 	@POST
 	@Consumes(MediaType.TEXT_PLAIN)
 	public Response registerTxt(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+		log.log(Level.INFO, "To register: "+inputJson);
+   	
+    	ObjectMapper mapper = new ObjectMapper();
+		
 		return registerJson(inputJson, useragent, request);
 	}
 
@@ -147,16 +216,20 @@ public class Event {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response registerJson(String inputJson, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
-	
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
 			JsonValidator jval = (JsonValidator) context.getAttribute("JsonValidator");
 			ObjectMapper mapper = new ObjectMapper();
-			
+		
 			JsonNode inputNode = mapper.readTree(inputJson);
 			String idconfig = inputNode.get("idconfig").asText();
-			String idunit = inputNode.get("idunit").asText();
-			
+			JsonNode idunitnode = inputNode.get("idunit");
+			String idunit;
+			if (idunitnode == null) {
+				idunit = Utils.getRequestIdentifier(idconfig,request);
+			} else {
+				idunit = inputNode.get("idunit").asText();
+			}
 			String etype = inputNode.get("etype").asText();
 			String ename = inputNode.get("ename").asText();
 			
@@ -166,6 +239,11 @@ public class Event {
 			else {
 				JsonNode evalueNode = inputNode.get("evalue");
 				evalue = evalueNode.toString();
+				
+				if (etype.equals(EventType.JSON.toString())) {
+					JsonNode evalueTest = mapper.readTree(evalue);
+					Map<String,Object> map = mapper.convertValue(evalueTest, Map.class);
+				}
 			}
 
 			String timestamp;
@@ -173,13 +251,36 @@ public class Event {
 				timestamp = inputNode.get("timestamp").asText();
 			else 
 				timestamp = Utils.getTimestamp(new Date());
-			
+			log.log(Level.INFO, "Register: validated content");
 			JExperiment jexp = em.getExperimentFromConf(idconfig, authuser);
+			log.log(Level.INFO, "Register: get experiment id");
 			String unitExp = jexp.getUnit();
+			
 			String treatment = em.getTreatment(unitExp, idconfig, idunit, authuser); //could be obtained from nsconfig if the experiment is running
 			JTreatment jtreat = em.getTreatment(jexp,treatment);
 			
-			JParamValues params;
+			log.log(Level.INFO, "Register: get treatment");
+			
+			JParamValues params;//	@NameBinding
+//			@Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+//			public @interface Compress {}
+		//	
+//			@Provider
+//			@Compress
+//			public class GZIPWriterInterceptor implements WriterInterceptor {
+		//
+//			    @Override
+//			    public void aroundWriteTo(WriterInterceptorContext context)
+//			                    throws IOException, WebApplicationException {
+		//
+//			    	MultivaluedMap<String,Object> headers = context.getHeaders();
+//			    	headers.add("Content-Encoding", "gzip");
+		//
+//			        final OutputStream outputStream = context.getOutputStream();
+//			        context.setOutputStream(new GZIPOutputStream(outputStream));
+//			        context.proceed();
+//			    }
+//			}
 			JsonNode paramnode = inputNode.get("paramvalues");
 			if (paramnode == null) {
 				params =  mapper.convertValue(em.getParams(jexp.getUnit(), idconfig, idunit, new HashMap<String,Object>(), authuser), JParamValues.class);
@@ -188,17 +289,24 @@ public class Event {
 				params = mapper.convertValue(paramnode, JParamValues.class);
 			}
 			
+			
 			InputStream stream = new ByteArrayInputStream(evalue.getBytes(StandardCharsets.UTF_8.name()));
 			JEvent event = em.createEvent(idconfig, idunit, ename, EventType.valueOf(etype), stream, timestamp,treatment, params, useragent, jexp.getExperimenter());
 			ProcessingReport pr = jval.validate(event, mapper.readTree(mapper.writeValueAsString(event)), context);
 			Preconditions.checkArgument(pr.isSuccess(), pr.toString());
+			
+			log.log(Level.INFO, "Register: event validated");
+			
 			em.registerEvent(idconfig, event, authuser);
-			ResponseBuilder response = Response.ok();
-			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
-		    //response.header("Access-Control-Allow-Credentials", "true");
-		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
-
+			
+			log.log(Level.INFO, "Register: registered");
+			ResponseBuilder response = Response.ok()
+					.cookie(new NewCookie(idconfig, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+		    		.header("Access-Control-Allow-Headers","origin, content-type, accept")
+		    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+		    		.header("Access-Control-Allow-Credentials", "true");
+		    
 //			if (jtreat.getUrl() != null) {
 //				//response.header("Access-Control-Allow-Origin", jtreat.getUrl());
 //			    //response.allow("OPTIONS");
@@ -323,6 +431,7 @@ public class Event {
 	
 	@POST
 	@Path("/getCSV")
+	//@Compress
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getCSV(String idevents, @Context HttpServletRequest request) {
@@ -336,6 +445,7 @@ public class Event {
 				String id = item.asText();
 				events.add(em.getEvent(id,authuser));
 			}
+			
 			StreamingOutput stream = new StreamingOutput() {
 				@Override
 				public void write(OutputStream out) throws IOException {
@@ -353,10 +463,10 @@ public class Event {
 					}
 					writer.flush();
 					sw.close();
-					
+							
 				}
 			};
-	
+			
 			return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
 					.header("Content-Disposition", "attachment; filename=\"" + "events.csv" + "\"") // optional
 					.build();
@@ -376,6 +486,7 @@ public class Event {
 	
 	@POST
 	@Path("/getJSON")
+	//@Compress
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getJSON(String idevents, @Context HttpServletRequest request) throws JsonProcessingException, IOException, ParseException {
@@ -415,6 +526,7 @@ public class Event {
 			};
 	
 			return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+					//.encoding("gzip")
 					.header("Content-Disposition", "attachment; filename=\"" + "events.json" + "\"") // optional
 					.build();
 		} catch (BadRequestException | ParseException e) {

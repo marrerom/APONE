@@ -19,6 +19,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -28,6 +29,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
@@ -486,8 +488,15 @@ public class Experiment {
 			String target = jtreat.getUrl();
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-				Response response = Response.seeOther(uri).cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
-				return response;
+				ResponseBuilder response = Response.seeOther(uri)
+						.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+						.header("Access-Control-Allow-Origin", "*")
+			    		.header("Access-Control-Allow-Headers","origin, content-type, accept")
+			    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+			    		.header("Access-Control-Allow-Credentials", "true");
+				
+						//.cookie(Utils.getCookie(uri, idrun, idunit)).build(); //302, temporaryRedirect(uri) for 301
+				return response.build();
 			}
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -506,12 +515,19 @@ public class Experiment {
 	
 	@Path("/redirect/{idrun}/{idunit}")
 	@GET
-	public Response 
-RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
+	public Response RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String idunit, @HeaderParam("user-agent") String useragent, @Context HttpServletRequest request) {
 		try {
+			System.out.println("redirect endpoint "+idrun+"/"+idunit);
+			
 			JUser authuser = Security.getClientUser();
 			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			
+			System.out.println("redirect endpoint, before get config");
+			
 			JExperiment jexp = em.getExperimentFromConf(idrun, authuser);
+			
+			System.out.println("redirect endpoint, after get config");
+			
 			String treatment = em.getTreatment(jexp.getUnit(), idrun, idunit, authuser);
 			String timestamp = Utils.getTimestamp(new Date());
 			ObjectMapper mapper = new ObjectMapper();
@@ -520,14 +536,30 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			
 			JParamValues jparams = mapper.convertValue(params, JParamValues.class);
 			
+			System.out.println("redirect endpoint, before get treatment");
+			
 			JTreatment jtreat = em.getTreatment(jexp, treatment);
+			
+			System.out.println("redirect endpoint, after get treatment");
+			
 			String target = jtreat.getUrl();
+			
+			System.out.println("redirect endpoint, target "+target);
+			
 			if (target != null) {
 				URI uri = new URI(Utils.getVariantURL(target,params, idunit, jtreat.getName()));
-				Response response = Response.seeOther(uri).build();
-				return response;
-			}
+				ResponseBuilder response = Response.seeOther(uri)
+						.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+						.header("Access-Control-Allow-Origin", "*")
+					    .header("Access-Control-Allow-Headers","origin, content-type, accept")
+					    .header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+					    .header("Access-Control-Allow-Credentials", "true");
+				return response.build();
+			} else
+				throw new BadRequestException("No target to redirect to");
+			
 		} catch (BadRequestException | ParseException e) {
+			System.out.println("redirect endpoint, before badrequest");
 			log.log(Level.INFO, e.getMessage(), e);
 			throw new BadRequestException(e.getMessage());
 		} catch (AuthenticationException e) {
@@ -537,8 +569,8 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 			throw new InternalServerException(e.getMessage());
 		}
 
-	    
-		return Response.status(Status.BAD_REQUEST).build();
+		
+		
 	}
 	
 	@Path("/getparams/{idrun}/{idunit}")
@@ -571,10 +603,12 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 //				response.header("Access-Control-Allow-Origin", origin.getScheme()+"://"+origin.getHost()+":"+origin.getPort());
 			}
 			result = mapper.writeValueAsString(node);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			response.header("Access-Control-Allow-Origin", "*");
-		    response.header("Access-Control-Allow-Headers","origin, content-type, accept");
-		    response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON)
+					.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+		    		.header("Access-Control-Allow-Headers","origin, content-type, accept")
+		    		.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+		    		.header("Access-Control-Allow-Credentials", "true");
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -661,10 +695,12 @@ RedirectUnit(@PathParam("idrun") String idrun, @PathParam("idunit") String iduni
 				//response = response.cookie(Utils.getCookie(origin, idrun, idunit));
 				}
 			result = mapper.writeValueAsString(node);
-			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON);
-			response.header("Access-Control-Allow-Origin", "*");
-	    	response.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization");
-	    	response.header("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+			ResponseBuilder response = Response.ok(result,MediaType.APPLICATION_JSON)
+					.cookie(new NewCookie(idrun, idunit, "/", "", "", (int)30 * 24 * 60 * 60, false))
+					.header("Access-Control-Allow-Origin", "*")
+					.header("Access-Control-Allow-Headers","origin, content-type, accept, authorization")
+					.header("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+					.header("Access-Control-Allow-Credentials", "true");
 
 			return response.build();
 		} catch (BadRequestException | ParseException e) {
