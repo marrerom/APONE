@@ -354,7 +354,8 @@ public class MongoDB implements Database {
 			if (treatitem.get("description") != null) treatcond.add(regex("treatment.description", treatitem.get("description").toString()));
 			if (treatitem.get("definition") != null) treatcond.add(regex("treatment.definition", treatitem.get("definition").toString()));
 			if (treatitem.get("control") != null) treatcond.add(eq("treatment.control", treatitem.get("control")));
-			treatmentscond.add(and(treatcond));
+			if (!treatcond.isEmpty())
+				treatmentscond.add(and(treatcond));
 		}
 		if (!treatmentscond.isEmpty())
 			conditions.add(or(treatmentscond));
@@ -411,10 +412,11 @@ public class MongoDB implements Database {
 				date = cal.getTime();
 				
 				
-				conditions.add(gte("config.date_to_end", date ));
-				conditions.add(lte("config.date_to_end", Utils.addDay(date) ));
+				configcond.add(gte("config.date_to_end", date ));
+				configcond.add(lte("config.date_to_end", Utils.addDay(date) ));
 			}
-			configurationcond.add(and(configcond));
+			if (!configcond.isEmpty())
+				configurationcond.add(and(configcond));
 		}
 		if (!configurationcond.isEmpty())
 			conditions.add(or(configurationcond));
