@@ -89,7 +89,25 @@ APONE delegates authentication to Twitter’s OAuth, and makes use of RabbitMQ a
 
 
 ## How
-A [user guide](docs/APONEUserGuide.md) explains how to easily define, run and control an experiment using a demo Client ([Client Example, or ClientE](https://marrerom.github.io/ClientE/)) and the [running instace of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), where you can also find three running experiments with ClientE for demonstration purposes. ClientE and most examples in the user guide are focused on the Information Retrieval domain. 
+
+### Quick Setup
+1. Go to [the running instance of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), and create a new experiment from the menu Experiments::Create new. Main fields to fill in are:
+- Variant name and client URL where it is located (eg. SearchBoxA, http://myclient/myVariantSearchBoxA). You can have as many variants as you want. One of them has to be the control.
+- Configuration name, optionally deadline and/or maximum  experimental units to complete the experiment (eg. maximum number of users), and distribution (percentage of experimental units assigned to each variant).
+
+2. Start the experiment selecting it from Experiments:Manage and clicking on 'Start' (you can start/stop the experiment as many times as you want).
+
+3. Develop your client and host it in a public server, hosting the different variants in the URLs specified in the definition of the experiment. Use [APONE's Javascript Library](docs/jsApone.html) to easily interact with APONE to get the variant assigned to a user, register events, check if the user has completed the experiment, etc. 
+
+4. Monitor the experiment from APONE's menu Monitoring::Experiments, and download the data registered from Events::Manage in order to decide the best variant.
+
+Users can participate in the running  experiments from APONE's interface Monitoring::Users, just by clicking on 'Participate in an experiment', or they can be redirected to the assigned variant from the following endpoint: /service/redirect/{experiment identifier}
+
+### Advanced
+
+Experiments can also be defined in [PlanOut language](https://facebook.github.io/planout/docs/planout-language-reference.html), where each variant is assigned pairs of key-values. In that case, we can easily create multivariate experiments and we are able to overwrite those key-values, which is necessary to run quasi-experiments.  
+ 
+A [user guide](docs/APONEUserGuide.md) explains in more detail how to define, run and control an experiment using a demo Client ([Client Example, or ClientE](https://marrerom.github.io/ClientE/)) and the [running instace of APONE we provide](http://ireplatform.ewi.tudelft.nl:8080/APONE), where you can also find three running experiments with ClientE for demonstration purposes. ClientE and most examples in the user guide are focused on the Information Retrieval domain. 
 
 It is also possible to download and install the platform from [Github](https://github.com/marrerom/APONE) following the [installation instructions](docs/installation.md).
 
