@@ -8,13 +8,15 @@
             "name" : "Default", 
             "description" : "Default ranking algorithm in ElasticSearch", 
             "control" : true, 
-            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE2/index.html?rankingAlg=default&linkColor=blue"
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientRanking",
+            "definition": "rankingAlg='default';linkColor='blue';" 
         }, 
         {
             "name" : "BM25", 
             "description" : "BM25 ranking algorithm implemented in ElasticSearch", 
             "control" : false, 
-            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE2/index.html?rankingAlg=bm25&linkColor=blue"
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientRanking",
+            "definition": "rankingAlg='bm25';linkColor='blue';"
         }
     ], 
     "config" : [

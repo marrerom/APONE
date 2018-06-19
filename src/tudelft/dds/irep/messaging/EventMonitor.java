@@ -44,6 +44,10 @@ public class EventMonitor {
 			return	treatcount.values().stream().mapToLong(p -> p.stream().distinct().count()).sum();
 	}
 	
+	public Map<String, List<String>> getExperimentalUnits(){
+		return treatcount;
+	}
+	
 	public Set<String> getTreatments(){
 		return treatcount.keySet();
 	}

@@ -86,6 +86,8 @@ public class Experiment {
 		    uploadExperiment(ranking, request);
 		    String factorial = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoFactorial.json")));
 		    uploadExperiment(factorial, request);
+		    String expAP = CharStreams.toString(new InputStreamReader(context.getResourceAsStream("/WEB-INF/demoAP.json")));
+		    uploadExperiment(expAP, request);
 		    Security.setAuthenticatedUser(request, em, authuser.getIdTwitter(), authuser.getIdname());
 		} catch (BadRequestException | ParseException e) {
 			log.log(Level.INFO, e.getMessage(), e);
@@ -340,8 +342,8 @@ public class Experiment {
 		} 
 	}
 	
-	//TODO: change to accept any type of event
-	@Path("/monitor/treatments")
+	
+	@Path("/monitor")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public String monitorTreatmentsComplete(@Context HttpServletRequest request) {

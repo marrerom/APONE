@@ -124,7 +124,7 @@ $(document).ready(function() {
 
 		newrow.find(".chart.icon").on("click", function(){
 			var id = newrow.attr("id");
-			displayChart(id.substr(0,id.indexOf("-")));
+			displayChartWindow(id.substr(0,id.indexOf("-")));
 		});
 		newrow.find(".chart.icon").css( 'cursor', 'pointer' );
 
@@ -141,112 +141,260 @@ $(document).ready(function() {
 		newrow.find(".ui.mini.statistic.completed").css( 'cursor', 'pointer' );
 	}
 	
-	function displayChart(id){
+/*
+ * Chart Functions
+ */
+	
+	function displayChartWindow(id){
 		$(".ui.modal._chart").find(".header").empty();
-		$(".ui.modal._chart").find(".content").empty();
-		$(".ui.modal._chart").find(".content").append("<canvas id='chart' width='400' height='300'>");
-		var errorMessage = "<p>There was an error loading data from experiment +"+id+"</p>";
+		$("#chartContainer").empty();
+		$(".ui.modal._chart").modal('refresh');
+//		$(".ui.modal._chart").find(".content").append("<canvas id='chart' width='400' height='300'>");
+		$(".ui.modal._chart").find("._chartload.small.blue.ui.button").on("click", function(){displayChart(id)});
+		var errorMessage = "<p>There was an error loading events from experiment +"+id+"</p>";
+		$(".ui.modal._chart").modal('show');
+		$.ajax({
+		  type: 'GET',	
+		  dataType: "json",
+		  url: getEnamesURL+"/"+id,
+		  success: chartLoadEvents,
+		  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
+		});
+		
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
-			  url: monitorSubtreatURL+"/"+id,
-			  success: displayChartSuccess,
+			  url: getAggregationTypesURL,
+			  success: chartLoadAggregation,
 			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
 			});
+		
+	}
+
+	function chartLoadEvents(events){
+		//load events
+		var dbox = $(".ui.modal._chart").find("._chartename.ui.dropdown");
+		var selected = dbox.val();
+		dbox.empty();
+		dbox.append("<option value=''>Select Event</option>");
+		for (var i = 0; i < events.length; i++) {
+			dbox.append("<option value='"+events[i]+"'>"+events[i]+"</option>");
+		}
+
 	}
 	
+	function chartLoadAggregation(aggitems){
+		//load events
+		var dbox = $(".ui.modal._chart").find("._chartagg.ui.dropdown");
+		var selected = dbox.val();
+		dbox.empty();
+		dbox.append("<option value=''>Select Operation</option>");
+		for (var i = 0; i < aggitems.length; i++) {
+			dbox.append("<option value='"+aggitems[i]+"'>"+aggitems[i]+"</option>");
+		}
+
+	}
+	
+	function displayChart(id){
+		var errorMessage = "<p>There was an error loading data from experiment +"+id+"</p>";
+		var input = {
+			idconfig: id,
+			ename: $(".ui.modal._chart").find("._chartename.ui.dropdown").val(),
+			completed: $(".ui.modal._chart").find("[name='chartcompleted']").is(":checked"),
+			aggregation: $(".ui.modal._chart").find("._chartagg.ui.dropdown").val() 
+			}
+		if (input.ename && input.aggregation){
+			$.ajax({
+			  type: 'POST',	
+			  contentType: "application/json",
+			  dataType: "json",
+			  data: JSON.stringify(input),
+			  url: getAggregationURL,
+			  success: displayChartSuccess,
+			  error: function(xhr, status, error) {alertError(xhr, errorMessage);}
+			});		
+		}
+	}
+	
+	
 	function displayChartSuccess(data){
-		
-		var ctx = document.getElementById("chart").getContext('2d');
-		var exposures = new Object();
-		var completed = new Object();
-		$.each(data, function (index, event){
-			if (event.ename == "exposure"){
-				$.each(event.treatments, function (index2, treatexp){
-					exposures[treatexp.name] = treatexp.value;
-				});
-			} else if (event.ename == "completed"){
-				$.each(event.treatments, function (index2, treatexp){
-					completed[treatexp.name] = treatexp.value;
-				});
+		var arrayPoints = [];
+		$.each(data, function (index, treatment){
+			var newDataPoint = {
+					name: treatment.name,
+					y: treatment.values,
+					type: "box",
+					boxpoints: 'all'
 			}
-				
+			arrayPoints.push(newDataPoint);
 		});
 
-		colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00'];
-		var datasets = new Array();
-		var enames = new Array();
-		var treatments = new Object();
-		$.each(data, function (index, event){
-			if (event.ename != "exposure" && event.ename != "completed"){
-				enames.push(event.ename);
-				color = 0;
-				$.each(event.treatments, function (index, treatment){
-					var dtreatment = treatments[treatment.name];
-					var nexposures = exposures[treatment.name];
-					var ncompleted = completed[treatment.name];
-					var txt; 
-					if (ncompleted == null)
-						ncompleted = 0;
-					if (nexposures == null){
-						nexposures = 1;
-						txt = "no exposures registered!";
-					} else
-						txt =  nexposures + " exp.";
-					txt = txt + "/"+ncompleted+" comp.";
-					if (dtreatment == null){
-						dtreatment = new Object();
-						dtreatment.label = treatment.name+" ("+txt+")";
-						//dtreatment.backgroundColor = 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';;
-						dtreatment.backgroundColor = colors[color%7];
-						color++;
-						dtreatment.data = new Array();
-						datasets.push(dtreatment);
-						treatments[treatment.name] = dtreatment;
-					} 
-					dtreatment.data.push(treatment.value/nexposures); 
-				});
-			}
-		});
-		
-		$(".ui.modal._chart").modal('show');
-		
-		var myBubbleChart = new Chart(ctx,{
-		    type: 'bar',
-		    data: {
-		      labels: enames,
-		      datasets: datasets
-		    },
-		    options: {
-		        barValueSpacing: 20,
-                scales: {
-                    xAxes: [{
-                        display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'User events'
-                        }
-                    }],
-                    yAxes: [{
-                        display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: "Average count per exposures"
-                        },
-                        ticks: {
-                        	min: 0
-                        }
-                    }]
-                },
-                title: {
-                    display: true,
-                    text: 'Event count'
-                }
-            }
-		});
+		Plotly.newPlot('chartContainer', arrayPoints);
 
+		
+//		var chart = new CanvasJS.Chart("chartContainer", {
+//			animationEnabled: true,
+//			title:{
+//				text: "Daily Sleep Statistics of Age Group 12 - 20"
+//			},
+//			axisX: {
+//				valueFormatString: "DDD"
+//			},
+//			axisY: {
+//				title: "Sleep Time (in Hours)"
+//			},
+//			data: [{
+//				type: "boxAndWhisker",
+//				xValueFormatString: "DDDD",
+//				yValueFormatString: "#0.0 Hours",
+//				dataPoints: [
+//					{ x: new Date(2017, 6, 3),  y: [4, 6, 8, undefined, undefined] },
+//					{ x: new Date(2017, 6, 4),  y: [5, 6, 7, 8, 6.5] },
+//					{ x: new Date(2017, 6, 5),  y: [4, 5, 7, 8, 6.5] },
+//					{ x: new Date(2017, 6, 6),  y: [3, 5, 6, 9, 5.5] },
+//					{ x: new Date(2017, 6, 7),  y: [6, 8, 10, 11, 8.5] },
+//					{ x: new Date(2017, 6, 8),  y: [5, 7, 9, 12, 7.5] },
+//					{ x: new Date(2017, 6, 9),  y: [4, 6, 8, 9, 7] }
+//				]
+//			}]
+//		});
+//		chart.render();
 		$(".ui.modal._chart").modal('refresh');
 	}
+	
+//	function displayChartSuccess(data){
+//		// var legendTemplate = "<span
+//		// class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0;
+//		// i<datasets.length; i++){%><span
+//		// style=\"background-color:<%=datasets[i].strokeColor%>\">&nbsp;&nbsp;&nbsp;</span>&nbsp;<%if(datasets[i].label){%><%=datasets[i].label%><%}%>&nbsp;&nbsp;<%}%></span>";
+//		var labels = new Array();
+//		var datachart = {
+//				label: "BP1",
+//				fillColor: "rgba(0, 102, 255, 0.2)",
+//				strokeColor : "rgba(151,187,205,1)",
+//				pointColor : "rgba(151,187,205,1)",
+//				pointStrokeColor : "#fff",
+//				pointHighlightFill : "#fff",
+//				pointHighlightStroke : "rgba(151,187,205,1)",
+//				data:[]
+//		}
+//
+//		$.each(data, function (index, treatment){
+//			labels.push(treatment.name);
+//			datachart.data.push(treatment.values);
+//
+//		});
+//		var boxChartData = {
+//				labels : labels,
+//				datasets : [ datachart ]
+//		};
+//		var ctx = document.getElementById("chart").getContext("2d");
+//		var myBar = new Chart(ctx).BoxPlot(boxChartData, {
+//			animation: false,
+//			responsive : false,
+//			showTooltips: true,
+//			//legendTemplate: legendTemplate,
+//			scaleShowHorizontalLines: true,
+//			scaleShowVerticalLines: true
+//		});
+//		
+//		$(".ui.modal._chart").modal('refresh');
+//
+//		// var legende = myBar.generateLegend();
+//		// $('#chartlegend').html(legende);
+//	}
+	
+//	function displayChartSuccess(data){
+//		var ctx = document.getElementById("chart").getContext('2d');
+//		var exposures = new Object();
+//		var completed = new Object();
+//		$.each(data, function (index, event){
+//			if (event.ename == "exposure"){
+//				$.each(event.treatments, function (index2, treatexp){
+//					exposures[treatexp.name] = treatexp.value;
+//				});
+//			} else if (event.ename == "completed"){
+//				$.each(event.treatments, function (index2, treatexp){
+//					completed[treatexp.name] = treatexp.value;
+//				});
+//			}
+//				
+//		});
+//
+//		colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00'];
+//		var datasets = new Array();
+//		var enames = new Array();
+//		var treatments = new Object();
+//		$.each(data, function (index, event){
+//			if (event.ename != "exposure" && event.ename != "completed"){
+//				enames.push(event.ename);
+//				color = 0;
+//				$.each(event.treatments, function (index, treatment){
+//					var dtreatment = treatments[treatment.name];
+//					var nexposures = exposures[treatment.name];
+//					var ncompleted = completed[treatment.name];
+//					var txt; 
+//					if (ncompleted == null)
+//						ncompleted = 0;
+//					if (nexposures == null){
+//						nexposures = 1;
+//						txt = "no exposures registered!";
+//					} else
+//						txt =  nexposures + " exp.";
+//					txt = txt + "/"+ncompleted+" comp.";
+//					if (dtreatment == null){
+//						dtreatment = new Object();
+//						dtreatment.label = treatment.name+" ("+txt+")";
+//						//dtreatment.backgroundColor = 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';;
+//						dtreatment.backgroundColor = colors[color%7];
+//						color++;
+//						dtreatment.data = new Array();
+//						datasets.push(dtreatment);
+//						treatments[treatment.name] = dtreatment;
+//					} 
+//					dtreatment.data.push(treatment.value/nexposures); 
+//				});
+//			}
+//		});
+//		
+//		$(".ui.modal._chart").modal('show');
+//		
+//		var myBubbleChart = new Chart(ctx,{
+//		    type: 'bar',
+//		    data: {
+//		      labels: enames,
+//		      datasets: datasets
+//		    },
+//		    options: {
+//		        barValueSpacing: 20,
+//                scales: {
+//                    xAxes: [{
+//                        display: true,
+//                        scaleLabel: {
+//                            display: true,
+//                            labelString: 'User events'
+//                        }
+//                    }],
+//                    yAxes: [{
+//                        display: true,
+//                        scaleLabel: {
+//                            display: true,
+//                            labelString: "Average count per exposures"
+//                        },
+//                        ticks: {
+//                        	min: 0
+//                        }
+//                    }]
+//                },
+//                title: {
+//                    display: true,
+//                    text: 'Event count'
+//                }
+//            }
+//		});
+//
+//		$(".ui.modal._chart").modal('refresh');
+//	}
 
 	
 	function displayParamSuccess(data){
@@ -287,7 +435,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: 'GET',	
 			  dataType: "json",
-			  url: monitorTreatmentsURL,
+			  url: monitorURL,
 			  success: getRunningSuccess,
 			  error: function(xhr, status, error) {consoleError(xhr, errorMessage);}
 			});

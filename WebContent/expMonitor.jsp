@@ -13,7 +13,7 @@
 <script src='js/general.js'></script>
 <script src='js/calendar.min.js'></script>
 <script src='js/expMonitor.js'></script>
-<script src='js/Chart.min.js'></script>
+<script src="js/plotly-latest.min.js"></script>
 </head>
 <body>
 
@@ -137,13 +137,37 @@
 			<div class="content"></div>
 		</div>
 		
-		<div class="ui modal _chart">
+		<div id="chartwindow" class="ui modal _chart">
 			<div class="header">Experiment events</div>
-			<div class="content"><canvas id="chart" width="400" height="300"></canvas></div>
+			<div class ="parameters">
+			
+
+					<div class="ui fluid segment">
+					
+						<select name='mondropdown' class='_chartename ui dropdown'>
+							<option value="">Select Event</option>
+						</select>
+						
+						<select name='mondropdown' class='_chartagg ui dropdown'>
+							<option value="">Select Operation</option>
+						</select>
+						
+						<div class='ui checkbox' style='padding-left:2px' >
+							<input  tabindex='0' name='chartcompleted' type='checkbox'	title='Only experimental units with "completed" event'>
+							<label>Completed</label>
+						</div>
+
+						
+						<div class='_chartload small blue ui button' tabindex='0' style='float:right'>Load Data</div>
+						
+					</div>
+	
+			</div>
+				<div id="chartContainer" style="height: 370px; width: 100%"></div>
 		</div>
 
+<div>
 
-
-
+</div>
 </body>
 </html>

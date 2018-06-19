@@ -283,10 +283,10 @@ public class ExperimentManager {
 	private List<JEvent> getMonitoringEvents(String idconf, JUser authuser) throws JsonParseException, JsonMappingException, IOException, ParseException{
 		JEvent filter = new JEvent();
 		filter.setIdconfig(idconf);
-		filter.setEname(JEvent.EXPOSURE_ENAME);
+		//filter.setEname(JEvent.EXPOSURE_ENAME);
 		List<JEvent> results = db.getEvents(filter, authuser);
-		filter.setEname(JEvent.COMPLETED_ENAME);
-		results.addAll(db.getEvents(filter, authuser));
+		//filter.setEname(JEvent.COMPLETED_ENAME);
+		//results.addAll(db.getEvents(filter, authuser));
 		return results;
 	}
 	

@@ -6,16 +6,16 @@
     "treatment" : [
         {
             "name" : "onlyone", 
-            "definition" : "linkColor=uniformChoice(choices=['blue','green'], unit=iduser);rankingAlg=uniformChoice(choices=['default','BM25'], unit=iduser);", 
+            "definition" : "linkColor=uniformChoice(choices=['blue','green'], unit=iduser);rankingAlg=uniformChoice(choices=['default','bm25'], unit=iduser);", 
             "control" : true, 
-            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE3/index.html"
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientColorRanking"
         }
     ], 
     "config" : [
         {
             "name" : "test", 
             "experimenter" : "ANONYMOUS", 
-            "controller_code" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE3/index.html", 
+            "controller_code" : "http://ireplatform.ewi.tudelft.nl:8080/ClientColorRanking", 
             "distribution" : [
                 {
                     "segments" : 100, 

@@ -10,7 +10,7 @@ var getEventURL =  "service/event/get";
 var removeEventURL =  "service/event/delete";
 var getCSVURL =  "service/event/getCSV";
 var getJSONURL =  "service/event/getJSON";
-var monitorTreatmentsURL =  "service/experiment/monitor/treatments";
+var monitorURL =  "service/experiment/monitor";
 var monitorSubtreatURL =  "service/experiment/monitor/subtreatments";
 var expsearchURL =  "service/experiment/search";
 var startURL =  "service/experiment/start";
@@ -26,8 +26,9 @@ var testURL =  "service/experiment/redirect"
 var adminUsersURL =  "service/user/admin";
 var deleteUserURL =  "service/user/delete";
 var newUserURL = "service/user/add";
-
-
+var getEnamesURL = "service/event/enames";
+var getAggregationTypesURL = "service/event/aggregationTypes";
+var getAggregationURL = "service/event/aggregate";
 
 function alertError(xhr, errorMessage){
 	var what = errorMessage;

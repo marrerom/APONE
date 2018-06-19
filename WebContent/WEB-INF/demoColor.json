@@ -8,13 +8,15 @@
             "name" : "Blue", 
             "description" : "Link color blue", 
             "control" : true, 
-            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE1/index.html?rankingAlg=default&linkColor=blue"
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientColor",
+            "definition": "rankingAlg='default';linkColor='blue';"
         }, 
         {
             "name" : "Green", 
             "description" : "Link color green", 
             "control" : false, 
-            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientE1/index.html?rankingAlg=default&linkColor=green"
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientColor",
+            "definition": "rankingAlg='default';linkColor='green';"
         }
     ], 
     "config" : [

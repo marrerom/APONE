@@ -69,24 +69,8 @@ public class User {
 	@Path("/authenticate")
 	@GET
 	public Response doGet(@Context HttpServletRequest request) {
-		Twitter twitter = new TwitterFactory().getInstance();
-		twitter.setOAuthConsumer(TWITTER_APP_CLIENT_ID, TWITTER_APP_CLIENT_SECRET);
-		request.getSession().setAttribute("twitter", twitter);
-		try {
-			StringBuffer callbackURL = request.getRequestURL();
-			int index = callbackURL.lastIndexOf("/");
-			callbackURL.replace(index, callbackURL.length(), "").append("/callback");
-
-			RequestToken requestToken = twitter.getOAuthRequestToken(callbackURL.toString());
-			request.getSession().setAttribute("requestToken", requestToken);
-
-			URI uri = new URI(requestToken.getAuthenticationURL());
-			Response response = Response.seeOther(uri).build();
-			return response;
-		} catch (Exception e) {
-			throw new InternalServerException(e.getMessage());
-		}
-
+		return authTwitter(request);
+		//return authworkaround(request);
 	}
 
 	@Path("/callback")
@@ -118,7 +102,46 @@ public class User {
 		} 
 	}
 	
+	private Response authTwitter(HttpServletRequest request) {
+		Twitter twitter = new TwitterFactory().getInstance();
+		twitter.setOAuthConsumer(TWITTER_APP_CLIENT_ID, TWITTER_APP_CLIENT_SECRET);
+		request.getSession().setAttribute("twitter", twitter);
+		try {
+			StringBuffer callbackURL = request.getRequestURL();
+			int index = callbackURL.lastIndexOf("/");
+			callbackURL.replace(index, callbackURL.length(), "").append("/callback");
+	
+			RequestToken requestToken = twitter.getOAuthRequestToken(callbackURL.toString());
+			request.getSession().setAttribute("requestToken", requestToken);
+	
+			URI uri = new URI(requestToken.getAuthenticationURL());
+			Response response = Response.seeOther(uri).build();
+			return response;
+		} catch (Exception e) {
+			throw new InternalServerException(e.getMessage());
+		}
+	}
+	
 
+	private Response authworkaround(HttpServletRequest request) {
+		String id = "937708183979773955";
+		String name = "socialdatadelft";
+		try {
+			ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
+			Security.setAuthenticatedUser(request, em, id, name);			
+		
+			URI uri = new URI(request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getServletContext().getContextPath());
+			Response response = Response.seeOther(uri).build();
+			return response;
+		} catch (BadRequestException e) {
+			log.log(Level.INFO, e.getMessage(), e);
+			throw new BadRequestException(e.getMessage());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+			throw new InternalServerException(e.getMessage());
+		} 
+
+	}
 	
 	@Path("/authenticatedUser")
 	@GET

@@ -145,6 +145,29 @@ var jsApone = function(aponeURL, idExperiment, idUnit, overrides){
 		}
 	}
 	
+	/**
+	 * Get cookie 'cname'
+	 * 
+	 * @function getCookie
+	 * @memberof module:jsApone
+	 * @private
+	 */
+	function getCookie(cname) {
+	    var name = cname + "=";
+	    var decodedCookie = decodeURIComponent(document.cookie);
+	    var ca = decodedCookie.split(';');
+	    for(var i = 0; i < ca.length; i++) {
+	        var c = ca[i];
+	        while (c.charAt(0) == ' ') {
+	            c = c.substring(1);
+	        }
+	        if (c.indexOf(name) == 0) {
+	            return c.substring(name.length, c.length);
+	        }
+	    }
+	    return null;
+	}
+	
 
 	/**
 	 * Sets the experimental conditions (see [{@link ExperimentalConditions}]) when the module is created. 
@@ -165,6 +188,9 @@ var jsApone = function(aponeURL, idExperiment, idUnit, overrides){
 		xhttp.onreadystatechange = function(){
 			callbackAJAX(xhttp, function(){variantInfo = JSON.parse(xhttp.responseText); registerExposure(); if (cbSuccess) {var expCond = new ExperimentalConditions(); cbSuccess(expCond)};}, function(){throw new Error("APONE set variant error");if (cbError) {cbError(xhttp.status);};});
 			};
+		if (!idUnit){
+			idUnit = getCookie(idExperiment);
+		}
 		if (idUnit){
 			xhttp.open("GET", aponeURL+"/service/experiment/getparams/"+idExperiment+"/"+idUnit, !sync);
 			xhttp.send();
