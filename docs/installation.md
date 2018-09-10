@@ -18,7 +18,7 @@ Tested version 2.6.10
 
 The port by default is 27017, although this can be changed in the configuration file (step 4).
 
-Currently, the platform works with a predefined user which has access to a database which contains two collections: *experiment* and *event*. The database and the user must be set in the configuration file (see step 4). The database and collections may be created dynamically by the platform, but the user must be created previously, with *read/write* permissions on the database.
+Currently, the platform works with a predefined user which has access to a database which contains three collections: *experiment*, *user* and *event*. The database and the user must be set in the configuration file (see step 4). The database and collections may be created dynamically by the platform, but the user must be created previously, with *read/write* permissions on the database.
 
 ## 3. RabbitMQ Server
 
@@ -94,17 +94,24 @@ Download or clone the project APONE from [github](https://github.com/marrerom/AP
 <td align="left"><p><span class="c11 c12 c4">irep-exchange</span></p></td>
 <td align="left"><p><span class="c11 c12 c4">RabbitMQ Exchange Name</span></p></td>
 </tr>
-  </tr>
+</tr>
 <tr class="even">
 <td align="left"><p><span class="c11 c1">ADMINTWITTERNAME</span></p></td>
 <td align="left"><p><span class="c11 c12 c4">socialdatadelft</span></p></td>
-<td align="left"><p><span class="c11 c12 c4">Twitter user name of admin</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">Twitter user name of admin (make sure the same user does not exist already in the database with a different rol)</span></p></td>
 </tr>
 <tr class="odd">
 <td align="left"><p><span class="c11 c1">ADMINTWITTERID</span></p></td>
 <td align="left"><p><span class="c11 c12 c4">937708183979773955</span></p></td>
 <td align="left"><p><span class="c11 c12 c4">Twitter id of admin</span></p></td>
 </tr>
+</tr>
+<tr class="even">
+<td align="left"><p><span class="c11 c1">LIMITEDACCESS</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">false</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">If true, only users already registered in the database (collection *user*) are able to access the platform</span></p></td>
+</tr>
+
 </tbody>
 </table>
 
