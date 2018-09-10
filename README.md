@@ -1,7 +1,10 @@
 # Academic Platform for ONline Experiments
 
-Open source platform to set up **controlled A/B experiments on the Web** 
+Open source platform to set up **controlled experiments on the Web** 
 
+* [Mónica Marrero. *APONE: Academic Platform for ONline Experiments*. Design of Experimental Search & Information REtrieval Systems Conference (DESIRES), 2018](https://dl.acm.org/citation.cfm?id=3210164&dl=ACM&coll=DL) 
+
+* [Mónica Marrero and Claudia Hauff. *A/B Testing with APONE*. The 41st International ACM SIGIR Conference on Research & Development in Information Retrieval, 2018](http://ceur-ws.org/Vol-2167/paper13.pdf)
 ***
 
 <img align="right" title="University of Exeter" src="docs/images/intro2.jpg" alt="University of Exeter">
@@ -20,6 +23,8 @@ A/B testing is also used in the academic world to test with real users if the de
     <p>Do people get scared, leave and never return if we add sound to our webpage?</p>
 </td></tr>
 </tbody></table>
+
+APONE is focused on this type of experiments, although it also gives support to quasi-experiments, where variants are not assigned randomly to the study participants, and observational studies, where only one variant is involved.
 
 ## Why
 
