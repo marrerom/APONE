@@ -94,6 +94,17 @@ Download or clone the project APONE from [github](https://github.com/marrerom/AP
 <td align="left"><p><span class="c11 c12 c4">irep-exchange</span></p></td>
 <td align="left"><p><span class="c11 c12 c4">RabbitMQ Exchange Name</span></p></td>
 </tr>
+  </tr>
+<tr class="even">
+<td align="left"><p><span class="c11 c1">ADMINTWITTERNAME</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">socialdatadelft</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">Twitter user name of admin</span></p></td>
+</tr>
+<tr class="odd">
+<td align="left"><p><span class="c11 c1">ADMINTWITTERID</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">937708183979773955</span></p></td>
+<td align="left"><p><span class="c11 c12 c4">Twitter id of admin</span></p></td>
+</tr>
 </tbody>
 </table>
 
@@ -161,7 +172,7 @@ Previously, you have to make sure that the platform is deployed, and the *config
 
 You can also run the test from the browser by requesting the following service to the platform:
 ```bash
-GET /service/test
+GET /service/test/{time (ms) between registering and testing events; default TIMEBEFORETEST property}
 ```
 After some time, you should see 'Test completed' in the browser if it was successful.
 
