@@ -1,0 +1,50 @@
+{
+    "name" : "AveragePrecision", 
+    "experimenter" : "ANONYMOUS", 
+    "description" : "Experiment to reproduce partially the work described in: A. Turpin and F. Scholer, 'User Performance versus Precision Measures for Simple Search Tasks', 2006. The users are exposed to a topic (randomly selected) and a SERP with predefined levels of AP (55, 75 or 95). The time to find the first relevant result is registered, as well as the percentage of relevant documents found and the percentage of non relevants checked as relevants.", 
+    "unit" : "defaultunit", 
+    "treatment" : [
+        {
+            "name" : "55", 
+            "description" : "AP=55", 
+            "control" : true, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientAP"
+        }, 
+        {
+            "name" : "75", 
+            "description" : "AP=75", 
+            "control" : true, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientAP"
+        },
+        {
+            "name" : "95", 
+            "description" : "AP=95", 
+            "control" : true, 
+            "url" : "http://ireplatform.ewi.tudelft.nl:8080/ClientAP"
+        }
+        
+    ], 
+    "config" : [
+        {
+            "name" : "test", 
+            "experimenter" : "ANONYMOUS", 
+            "distribution" : [
+                {
+                    "segments" : 33, 
+                    "treatment" : "55", 
+                    "action" : "ADD"
+                }, 
+                {
+                    "segments" : 33, 
+                    "treatment" : "75", 
+                    "action" : "ADD"
+                },
+                {
+                    "segments" : 33, 
+                    "treatment" : "95", 
+                    "action" : "ADD"
+                }
+            ] 
+        }
+    ]
+}

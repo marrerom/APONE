@@ -142,7 +142,12 @@ public class ServerListener implements ServletContextListener {
     		JUser master = Security.getMasterUser();
     		JUser anonymous = Security.getAnonymousUser();
     		JUser client = Security.getClientUser();
-    		JUser socialdatadelft = new JUser("socialdatadelft",  "937708183979773955", UserRol.ADMIN);
+    		
+    		String adminName = prop.getProperty("ADMINTWITTERNAME");
+    		sce.getServletContext().setAttribute("adminTwitterName", adminName);
+    		String adminID = prop.getProperty("ADMINTWITTERID");
+    		//JUser admin = new JUser("socialdatadelft",  "937708183979773955", UserRol.ADMIN);
+    		JUser admin = new JUser(adminName,  adminID, UserRol.ADMIN);
 
 	
     		if (em.getUsers(master, master).isEmpty()) {
@@ -156,10 +161,10 @@ public class ServerListener implements ServletContextListener {
     				throw new InternalServerException("Client (CLIENT) user name already existing in the database for other user");
     		}
     		
-    		if (em.getUsers(socialdatadelft, master).isEmpty()) {
-    			JUser sdduser = em.createMasterUser(socialdatadelft.getIdTwitter(), socialdatadelft.getName(), master);
-    			if (!sdduser.getIdname().equals(socialdatadelft.getIdname()))
-    				throw new InternalServerException("SocialDataDelft (socialdatadelft) user name already existing in the database for other user");
+    		if (em.getUsers(admin, master).isEmpty()) {
+    			JUser sdduser = em.createMasterUser(admin.getIdTwitter(), admin.getName(), master);
+    			if (!sdduser.getIdname().equals(admin.getIdname()))
+    				throw new InternalServerException("User name '"+ adminName +"' already existing in the database for other user");
     		}
 
     		if (em.getUsers(anonymous, master).isEmpty()) {

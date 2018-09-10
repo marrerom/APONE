@@ -86,7 +86,9 @@ public class RunTest {
 		public Response setUser(@Context HttpServletRequest request) throws IOException, ParseException {
 			if (request.getLocalAddr().equals(request.getRemoteAddr())) { //TODO: check if valid
 				ExperimentManager em = (ExperimentManager)context.getAttribute("ExperimentManager");
-				JUser master = em.getUserByIdname("socialdatadelft", Security.getMasterUser());
+				String adminName = (String) context.getAttribute("adminTwitterName");
+				//JUser master = em.getUserByIdname("socialdatadelft", Security.getMasterUser());
+				JUser master = em.getUserByIdname(adminName, Security.getMasterUser());
 				Security.setAuthenticatedUser(request, em, master.getIdTwitter(), master.getIdname());
 				return Response.ok().build();
 			}
