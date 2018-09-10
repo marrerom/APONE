@@ -18,7 +18,7 @@ Tested version 2.6.10
 
 The port by default is 27017, although this can be changed in the configuration file (step 4).
 
-Currently, the platform works with a predefined user which has access to a database which contains three collections: *experiment*, *user* and *event*. The database and the user must be set in the configuration file (see step 4). The database and collections may be created dynamically by the platform, but the user must be created previously, with *read/write* permissions on the database.
+Currently, the platform works with a predefined database user which has access to a database which contains three collections: *experiment*, *user* and *event*. The database and the database user must be set in the configuration file (see step 4). The database and collections may be created dynamically by the platform, but the user must be created previously, with *read/write* permissions on the database.
 
 ## 3. RabbitMQ Server
 
