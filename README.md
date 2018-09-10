@@ -2,10 +2,9 @@
 
 Open source platform to set up **controlled experiments on the Web** 
 
-* Mónica Marrero. *APONE: Academic Platform for ONline Experiments*. Design of Experimental Search & Information REtrieval Systems Conference, 2018 [Preprint](https://marrerom.github.io/publications/desires18_apone.pdf)
+* [Mónica Marrero. *APONE: Academic Platform for ONline Experiments*. Design of Experimental Search & Information REtrieval Systems Conference (DESIRES), 2018](https://dl.acm.org/citation.cfm?id=3210164&dl=ACM&coll=DL) 
 
-* Mónica Marrero and Claudia Hauff. *A/B Testing with APONE*. The 41st International ACM SIGIR Conference on Research & Development in Information Retrieval, 2018 [Preprint](https://marrerom.github.io/publications/sigir18_apone.pdf)
-
+* [Mónica Marrero and Claudia Hauff. *A/B Testing with APONE*. The 41st International ACM SIGIR Conference on Research & Development in Information Retrieval, 2018](http://ceur-ws.org/Vol-2167/paper13.pdf)
 ***
 
 <img align="right" title="University of Exeter" src="docs/images/intro2.jpg" alt="University of Exeter">
