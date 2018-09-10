@@ -161,7 +161,7 @@ Previously, you have to make sure that the platform is deployed, and the *config
 
 You can also run the test from the browser by requesting the following service to the platform:
 ```bash
-GET /service/test/{TIMEBEFORETEST}
+GET /service/test
 ```
 After some time, you should see 'Test completed' in the browser if it was successful.
 
